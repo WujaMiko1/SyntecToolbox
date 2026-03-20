@@ -1,0 +1,1829 @@
+﻿<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Syntec Ladder Viewer v4.0</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#0f0f1e;--sf:#1a1a30;--sf2:#14142a;--bd:#2d2d50;--bdl:#4a4a7a;
+  --tx:#d8d8ee;--td:#7878a0;--ac:#6c8cff;--ah:#8aa4ff;--a2:#ff6c8c;
+  --gn:#4caf50;--or:#ff9800;--rd:#f44336;--cy:#00bcd4;--yl:#ffeb3b;
+  --pb:#0d0d1e;--sel:rgba(108,140,255,0.18);
+  --cat-safety:#f44336;--cat-spindle:#9c27b0;--cat-axis:#2196f3;--cat-io:#ff9800;
+  --cat-tool:#e91e63;--cat-motion:#4caf50;--cat-comm:#00bcd4;--cat-mode:#ffeb3b;
+  --cat-alarm:#ff5722;--cat-init:#607d8b;--cat-pneum:#8bc34a;--cat-vacuum:#673ab7;
+  --cat-feed:#03a9f4;--cat-display:#795548;--cat-other:#9e9e9e;
+}
+body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--tx);overflow:hidden;height:100vh;display:flex;flex-direction:column;font-size:12px}
+button{font-family:inherit;cursor:pointer}
+.top-bar{display:flex;align-items:center;gap:10px;padding:6px 14px;background:var(--sf2);border-bottom:1px solid var(--bd);flex-shrink:0}
+.top-bar h1{font-size:14px;font-weight:700;color:var(--ac)}.top-bar h1 span{color:var(--td);font-weight:400;font-size:10px;margin-left:6px}
+.top-btn{background:var(--pb);border:1px solid var(--bd);color:var(--tx);padding:4px 10px;border-radius:4px;cursor:pointer;font-size:11px;transition:all .12s}
+.top-btn:hover{background:var(--ac);color:#fff;border-color:var(--ac)}
+.top-btn.green{border-color:var(--gn)}.top-btn.green:hover{background:var(--gn)}
+.top-btn.warn{border-color:var(--or)}.top-btn.warn:hover{background:var(--or)}
+input[type="file"]{display:none}
+.main{flex:1;display:flex;overflow:hidden}
+.sidebar{width:350px;display:flex;flex-direction:column;border-right:1px solid var(--bd);background:var(--sf);flex-shrink:0}
+.content-area{flex:1;display:flex;flex-direction:column;overflow:hidden}
+.side-header{padding:6px 10px;background:var(--sf2);border-bottom:1px solid var(--bd);font-size:10px;font-weight:700;color:var(--ac);text-transform:uppercase;letter-spacing:.5px;display:flex;align-items:center;gap:6px}
+.side-header .cnt{background:var(--ac);color:#fff;border-radius:8px;padding:0 6px;font-size:9px;min-width:20px;text-align:center}
+.filter-box{padding:4px 8px;border-bottom:1px solid var(--bd);background:var(--sf);display:flex;gap:4px}
+.filter-box input{flex:1;background:var(--pb);border:1px solid var(--bd);color:var(--tx);padding:4px 8px;border-radius:4px;font-size:11px}
+.filter-box input:focus{border-color:var(--ac);outline:none}
+.filter-box select{background:var(--pb);border:1px solid var(--bd);color:var(--tx);padding:4px;border-radius:4px;font-size:10px}
+.sec-list{flex:1;overflow-y:auto}
+.sec-item{padding:5px 10px;border-bottom:1px solid rgba(45,45,80,.3);cursor:pointer;transition:background .1s;display:flex;gap:6px;align-items:flex-start;border-left:3px solid transparent}
+.sec-item:hover{background:var(--sel)}
+.sec-item.active{background:rgba(108,140,255,.15);border-left-color:var(--ac)}
+.sec-idx{color:var(--td);font-size:9px;font-family:'Cascadia Code','Consolas',monospace;min-width:24px;text-align:right;padding-top:2px}
+.sec-body{flex:1;min-width:0}
+.sec-name-cn{font-size:11px;color:var(--tx);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sec-name-pl{font-size:10px;color:var(--yl);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-style:italic}
+.sec-meta{font-size:9px;color:var(--td);display:flex;gap:6px;margin-top:1px;align-items:center}
+.cat-badge{font-size:8px;padding:0 5px;border-radius:6px;color:#fff;font-weight:700;letter-spacing:.3px;white-space:nowrap;line-height:14px}
+.tab-bar{display:flex;border-bottom:1px solid var(--bd);background:var(--sf2);flex-shrink:0;overflow-x:auto}
+.tab{padding:6px 14px;font-size:11px;color:var(--td);cursor:pointer;border-bottom:2px solid transparent;transition:all .12s;white-space:nowrap}
+.tab:hover{color:var(--tx)}.tab.active{color:var(--ac);border-bottom-color:var(--ac)}
+.tab-content{flex:1;overflow-y:auto;display:none;padding:12px}.tab-content.active{display:block}
+.vmap{display:flex;flex-wrap:wrap;gap:3px;padding:8px}
+.sum-cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:8px;margin-bottom:16px}
+.sum-card{border:1px solid var(--bd);border-radius:8px;padding:10px;background:var(--sf);text-align:center;transition:all .12s}
+.sum-card:hover{border-color:var(--ac)}
+.sum-card .sc-num{font-size:24px;font-weight:800;font-family:'Cascadia Code',monospace}
+.sum-card .sc-lbl{font-size:9px;color:var(--td);text-transform:uppercase;letter-spacing:.5px;margin-top:2px}
+.treemap{display:flex;flex-wrap:wrap;gap:2px;padding:8px}
+.treemap-cell{border-radius:4px;display:flex;align-items:center;justify-content:center;cursor:pointer;position:relative;min-height:20px;transition:all .12s;overflow:hidden}
+.treemap-cell:hover{filter:brightness(1.3);z-index:10}
+.treemap-cell span{font-size:8px;color:#fff;text-shadow:0 1px 3px rgba(0,0,0,.8);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding:0 2px}
+.flow-group{border:1px dashed var(--bd);border-radius:8px;padding:8px;margin:8px 0}
+.flow-group-hdr{font-size:11px;font-weight:700;margin-bottom:6px;padding:2px 8px;border-radius:3px;display:inline-block}
+.flow-group-body{display:flex;flex-wrap:wrap;gap:4px}
+.flow-node{display:inline-flex;flex-direction:column;align-items:center;padding:6px 10px;border:1px solid var(--bd);border-radius:6px;background:var(--sf);min-width:140px;cursor:pointer;position:relative;transition:all .15s}
+.flow-node:hover{border-color:var(--ac);box-shadow:0 2px 12px rgba(108,140,255,.2)}
+.flow-node .fn-cn{font-size:10px;color:var(--tx);font-weight:600;text-align:center;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.flow-node .fn-pl{font-size:9px;color:var(--yl);font-style:italic;text-align:center;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.flow-node .fn-idx{font-size:8px;color:var(--td);margin-bottom:2px}
+.hex-view{font-family:'Cascadia Code','Consolas',monospace;font-size:11px;line-height:1.6;white-space:pre}
+.hex-off{color:var(--cy)}.hex-byte{color:var(--td)}.hex-ascii{color:var(--gn)}
+.hex-sep{color:rgba(45,45,80,.8)}.hex-text{color:var(--yl);background:rgba(255,235,59,.08);border-radius:2px}
+.hex-marker{color:var(--a2);background:rgba(255,108,140,.08);border-radius:2px}
+.hex-nop{color:rgba(120,120,160,.3)}
+.info-grid{display:grid;grid-template-columns:120px 1fr;gap:2px 12px;font-size:11px;margin-bottom:12px}
+.info-label{color:var(--td);text-align:right}.info-val{font-family:'Cascadia Code','Consolas',monospace;color:var(--cy)}
+.ov-bar{display:flex;height:6px;border-radius:3px;overflow:hidden;margin:8px 0;background:var(--bd)}
+.ov-bar div{height:100%}
+.legend{display:flex;gap:12px;flex-wrap:wrap;font-size:10px;margin:8px 0}
+.legend-item{display:flex;align-items:center;gap:4px}
+.legend-dot{width:8px;height:8px;border-radius:2px}
+.reg-chip{display:inline-block;padding:1px 6px;border-radius:3px;font-size:10px;font-family:'Cascadia Code','Consolas',monospace;margin:1px;cursor:pointer}
+.reg-chip.R{background:#1a3a1a;color:#6f6;border:1px solid #2a5a2a}
+.reg-chip.K{background:#3a3a1a;color:#ff6;border:1px solid #5a5a2a}
+.reg-chip.D{background:#1a2a4a;color:#6cf;border:1px solid #2a4a6a}
+.reg-chip.T{background:#3a1a3a;color:#f6f;border:1px solid #5a2a5a}
+.reg-chip.C{background:#1a3a3a;color:#6ff;border:1px solid #2a5a5a}
+.reg-chip.M{background:#3a2a1a;color:#fc6;border:1px solid #5a4a2a}
+.cmp-box{flex:1;border:1px solid var(--bd);border-radius:4px;padding:8px;background:var(--sf)}
+.cmp-box h3{font-size:11px;color:var(--ac);margin-bottom:6px}
+.ladder-rung{border:1px solid var(--bd);border-radius:6px;margin:8px 0;background:var(--sf);overflow:hidden}
+.ladder-rung-hdr{display:flex;align-items:center;gap:8px;padding:8px 12px;border-bottom:1px solid var(--bd);background:var(--sf2);cursor:pointer}
+.ladder-rung-num{font-size:10px;color:var(--ac);font-weight:700;min-width:30px}
+.ladder-rung-lbl{font-size:12px;color:var(--tx);font-weight:600}
+.ladder-rung-pl{font-size:11px;color:var(--yl);font-style:italic;margin-left:6px}
+.ladder-rung-body{padding:8px 12px}
+.ladder-rail{display:flex;align-items:center;gap:3px;font-family:'Cascadia Code','Consolas',monospace;font-size:11px;padding:4px 0;flex-wrap:wrap}
+.lw{color:var(--bd)}
+.ladder-contact{display:inline-flex;align-items:center;padding:2px 6px;border:1px solid var(--gn);border-radius:4px;color:var(--gn);font-size:10px;font-weight:600}
+.ladder-coil{display:inline-flex;align-items:center;padding:2px 6px;border:1px solid var(--or);border-radius:4px;color:var(--or);font-size:10px;font-weight:600}
+.ladder-func{display:inline-flex;align-items:center;padding:2px 8px;border:1px solid var(--cy);border-radius:4px;color:var(--cy);font-size:10px;font-weight:600}
+.ladder-unresolved{color:var(--td);font-size:10px;font-style:italic;padding:4px 0}
+.welcome{display:flex;flex-direction:column;align-items:center;justify-content:center;flex:1;text-align:center;gap:12px;color:var(--td);padding:40px}
+.welcome h2{color:var(--ac);font-size:22px}.welcome p{max-width:500px;line-height:1.6}
+.welcome .drop{border:2px dashed var(--bd);border-radius:12px;padding:30px 40px;cursor:pointer;transition:all .2s}
+.welcome .drop:hover{border-color:var(--ac);background:rgba(108,140,255,.05)}
+.welcome .drop.drag-over{border-color:var(--gn);background:rgba(76,175,80,.1)}
+.statusbar{display:flex;align-items:center;gap:14px;padding:3px 12px;background:var(--ac);color:#fff;font-size:10px;flex-shrink:0;font-weight:500}
+::-webkit-scrollbar{width:5px;height:5px}::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--bd);border-radius:3px}::-webkit-scrollbar-thumb:hover{background:var(--bdl)}
+.io-table{width:100%;border-collapse:collapse;font-size:11px}
+.io-table th{padding:5px 8px;text-align:left;background:var(--sf2);color:var(--ac);font-size:10px;border-bottom:1px solid var(--bd);position:sticky;top:0}
+.io-table td{padding:4px 8px;border-bottom:1px solid rgba(45,45,80,.2)}
+.io-table tr:hover{background:var(--sel)}
+.io-table .io-addr{font-family:'Cascadia Code',monospace;color:var(--cy);font-size:10px;white-space:nowrap}
+.io-table .io-dir-in{color:var(--gn);font-weight:700}.io-table .io-dir-out{color:var(--or);font-weight:700}
+.dep-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:12px}
+.dep-block{border:1px solid var(--bd);border-radius:8px;padding:12px;background:var(--sf);transition:all .15s}
+.dep-block:hover{border-color:var(--ac);box-shadow:0 2px 16px rgba(108,140,255,.15)}
+.dep-block h4{font-size:12px;margin-bottom:8px;display:flex;align-items:center;gap:6px}
+.dep-item{font-size:10px;padding:3px 0;border-bottom:1px solid rgba(45,45,80,.15);display:flex;align-items:center;gap:6px}
+.dep-arrow{font-size:12px;font-weight:700}
+.dep-arrow.blocks{color:var(--rd)}.dep-arrow.requires{color:var(--or)}.dep-arrow.controls{color:var(--gn)}.dep-arrow.powers{color:var(--cy)}
+.dep-tag{font-size:8px;padding:1px 5px;border-radius:3px;font-weight:700;letter-spacing:.3px}
+.dep-tag.blocks{background:#f4433622;color:var(--rd);border:1px solid #f4433644}
+.dep-tag.requires{background:#ff980022;color:var(--or);border:1px solid #ff980044}
+.dep-tag.controls{background:#4caf5022;color:var(--gn);border:1px solid #4caf5044}
+.dep-tag.powers{background:#00bcd422;color:var(--cy);border:1px solid #00bcd444}
+.dep-tag.sequence{background:#9c27b022;color:#ce93d8;border:1px solid #9c27b044}
+.dep-tag.activates{background:#ffeb3b22;color:var(--yl);border:1px solid #ffeb3b44}
+.io-stat{display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:6px;font-size:11px;font-weight:600}
+.xref-table{width:100%;border-collapse:collapse;font-size:11px}.xref-table th{padding:5px 8px;text-align:left;background:var(--sf2);color:var(--ac);font-size:10px;border-bottom:1px solid var(--bd);position:sticky;top:0}.xref-table td{padding:4px 8px;border-bottom:1px solid rgba(45,45,80,.2)}.xref-table tr:hover{background:var(--sel)}
+.help-card{border:1px solid var(--bd);border-radius:8px;padding:14px;background:var(--sf);margin-bottom:12px}
+.help-card h4{color:var(--ac);font-size:12px;margin-bottom:8px;display:flex;align-items:center;gap:6px}
+.help-card table{width:100%;border-collapse:collapse;font-size:11px}
+.help-card table th{padding:4px 8px;text-align:left;background:var(--sf2);color:var(--ac);font-size:10px;border-bottom:1px solid var(--bd)}.help-card table td{padding:3px 8px;border-bottom:1px solid rgba(45,45,80,.15)}
+.gsearch-overlay{display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.6);z-index:1000;align-items:flex-start;justify-content:center;padding-top:15vh}
+.gsearch-overlay.open{display:flex}
+.gsearch-box{width:600px;max-width:90vw;background:var(--sf);border:1px solid var(--ac);border-radius:12px;overflow:hidden;box-shadow:0 8px 40px rgba(0,0,0,.5)}
+.gsearch-input{width:100%;padding:14px 18px;background:transparent;border:none;color:var(--tx);font-size:14px;outline:none;font-family:inherit}
+.gsearch-results{max-height:400px;overflow-y:auto;border-top:1px solid var(--bd)}
+.gsearch-item{padding:8px 18px;cursor:pointer;display:flex;gap:8px;align-items:center;border-bottom:1px solid rgba(45,45,80,.2);font-size:11px;transition:background .1s}
+.gsearch-item:hover,.gsearch-item.sel{background:var(--sel)}
+.gsearch-item .gs-type{font-size:9px;padding:1px 6px;border-radius:3px;font-weight:700;min-width:50px;text-align:center}
+.gsearch-item .gs-text{color:var(--tx);flex:1}.gsearch-item .gs-sub{color:var(--td);font-size:10px}
+.note-area textarea{width:100%;background:var(--pb);border:1px solid var(--bd);color:var(--yl);padding:6px;border-radius:4px;font-size:10px;font-family:inherit;resize:vertical;min-height:36px}
+.note-area textarea:focus{border-color:var(--ac);outline:none}
+.path-tree{font-family:'Cascadia Code','Consolas',monospace;font-size:11px;line-height:2;color:var(--td);padding:8px 12px}
+.path-tree .pt-dir{color:var(--ac);font-weight:600}.path-tree .pt-file{color:var(--yl)}
+.path-tree .pt-desc{color:var(--td);font-style:italic;font-size:10px}
+.path-tree .pt-hl{background:rgba(108,140,255,.15);padding:2px 6px;border-radius:3px}
+.kbd{display:inline-block;padding:1px 6px;background:var(--sf2);border:1px solid var(--bd);border-radius:3px;font-size:10px;font-family:monospace;color:var(--ac)}
+</style>
+</head>
+<body>
+<div class="top-bar">
+  <h1>&#x26D3; Syntec Ladder Viewer <span>v4.0</span></h1>
+  <label for="ladFile" class="top-btn green">&#x1F4C2; Wczytaj .lad</label>
+  <input type="file" id="ladFile" accept=".lad" multiple>
+  <label for="ladFolder" class="top-btn">&#x1F4C1; Wczytaj folder Ladder</label>
+  <input type="file" id="ladFolder" webkitdirectory directory multiple>
+  <button class="top-btn" onclick="exportJSON()" id="btnExport" style="display:none">&#x1F4BE; JSON</button>
+  <button class="top-btn warn" onclick="exportLabels()" id="btnLabels" style="display:none">&#x1F4CB; Etykiety</button>
+  <label for="ioMapFile" class="top-btn" id="btnIoMap" style="display:none">&#x1F50C; IoMap XML</label>
+  <input type="file" id="ioMapFile" accept=".xml" onchange="loadIoMapXML(this)">
+  <button class="top-btn" onclick="openGlobalSearch()" title="Ctrl+K">&#x1F50E; Szukaj</button>
+  <span style="margin-left:auto;font-size:10px;color:var(--td)" id="fileInfo">Brak pliku</span>
+</div>
+<div class="main" id="mainArea">
+  <div class="welcome" id="welcomeScreen">
+    <h2>&#x26D3; Syntec PLC Ladder Viewer v3.0</h2>
+    <p>Wizualna przegladarka skompilowanych programow PLC (.lad) dla sterownikow Syntec CNC.<br>
+    Pelne tlumaczenie chinskich etykiet na polski, opisy wejsc/wyjsc I/O, mapa zaleznosci systemowych, kategoryzacja sekcji i diagram.</p>
+    <div class="drop" id="dropZone">
+      <div style="font-size:36px;margin-bottom:8px">&#x1F4C2;</div>
+      <div style="font-size:13px;color:var(--tx)">Przeciagnij pliki .lad tutaj</div>
+      <div style="font-size:10px;margin-top:4px">lub kliknij przycisk powyzej</div>
+    </div>
+    <p style="font-size:10px;color:var(--bdl)">Sciezka: <code>Project/DiskC/OpenCNC/Ladder/</code></p>
+  </div>
+  <div class="sidebar" id="sidePanel" style="display:none">
+    <div class="side-header">
+      <span>&#x1F4CA; Sekcje</span>
+      <span class="cnt" id="secCount">0</span>
+      <select id="fileSelect" style="margin-left:auto;background:var(--pb);border:1px solid var(--bd);color:var(--tx);border-radius:3px;font-size:10px;padding:2px 4px" onchange="selectFile(this.value)"></select>
+    </div>
+    <div class="filter-box">
+      <input id="secFilter" placeholder="Szukaj (chinski / polski)..." oninput="filterSections()">
+      <select id="catFilter" onchange="filterSections()"><option value="">Wszystkie</option></select>
+    </div>
+    <div class="sec-list" id="secList"></div>
+  </div>
+  <div class="content-area" id="contentPanel" style="display:none">
+    <div class="tab-bar">
+      <div class="tab active" data-tab="visual" onclick="switchTab('visual')">&#x1F5FA;&#xFE0F; Mapa</div>
+      <div class="tab" data-tab="overview" onclick="switchTab('overview')">&#x1F4CA; Przeglad</div>
+      <div class="tab" data-tab="sections" onclick="switchTab('sections')">&#x1F4D1; Sekcje</div>
+      <div class="tab" data-tab="flow" onclick="switchTab('flow')">&#x1F500; Struktura</div>
+      <div class="tab" data-tab="ladder" onclick="switchTab('ladder')">&#x26D3; Diagram</div>
+      <div class="tab" data-tab="registers" onclick="switchTab('registers')">&#x1F527; Rejestry</div>
+      <div class="tab" data-tab="hex" onclick="switchTab('hex')">&#x1F50D; Hex</div>
+      <div class="tab" data-tab="compare" onclick="switchTab('compare')">&#x2696; Porownanie</div>
+      <div class="tab" data-tab="io" onclick="switchTab('io')">&#x1F50C; I/O</div>
+      <div class="tab" data-tab="system" onclick="switchTab('system')">&#x1F3D7; System</div>
+      <div class="tab" data-tab="xref" onclick="switchTab('xref')">&#x1F517; Xref</div>
+      <div class="tab" data-tab="help" onclick="switchTab('help')">&#x2753; Pomoc</div>
+    </div>
+    <div class="tab-content active" id="tab-visual"></div>
+    <div class="tab-content" id="tab-overview"></div>
+    <div class="tab-content" id="tab-sections"></div>
+    <div class="tab-content" id="tab-flow"></div>
+    <div class="tab-content" id="tab-ladder"></div>
+    <div class="tab-content" id="tab-registers"></div>
+    <div class="tab-content" id="tab-hex" style="padding:0"></div>
+    <div class="tab-content" id="tab-compare"></div>
+    <div class="tab-content" id="tab-io"></div>
+    <div class="tab-content" id="tab-system"></div>
+    <div class="tab-content" id="tab-xref"></div>
+    <div class="tab-content" id="tab-help"></div>
+  </div>
+</div>
+<div class="gsearch-overlay" id="gsOverlay" onclick="if(event.target===this)closeGlobalSearch()">
+  <div class="gsearch-box">
+    <input class="gsearch-input" id="gsInput" placeholder="Szukaj sekcji, rejestru, I/O, tlumaczenia... (Esc = zamknij)" oninput="doGlobalSearch(this.value)" onkeydown="gsKeyNav(event)">
+    <div class="gsearch-results" id="gsResults"></div>
+  </div>
+</div>
+<div class="statusbar"><span id="status">Gotowy - wczytaj plik .lad</span></div>
+<script>
+// =========================================================
+// SYNTEC LADDER VIEWER v4.0 - Visual PLC Browser
+// =========================================================
+
+// CHINESE TO POLISH DICTIONARY
+const CN_PL = {
+  '\u7DCA\u6025\u505C\u6B62':'Zatrzymanie awaryjne (E-STOP)',
+  '\u6025\u505C':'E-STOP',
+  '\u6025\u505C\u8F03\u6B63':'Kalibracja E-STOP',
+  '\u8D85\u7A0B\u91CB\u653E':'Zwolnienie przekroczenia zakresu',
+  '\u4E09\u8EF8\u8D85\u7A0B':'Przekroczenie zakresu 3 osi',
+  '\u5C0D\u5200\u8D85\u7A0B':'Przekroczenie zakresu ustawiania narzedzia',
+  '\u4E0D\u53EF\u79FB\u52D5':'Zakaz ruchu',
+  '\u96D9\u6A6B\u6881\u9632\u649E\u4FDD\u8B77':'Ochrona antykolizyjna podwojnej belki',
+  '\u589E\u52A0\u806F\u6A5F\u4FDD\u8B77':'Dodaj ochrone online',
+  '\u4E3B\u8EF8':'Wrzeciono',
+  '\u4E3B\u8EF8\u65CB\u8F49\u4E2D':'Wrzeciono w ruchu obrotowym',
+  '\u4E3B\u8EF8\u904B\u8F49\u7570\u5E38':'Blad pracy wrzeciona',
+  '\u4E3B\u8EF8\u672A\u593E\u5200\u4E0D\u53EF\u904B\u8F49':'Wrzeciono bez narzedzia - blokada',
+  '\u4E3B\u8EF8\u7B49\u5F85':'Oczekiwanie wrzeciona',
+  '\u8B8A\u983B\u5668\u904E\u8F09':'Przeciazenie falownika',
+  '\u5200\u5EAB':'Magazyn narzedzi',
+  '\u5200\u5EAB\u63A8\u51FA':'Wysuniecie magazynu narzedzi',
+  '\u5200\u5EAB\u51FA':'Magazyn narzedzi (wyjscie)',
+  '\u5200\u5EAB\u4FDD\u8B77':'Ochrona magazynu narzedzi',
+  '\u63DB\u5200\u6A19\u5FD7':'Flaga wymiany narzedzia',
+  '\u63DB\u5200\u81EA\u52D5\u5C0D\u5200':'Automatyczne ustawianie po wymianie narzedzia',
+  '\u6709\u5200':'Narzedzie obecne',
+  '\u6709\u5200\u6AA2\u6E2C':'Detekcja narzedzia',
+  '\u677E\u5200':'Zwolnienie narzedzia',
+  '\u593E\u5200':'Zacisniecie narzedzia',
+  '\u5C0D\u5200\u4FE1\u865F':'Sygnal ustawiania narzedzia',
+  '\u624B\u8EF8\u8EF8\u9078':'Wybor osi kolka recznego',
+  '\u500D\u7387':'Skalowanie (override)',
+  '\u5BF8\u52D5\u500D\u7387':'Override JOG',
+  '\u624B\u52D5\u6A21\u5F0F':'Tryb reczny',
+  '\u96D9\u9A45\u52D5\u8EF8\u70BA':'Os podwojnego napedu',
+  '\u96D9\u9A45\u52D5\u5C0B\u539F\u9EDE':'Bazowanie podwojnego napedu',
+  '\u4E00\u9375\u5C0B\u539F\u9EDE':'Bazowanie jednym przyciskiem',
+  '\u4E00\u9375\u56DE\u7A0B\u5F0F\u5EA7\u6A19':'Powrot do wspolrzednych programu jednym przyciskiem',
+  '\uFF38\uFF0B':'Os X+','\uFF38\uFF0D':'Os X-','\uFF39\uFF0B':'Os Y+','\uFF39\uFF0D':'Os Y-','\uFF3A\uFF0B':'Os Z+','\uFF3A\uFF0D':'Os Z-',
+  '\u8EF8\u5411\u672A\u6709\u79FB\u52D5\u771F\u7A7A\u6CF5\u81EA\u52D5\u95DC\u9589\u529F\u80FD':'Auto-wylaczenie pompy prozniowej przy braku ruchu',
+  '\u8EF8\u5411\u5E38\u958B\u6642':'Os normalnie otwarta',
+  '\u8EF8\u5239\u8ECA':'Hamulec osi',
+  '\u79FB\u52D5\u5438\u76E4\u6C23\u7F38':'Cylinder przyssawki ruchomej',
+  '\u4E2D\u4F4D\u7F6E':'Pozycja srodkowa',
+  '\u4E0A\u4F4D':'Pozycja gorna',
+  '\u4E0B\u4F4D\u7F6E':'Pozycja dolna',
+  '\u4E0A\u6599\u5B9A\u4F4D\u6C23\u7F38\u52D5\u4F5C\u5373\u5074\u63A8\u6C23\u7F38':'Cylinder pozycjonowania/wypychania bocznego',
+  '\u5074\u63A8\u6C23\u7F38\u8B66\u5831':'Alarm cylindra bocznego',
+  '\u5C0E\u5411\u6C23\u7F38\u52D5\u4F5C':'Dzialanie cylindra prowadzacego',
+  '\u63A8\u6599\u6C23\u7F38\u52D5\u4F5C':'Dzialanie cylindra podparcia materialu',
+  '\u9650\u5236\u63A8\u6599':'Ograniczenie podparcia materialu',
+  '\u63A8\u6599\u72C0\u614B\u6307\u793A':'Wskaznik stanu podparcia materialu',
+  '\u63A8\u6599':'Podparcie materialu',
+  '\u63A8\u6599\u9032\u7A0B\u986F\u793A':'Wyswietlanie postepu podparcia',
+  '\u540E\u63A8\u6599':'Tylne podparcie materialu',
+  '\u9650\u5236\u540E\u63A8':'Ograniczenie tylnego podparcia',
+  '\u540E\u63A8\u672A\u51FA\u8B66':'Brak alarmu tylnego podparcia',
+  '\u5B9A\u4F4D\u6C23\u7F38\u52D5\u4F5C':'Dzialanie cylindra pozycjonowania',
+  '\u4E00\u9375\u6C23\u7F38\u52D5\u4F5C':'Operacja cylindrow jednym przyciskiem',
+  '\u4E00\u9375\u63A8\u6599\u52D5\u4F5C':'Podparcie materialu jednym przyciskiem',
+  '\u4E2D\u53F3\u4E0A\u6599\u6C23\u7F38':'Cylinder ladowania srodkowo-prawy',
+  '\u4E0A\u4E0B\u5B9A\u4F4D\u6C23\u7F38':'Cylinder pozycjonowania gora/dol',
+  '\u689D\u78BC\u6C23\u7F38\u4E0A':'Cylinder kodu kreskowego (gora)',
+  '\u771F\u7A7A\u6CF5':'Pompa prozniowa',
+  '\u771F\u7A7A\u5438\u9644':'Przyssanie prozniowe',
+  '\u771F\u7A7A\u5438\u9644\u52D5\u4F5C':'Dzialanie przyssania prozniowego',
+  '\u771F\u7A7A\u7570\u8B66\u53D6\u6D88':'Anulowanie alarmu prozni',
+  '\u53F3\u5438\u76E4\u6C23\u7F38\u52D5\u4F5C':'Dzialanie cylindra prawej przyssawki',
+  '\u53F3\u5438\u76E4\u52D5\u4F5C':'Dzialanie prawej przyssawki',
+  '\u4E2D\u5438\u76E4\u52D5\u4F5C':'Dzialanie srodkowej przyssawki',
+  '\u5438\u76E4\u6C23\u7F38\u6A19\u8B58':'Znacznik cylindra przyssawki',
+  '\u5438\u76E4\u72C0\u614B\u986F\u793A':'Wyswietlanie stanu przyssawki',
+  '\u4E2D\u53F3\u4E00\u584A\u5438':'Przyssanie bloku srodkowo-prawego',
+  '\u689D\u78BC\u5438\u9644':'Przyssanie kodu kreskowego',
+  '\u81EA\u52D5\u4E0A\u4E0B\u6599\u76F8\u95DC':'Automatyczne ladowanie/rozladowanie (powiazane)',
+  '\u5228\u82B1\u677F\u4E0A\u4E0B\u6599':'Ladowanie/rozladowanie plyty wiorowej',
+  '\u5BC6\u5EA6\u677F\u4E0A\u4E0B\u6599':'Ladowanie/rozladowanie plyty MDF',
+  '\u4E00\u9375\u4E0A\u4E0B\u6599':'Ladowanie/rozladowanie jednym przyciskiem',
+  '\u4E0A\u4E0B\u6599\u72C0\u614B\u9650\u5236\u7A0B\u5F0F\u555F\u52D5':'Stan ladowania ogranicza start programu',
+  '\u4E0B\u6599\u6AA2\u6E2C':'Detekcja rozladunku',
+  '\u7A0B\u5F0F\u555F\u52D5':'Start programu',
+  '\u7A0B\u5F0F\u5FA9\u4F4D':'Reset programu',
+  '\u7A0B\u5E8F\u555F\u52D5':'Start programu (uruchomienie)',
+  '\u7A0B\u5E8F\u66AB\u505C':'Pauza programu',
+  '\u6A21\u5F0F\u9078\u64C7':'Wybor trybu',
+  '\u81EA\u52D5\u904B\u884C\u4E2D\u689D\u4EF6\u5224\u65B7':'Warunki kontrolne w trybie auto',
+  '\u9032\u7D66\u4FDD\u6301':'Wstrzymanie posuwu (Feed Hold)',
+  '\u901A\u4FE1':'Komunikacja',
+  '\u5411\u8CBC\u6A19\u6A5F\u5171\u4EAB\u72C0\u614B':'Udostepnianie stanu etykieciarce',
+  '\u8B80\u8CBC\u6A19\u6A5F\u72C0\u614B':'Odczyt stanu etykieciarki',
+  '\u521D\u59CB\u5316\u72C0\u614B\u5716\u8B8A\u6578':'Inicjalizacja zmiennych diagramu stanow',
+  '\u8A2D\u5B9A\u57FA\u672C\u6E2C\u8A66\u74B0\u5883':'Ustawienie podstawowego srodowiska testowego',
+  '\u53C3\u6578':'Parametry',
+  '\u8173\u8E0F\u521D\u59CB\u72C0\u614B':'Stan poczatkowy pedalu',
+  '\u7B2C\u4E00\u584A\u8F38\u5165\u677F':'Pierwsza karta wejsciowa',
+  '\u7B2C\u4E8C\u584A\u8F38\u5165\u677F':'Druga karta wejsciowa',
+  '\u7B2C\u4E09\u584A\u8F38\u5165\u677F':'Trzecia karta wejsciowa',
+  '\u7B2C\u4E00\u584A\u8F38\u51FA\u677F':'Pierwsza karta wyjsciowa',
+  '\u7B2C\u4E8C\u584A\u8F38\u51FA\u677F':'Druga karta wyjsciowa',
+  '\u7B2C\u4E09\u584A\u8F38\u51FA\u677F':'Trzecia karta wyjsciowa',
+  '\u5927\u5C0F\u677F':'Mala/duza plyta',
+  '\u5149\u96FB\u76F8\u95DC':'Czujniki fotoelektryczne (powiazane)',
+  '\u6BDB\u5237\u52D5\u4F5C':'Dzialanie szczotki',
+  '\u51B7\u6C34\u6A5F':'Chlodziarka wody',
+  '\u51B7\u6C34\u6A5F\u5831\u8B66':'Alarm chlodziarka',
+  '\u6C23\u58D3\u4E0D\u8DB3':'Zbyt niskie cisnienie powietrza',
+  '\u5439\u6C23':'Nadmuch powietrza',
+  '\u5C0E\u8ECC\u5439\u6C23':'Nadmuch prowadnic',
+  '\u6253\u5370\u5439\u6C23':'Nadmuch drukowania',
+  '\u6F64\u6ED1\u4E0D\u8DB3\u8B66\u5831':'Alarm niedostatecznego smarowania',
+  '\u672A\u5C0B\u539F\u9EDE\u8B66\u5831':'Alarm - nie wykonano bazowania',
+  '\u7CFB\u5217\u4E0A\u4E0B\u6599\u6392\u9459':'Seria: ladowanie/wiertarka rzedowa',
+  '\u7B49\u5F85\u904B\u52D5\u6307\u4EE4\u5B8C\u6210':'Oczekiwanie na zakonczenie ruchu',
+  '\u63A7\u5236\u5668\u57F7\u884C\u5230':'Kontroler wykonal dotychczas',
+  '\u5167\u5BB9\u653E\u5728\u9019\u7406':'Tresc umieszczona tutaj',
+  '\u8B80\u53D6':'Odczyt',
+  '\u63D0\u793A':'Informacja',
+  // === v3.0 - pelne tlumaczenia ===
+  '\u4E3B\u8EF8\u6B63\u8F49':'Obroty wrzeciona CW (do przodu)',
+  '\u4E3B\u8EF8\u505C\u6B62':'Zatrzymanie wrzeciona',
+  '\u4E3B\u8EF8\u677E\u5200':'Zwolnienie narzedzia wrzeciona',
+  '\u4E3B\u8EF8\u593E\u8B66':'Alarm zacisku wrzeciona',
+  '\u4E3B\u8EF8\u505C\u5931':'Blad zatrzymania wrzeciona',
+  '\u4E3B\u8EF8\u7121\u5200':'Wrzeciono bez narzedzia',
+  '\u9EC3\u71C8':'Lampka zolta (stan gotowosci)',
+  '\u7DA0\u71C8':'Lampka zielona (praca)',
+  '\u7D05\u71C8':'Lampka czerwona (alarm)',
+  '\u53F3\u5438\u76E4\u5438\u9644':'Przyssanie prawej przyssawki',
+  '\u53F3\u5438\u76E4\u91CB\u653E':'Zwolnienie prawej przyssawki',
+  '\u5438\u76E4\u5074\u63A8':'Boczne wypychanie przyssawki',
+  '\u4E2D\u5438\u76E4\u4E0B\u4F4D':'Srodkowa przyssawka - pozycja dolna',
+  '\u4E2D\u5438\u76E4\u4E2D\u4F4D':'Srodkowa przyssawka - pozycja srodkowa',
+  '\u4E2D\u5438\u76E4\u5438\u9644':'Przyssanie srodkowej przyssawki',
+  '\u4E2D\u5438\u76E4\u91CB\u653E':'Zwolnienie srodkowej przyssawki',
+  '\u4E00\u9375\u7A0B\u5F0F':'Program jednym przyciskiem',
+  '\u4E3B\u7A0B\u5F0F\u865F\u78BC':'Numer programu glownego',
+  '\u7531\u4F7F\u7528\u8005\u81EA\u884C\u5B9A\u7FA9':'Definiowane przez uzytkownika',
+  '\u4E00\u9375\u4E0B\u6599':'Rozladowanie jednym przyciskiem',
+  '\u4E00\u9375\u7F38\u56DE':'Powrot cylindrow jednym przyciskiem',
+  '\u4E00\u9375\u7F38\u51FA':'Wysuw cylindrow jednym przyciskiem',
+  '\u5C0D\u5200\u5439\u6C23':'Nadmuch ustawiania narzedzia',
+  '\u96F7\u9054':'Radar (czujnik odleglosci)',
+  '\u500D\u7387\u6E1B':'Zmniejszenie override',
+  '\u500D\u7387\u52A0':'Zwiekszenie override',
+  '\u5207\u524A\u500D\u52A0':'Zwiekszenie override skrawania',
+  '\u5207\u524A\u500D\u6E1B':'Zmniejszenie override skrawania',
+  '\u6BB5\u6578\u8A2D\u5B9A':'Ustawienie segmentow',
+  '\u4E3B\u8EF8\u500D\u6E1B':'Zmniejszenie override wrzeciona',
+  '\u4E3B\u8EF8\u500D\u52A0':'Zwiekszenie override wrzeciona',
+  '\u7531\u7CFB\u7D71\u53C3\u6578':'Z parametrow systemowych',
+  '\u58D3\u8F25\u4E0A':'Walek dociskowy gora',
+  '\u5074\u63A8':'Wypychanie boczne',
+  '\u5200\u5EAB\u7F69\u958B':'Otwarcie oslony magazynu narzedzi',
+  '\u5200\u5EAB\u7F69\u95DC':'Zamkniecie oslony magazynu narzedzi',
+  '\u5DE6\u53F3\u79FB\u52D5':'Ruch lewo/prawo',
+  '\u5B9A\u4F4D\u7F38':'Cylinder pozycjonowania',
+  '\u5438\u76E4\u6C23\u7F38':'Cylinder przyssawki',
+  '\u5438\u76E4\u5438\u653E':'Przyssanie/zwolnienie przyssawki',
+  '\u5074\u63A8\u6C23\u7F38':'Cylinder bocznego wypychania',
+  '\u5200\u5EAB\u5C0E\u5411':'Prowadnica magazynu narzedzi',
+  '\u540E\u63A8\u6C23\u7F38':'Cylinder tylnego podparcia',
+  '\u63A8\u6599\u6C23\u7F38':'Cylinder podparcia materialu',
+  '\u624B\u8F2A\u6A21\u64EC':'Symulacja kolka recznego',
+  '\u55AE\u7BC0\u57F7\u884C':'Wykonanie pojedynczego bloku',
+  '\u7570\u8B66\u53D6\u6D88':'Anulowanie alarmu',
+  '\u5B9A\u4F4D\u5438\u9644':'Przyssanie pozycjonujace',
+  '\u7A0B\u5F0F\u66AB\u505C':'Pauza programu',
+  '\u7A0B\u5F0F\u5FA9\u4F4D':'Reset programu',
+  '\u771F\u7A7A\u904E\u8F09':'Przeciazenie prozni',
+  '\u8B8A\u983B\u5668\u8B66\u5831':'Alarm falownika',
+  '\u6392\u9459\u555F\u52D5':'Start wiertarki rzedowej',
+  '\u662F\u5426\u958B\u555F':'Czy wlaczyc',
+  '\u8B8A\u983B\u5668\u6700\u9AD8\u983B\u7387':'Najwyzsza czestotliwosc falownika',
+  '\u5BCC\u51CC\u8B8A\u983B\u5668':'Falownik Fuling',
+  '\u8A2D\u7F6E\u8F49\u901F':'Ustawienie predkosci obrotowej',
+  '\u6700\u9AD8\u8F49\u901F':'Najwyzsza predkosc obrotowa',
+  '\u5438\u9644':'Przyssanie',
+  '\u8CBC\u6A19\u9591\u7F6E':'Etykieciarka bezczynna',
+  '\u4FDD\u8B77\u95DC':'Wylaczenie ochrony',
+  '\u89F8\u767C\u8D85\u7A0B':'Wyzwolenie przekroczenia zakresu',
+  '\u6A21\u5F0F':'Tryb',
+  '\u677E\u5200\u6AA2\u6E2C':'Detekcja zwolnienia narzedzia',
+  '\u593E\u5200\u6AA2\u6E2C':'Detekcja zacisniecia narzedzia',
+  '\u5438\u76E4\u7F38\u4E0B':'Cylinder przyssawki - dol',
+  '\u5B9A\u4F4D\u63A8\u6599':'Pozycjonowanie podparcia',
+  '\u5438\u76E4\u7F38\u4E0A':'Cylinder przyssawki - gora',
+  '\u689D\u5438\u958B':'Przyssanie paskowe wlaczone',
+  '\u5074\u63A8\u56DE':'Powrot wypychania bocznego',
+  '\u689D\u5438\u95DC':'Przyssanie paskowe wylaczone',
+  '\u63A8\u6599\u56DE':'Powrot podparcia materialu',
+  '\u63A8\u6599\u51FA':'Wysuw podparcia materialu',
+  '\u5438\u76E4\u5438':'Przyssanie przyssawki',
+  '\u5438\u76E4\u653E':'Zwolnienie przyssawki',
+  '\u540E\u63A8':'Tylne podparcie',
+  '\u771F\u7A7A\u958B':'Proznia wlaczona',
+  '\u771F\u7A7A\u95DC':'Proznia wylaczona',
+  '\u6CF5\u958B':'Pompa wlaczona',
+  '\u539F\u9EDE':'Punkt bazowy (Home)',
+  '\u6253\u5370\u6C23\u958B':'Nadmuch drukowania wlaczony',
+  '\u6253\u5370\u6C23\u95DC':'Nadmuch drukowania wylaczony',
+  '\u8EF8\u5C0B\u904E':'Os zbazowana',
+  '\u8EDF\u9AD4\u884C\u7A0B\u6975\u9650\u4FDD\u8B77\u5728\u5C0B\u904E':'Ochrona limitu programowego po bazowaniu',
+  '\u4E0D\u5141\u8A31\u8D77\u52D5\u52A0\u5DE5':'Zakaz uruchomienia obrobki',
+  '\u6B63\u5728\u52A0\u5DE5\u4E2D':'W trakcie obrobki',
+  '\u55AE\u7BC0\u505C\u6B62\u4E2D':'Zatrzymanie pojedynczego bloku',
+  '\u505C\u6B62\u4FE1\u865F':'Sygnal stopu',
+  '\u5C0D\u61C9\u5230\u5DE8\u96C6\u7CFB\u7D71\u8B8A\u6578':'Odpowiada zmiennej makro systemowej',
+  '\u7B2C\u4E8C\u8EDF\u9AD4\u884C\u7A0B\u6975\u9650\u958B\u95DC':'Drugi limit programowy zakresu',
+  '\u4E0D\u4FDD\u8B77':'Bez ochrony',
+  '\u4FDD\u8B77':'Ochrona aktywna',
+  '\u8ACB\u53C3\u8003\u53C3\u6578':'Sprawdz parametr',
+  '\u8EF8\u6A5F\u81FA\u6B63\u5411\u786C\u9AD4\u6975\u9650':'Limit sprzetowy (+) osi maszyny',
+  '\u6307\u4EE4\u6216\u624B\u8F2A\u6307\u4EE4':'Polecenie lub polecenie kolka recznego',
+  '\u53EA\u80FD\u4EE5\u53CD\u65B9\u5411\u5E36\u51FA':'Wycofanie tylko w przeciwnym kierunku',
+  '\u63A7\u5236\u5668\u5C31\u6703\u7522\u751F\u9019\u500B\u65B9\u5411\u7684\u904B\u52D5':'Kontroler wygeneruje ruch w tym kierunku',
+  '\u81FA\u9762\u91CB\u653E':'Zwolnienie stolu',
+  '\u52A0\u5DE5\u5439\u6C23':'Nadmuch obrobki',
+  '\u5FEB\u901F\u9032\u7D66':'Szybki posuw (rapid feed)',
+  '\u9650\u5236\u975E\u6A19':'Ograniczenie niestandardowe',
+  '\u975E\u6A19\u88AB\u9650\u5236':'Niestandardowe zablokowane',
+  '\u4E0A\u6599\u5B9A\u4F4D\u7F38\u4E00\u584A\u52D5\u4F5C':'Dzialanie cylindra pozycjonowania zaladunku',
+  '\u8A2D\u5B9A\u70BA\u5404\u8EF8\u5411\u8A2D\u5B9A\u6578\u503C\u76F8\u52A0':'Ustawienie: suma wartosci osi',
+  '\u7B2C\u4E8C\u7D44\u8EF8\u7FA4\u547D\u4EE4\u66AB\u5B58\u5668':'Rejestr polecen 2. grupy osi',
+  '\u624D\u6703\u88AB\u8D77\u52D5':'Dopiero wtedy uruchomione',
+  '\u540C\u6642\u767C\u51FA\u672A\u5C0B':'Informacja o braku bazowania',
+  '\u624D\u6703\u958B\u59CB\u57F7\u884C\u4E0B\u4E00\u500B':'Dopiero przejdzie do nastepnego',
+  '\u6703\u767C\u51FA':'Wysle sygnal',
+  '\u53F3\u5438\u76E4':'Prawa przyssawka',
+  '\u4E2D\u5438\u76E4':'Srodkowa przyssawka',
+  '\u4E0A\u6599\u5B9A\u4F4D\u7F38':'Cylinder pozycjonowania zaladunku',
+  '\u5438\u76E4\u7F38':'Cylinder przyssawki',
+  '\u8D77\u52D5':'Uruchomienie',
+  '\u52A0\u5DE5':'Obrobka',
+  '\u5C0B\u539F\u9EDE':'Bazowanie (homing)',
+};
+
+// CATEGORY SYSTEM
+const CATEGORIES = [
+  { id:'safety',  name:'Bezpieczenstwo',      color:'var(--cat-safety)',  icon:'\uD83D\uDED1', keywords:['\u7DCA\u6025','\u6025\u505C','\u8D85\u7A0B','\u4FDD\u8B77','\u9632\u649E','\u9650\u5236','\u4E0D\u53EF\u79FB\u52D5','\u975E\u6A19','\u91CB\u653E','\u5239\u8ECA'] },
+  { id:'spindle', name:'Wrzeciono',            color:'var(--cat-spindle)', icon:'\uD83D\uDD04', keywords:['\u4E3B\u8EF8','\u8B8A\u983B','\u6B63\u8F49','\u8F49\u901F'] },
+  { id:'tool',    name:'Narzedzia / Magazyn',  color:'var(--cat-tool)',    icon:'\uD83D\uDD27', keywords:['\u5200\u5EAB','\u5200','\u63DB\u5200','\u5C0D\u5200','\u6709\u5200','\u677E\u5200','\u593E\u5200','\u6392\u9459'] },
+  { id:'axis',    name:'Osie / Ruch',          color:'var(--cat-axis)',    icon:'\u2195\uFE0F', keywords:['\u8EF8','\u624B\u8EF8','\u500D\u7387','\u5BF8\u52D5','\uFF38','\uFF39','\uFF3A','\u9A45\u52D5','\u539F\u9EDE','\u79FB\u52D5'] },
+  { id:'pneum',   name:'Pneumatyka',           color:'var(--cat-pneum)',   icon:'\uD83D\uDCA8', keywords:['\u6C23\u7F38','\u6C23\u58D3','\u63A8\u6599','\u5C0E\u5411','\u5074\u63A8','\u5B9A\u4F4D\u7F38','\u4E0A\u6599','\u5B9A\u4F4D\u6C23'] },
+  { id:'vacuum',  name:'Proznia',              color:'var(--cat-vacuum)',  icon:'\uD83D\uDD2E', keywords:['\u771F\u7A7A','\u5438\u76E4','\u5438\u9644','\u5438','\u6CF5'] },
+  { id:'load',    name:'Ladowanie/Rozladunek', color:'var(--cat-io)',      icon:'\uD83D\uDCE6', keywords:['\u4E0A\u4E0B\u6599','\u4E0B\u6599','\u5228\u82B1\u677F','\u5BC6\u5EA6\u677F'] },
+  { id:'program', name:'Program / Tryb',       color:'var(--cat-motion)',  icon:'\u25B6\uFE0F', keywords:['\u7A0B\u5F0F','\u7A0B\u5E8F','\u6A21\u5F0F','\u904B\u884C','\u9032\u7D66','\u555F\u52D5','\u5FA9\u4F4D','\u66AB\u505C','\u55AE\u7BC0','\u52A0\u5DE5'] },
+  { id:'comm',    name:'Komunikacja',          color:'var(--cat-comm)',    icon:'\uD83D\uDCE1', keywords:['\u901A\u4FE1','\u8CBC\u6A19\u6A5F','\u5171\u4EAB'] },
+  { id:'init',    name:'Inicjalizacja',        color:'var(--cat-init)',    icon:'\u2699\uFE0F', keywords:['\u521D\u59CB','\u8A2D\u5B9A','\u53C3\u6578','\u6E2C\u8A66','\u8173\u8E0F'] },
+  { id:'board',   name:'Karty I/O',            color:'var(--cat-feed)',    icon:'\uD83D\uDCDF', keywords:['\u8F38\u5165\u677F','\u8F38\u51FA\u677F'] },
+  { id:'alarm',   name:'Alarmy',               color:'var(--cat-alarm)',   icon:'\u26A0\uFE0F', keywords:['\u8B66\u5831','\u8B66','\u7570\u5E38','\u5831\u8B66'] },
+  { id:'display', name:'Wyswietlanie',         color:'var(--cat-display)', icon:'\uD83D\uDCFA', keywords:['\u986F\u793A','\u6307\u793A','\u9032\u7A0B','\u71C8','\u96F7\u9054'] },
+  { id:'misc',    name:'Inne',                 color:'var(--cat-other)',   icon:'\uD83D\uDCCE', keywords:[] },
+];
+
+function categorize(label) {
+  for (const cat of CATEGORIES) {
+    if (cat.id === 'misc') continue;
+    for (const kw of cat.keywords) { if (label.includes(kw)) return cat; }
+  }
+  return CATEGORIES[CATEGORIES.length - 1];
+}
+
+function translate(cn) {
+  if (CN_PL[cn]) return CN_PL[cn];
+  for (const [k, v] of Object.entries(CN_PL)) {
+    if (cn.includes(k) && k.length >= 2) return v + ' (~)';
+  }
+  let result = cn; let translated = false;
+  const frags = Object.entries(CN_PL).sort((a,b) => b[0].length - a[0].length);
+  for (const [k, v] of frags) {
+    if (k.length >= 2 && result.includes(k)) { result = result.replace(k, '['+v+']'); translated = true; }
+  }
+  return translated ? result : '';
+}
+
+// I/O DATABASE - typowe przypisania Syntec CNC (frezarka/router drewna)
+const IO_DB = {
+  inputs: [
+    {addr:'X0.0',  name:'E-STOP',                     desc:'Przycisk zatrzymania awaryjnego - normalnie zamkniety (NC)', cat:'safety'},
+    {addr:'X0.1',  name:'Limit sprzetowy X+',          desc:'Czujnik krancowy osi X w kierunku dodatnim', cat:'safety'},
+    {addr:'X0.2',  name:'Limit sprzetowy X-',          desc:'Czujnik krancowy osi X w kierunku ujemnym', cat:'safety'},
+    {addr:'X0.3',  name:'Limit sprzetowy Y+',          desc:'Czujnik krancowy osi Y w kierunku dodatnim', cat:'safety'},
+    {addr:'X0.4',  name:'Limit sprzetowy Y-',          desc:'Czujnik krancowy osi Y w kierunku ujemnym', cat:'safety'},
+    {addr:'X0.5',  name:'Limit sprzetowy Z+',          desc:'Czujnik krancowy osi Z w kierunku dodatnim', cat:'safety'},
+    {addr:'X0.6',  name:'Limit sprzetowy Z-',          desc:'Czujnik krancowy osi Z w kierunku ujemnym', cat:'safety'},
+    {addr:'X0.7',  name:'Czujnik Home X',              desc:'Czujnik punktu bazowego osi X', cat:'axis'},
+    {addr:'X1.0',  name:'Czujnik Home Y',              desc:'Czujnik punktu bazowego osi Y', cat:'axis'},
+    {addr:'X1.1',  name:'Czujnik Home Z',              desc:'Czujnik punktu bazowego osi Z', cat:'axis'},
+    {addr:'X1.2',  name:'Czujnik cisnienia',           desc:'Presostat - wykrywanie zbyt niskiego cisnienia pneumatyki', cat:'pneum'},
+    {addr:'X1.3',  name:'Narzedzie zacisniety',        desc:'Czujnik potwierdzenia zacisku narzedzia we wrzecionie', cat:'tool'},
+    {addr:'X1.4',  name:'Narzedzie zwolnione',         desc:'Czujnik potwierdzenia zwolnienia narzedzia', cat:'tool'},
+    {addr:'X1.5',  name:'Detekcja narzedzia',          desc:'Czujnik obecnosci narzedzia w magazynie (kazda pozycja)', cat:'tool'},
+    {addr:'X1.6',  name:'Przekaznik termiczny',        desc:'Ochrona termiczna wrzeciona/falownika', cat:'spindle'},
+    {addr:'X1.7',  name:'Smarowanie OK',               desc:'Czujnik poziomu oleju smarujacego', cat:'alarm'},
+    {addr:'X2.0',  name:'Podajnik materialu',          desc:'Czujnik fotoelektryczny detekcji materialu', cat:'load'},
+    {addr:'X2.1',  name:'Przyssawka dol',              desc:'Czujnik pozycji dolnej cylindra przyssawki', cat:'vacuum'},
+    {addr:'X2.2',  name:'Przyssawka gora',             desc:'Czujnik pozycji gornej cylindra przyssawki', cat:'vacuum'},
+    {addr:'X2.3',  name:'Cylinder pozycjonowania',     desc:'Czujnik stanu cylindra pozycjonowania materialu', cat:'pneum'},
+    {addr:'X2.4',  name:'Cylinder boczny',             desc:'Czujnik stanu cylindra bocznego wypychania', cat:'pneum'},
+    {addr:'X2.5',  name:'Cylinder prowadzacy',         desc:'Czujnik stanu cylindra prowadzacego', cat:'pneum'},
+    {addr:'X2.6',  name:'Tylne podparcie wys.',        desc:'Czujnik wysuniecia tylnego podparcia materialu', cat:'pneum'},
+    {addr:'X2.7',  name:'Tylne podparcie pow.',        desc:'Czujnik powrotu tylnego podparcia materialu', cat:'pneum'},
+    {addr:'X3.0',  name:'Chlodzenie alarm',            desc:'Sygnal alarmu z chlodziaki wody', cat:'alarm'},
+    {addr:'X3.1',  name:'Magazyn narzedzi poz.',       desc:'Czujnik pozycji magazynu narzedzi', cat:'tool'},
+    {addr:'X3.2',  name:'Kolko reczne A',              desc:'Sygnal A enkodera kolka recznego (MPG)', cat:'axis'},
+    {addr:'X3.3',  name:'Kolko reczne B',              desc:'Sygnal B enkodera kolka recznego (MPG)', cat:'axis'},
+    {addr:'HK0-6', name:'Klawisze operatorskie',       desc:'Przyciski panelu operatora: tryb, start, stop, override', cat:'program'},
+    {addr:'HK7-13',name:'Wybor osi/override',          desc:'Klawisze: wybor osi kolka, skalowanie posuwu/wrzeciona', cat:'axis'},
+  ],
+  outputs: [
+    {addr:'Y0.0',  name:'Wrzeciono CW',               desc:'Obroty wrzeciona zgodnie z ruchem wskazowek zegara', cat:'spindle'},
+    {addr:'Y0.1',  name:'Wrzeciono CCW',               desc:'Obroty wrzeciona przeciwnie do ruchu wskazowek', cat:'spindle'},
+    {addr:'Y0.2',  name:'Zacisk narzedzia',            desc:'Elektrozawor zacisku narzedzia we wrzecionie', cat:'tool'},
+    {addr:'Y0.3',  name:'Zwolnienie narzedzia',        desc:'Elektrozawor zwolnienia narzedzia ze wrzeciona', cat:'tool'},
+    {addr:'Y0.4',  name:'Pompa prozniowa',             desc:'Wlaczenie pompy prozniowej do ssania przyssawek', cat:'vacuum'},
+    {addr:'Y0.5',  name:'Zawor ssania 1',              desc:'Elektrozawor strefy ssania 1 (lewa)', cat:'vacuum'},
+    {addr:'Y0.6',  name:'Zawor ssania 2',              desc:'Elektrozawor strefy ssania 2 (srodek)', cat:'vacuum'},
+    {addr:'Y0.7',  name:'Zawor ssania 3',              desc:'Elektrozawor strefy ssania 3 (prawa)', cat:'vacuum'},
+    {addr:'Y1.0',  name:'Nadmuch prowadnic',           desc:'Zawor nadmuchu czyszczacego prowadnice liniowe', cat:'pneum'},
+    {addr:'Y1.1',  name:'Nadmuch obrobki',             desc:'Zawor nadmuchu w strefie obrobki (chlodzenie/odpylanie)', cat:'pneum'},
+    {addr:'Y1.2',  name:'Nadmuch drukowania',          desc:'Zawor nadmuchu dla systemu nadruku/etykietowania', cat:'pneum'},
+    {addr:'Y1.3',  name:'Magazyn narzedzi WY',         desc:'Elektrozawor wysuniecia magazynu narzedzi', cat:'tool'},
+    {addr:'Y1.4',  name:'Magazyn narzedzi POW',        desc:'Elektrozawor powrotu magazynu narzedzi', cat:'tool'},
+    {addr:'Y1.5',  name:'Oslona magazynu',             desc:'Elektrozawor oslony ochronnej magazynu', cat:'tool'},
+    {addr:'Y1.6',  name:'Lampka zielona',              desc:'Lampka sygnalizacyjna - maszyna pracuje/gotowa', cat:'display'},
+    {addr:'Y1.7',  name:'Lampka zolta',                desc:'Lampka sygnalizacyjna - stan gotowosci/ostrzezenie', cat:'display'},
+    {addr:'Y2.0',  name:'Lampka czerwona',             desc:'Lampka sygnalizacyjna - alarm/blad', cat:'display'},
+    {addr:'Y2.1',  name:'Chlodzenie ON',               desc:'Wlaczenie chlodziaki wody', cat:'spindle'},
+    {addr:'Y2.2',  name:'Smarowanie',                  desc:'Wlaczenie pompy smarowania centralnego', cat:'alarm'},
+    {addr:'Y2.3',  name:'Cyl. przyssawki dol',         desc:'Elektrozawor ruchu cylindra przyssawki w dol', cat:'vacuum'},
+    {addr:'Y2.4',  name:'Cyl. przyssawki gora',        desc:'Elektrozawor ruchu cylindra przyssawki w gore', cat:'vacuum'},
+    {addr:'Y2.5',  name:'Cyl. pozycjonowania',         desc:'Elektrozawor cylindra pozycjonowania materialu', cat:'pneum'},
+    {addr:'Y2.6',  name:'Cyl. boczny',                 desc:'Elektrozawor cylindra bocznego wypychania', cat:'pneum'},
+    {addr:'Y2.7',  name:'Cyl. tylne podparcie',        desc:'Elektrozawor cylindra tylnego podparcia materialu', cat:'pneum'},
+    {addr:'Y3.0',  name:'Cyl. prowadzacy',             desc:'Elektrozawor cylindra prowadzacego material', cat:'pneum'},
+    {addr:'Y3.1',  name:'Cyl. podparcia',              desc:'Elektrozawor cylindra podparcia/wypychacza materialu', cat:'pneum'},
+    {addr:'Y3.2',  name:'Kodkreskowy cyl.',             desc:'Elektrozawor cylindra skanera kodow kreskowych', cat:'pneum'},
+    {addr:'Y3.3',  name:'Hamulec osi',                 desc:'Elektrozawor hamulca osi (zwykle Z)', cat:'axis'},
+  ]
+};
+
+// SYSTEM DEPENDENCIES - mapa zaleznosci systemowych CNC
+const SYS_DEPS = [
+  // BEZPIECZENSTWO
+  {group:'Lancuch bezpieczenstwa',icon:'\uD83D\uDED1',color:'var(--cat-safety)', items:[
+    {src:'E-STOP (przycisk)',tgt:'Wrzeciono',type:'blocks',desc:'Zatrzymanie awaryjne natychmiast blokuje obroty wrzeciona'},
+    {src:'E-STOP (przycisk)',tgt:'Ruch osi X/Y/Z',type:'blocks',desc:'Zatrzymanie awaryjne blokuje wszelki ruch osi'},
+    {src:'E-STOP (przycisk)',tgt:'Program CNC',type:'blocks',desc:'Zatrzymanie awaryjne zatrzymuje wykonywany program'},
+    {src:'E-STOP (przycisk)',tgt:'Pneumatyka',type:'blocks',desc:'Zatrzymanie awaryjne blokuje operacje pneumatyczne'},
+    {src:'Limity sprzetowe',tgt:'Ruch danej osi',type:'blocks',desc:'Przekroczenie zakresu blokuje ruch w danym kierunku, cofanie mozliwe'},
+    {src:'Limity programowe',tgt:'Ruch osi',type:'blocks',desc:'Softlimity aktywne po bazowaniu - chronia przed wyjazdem poza obszar'},
+    {src:'Ochrona antykolizyjna',tgt:'Ruch belek',type:'blocks',desc:'System zapobiega kolizji podwojnych belek/osi'},
+    {src:'Cisnienie powietrza',tgt:'Start programu',type:'requires',desc:'Program nie startuje przy zbyt niskim cisnieniu powietrza'},
+  ]},
+  // WRZECIONO
+  {group:'Uklad wrzeciona',icon:'\uD83D\uDD04',color:'var(--cat-spindle)', items:[
+    {src:'Narzedzie zacisniety',tgt:'Obroty wrzeciona',type:'requires',desc:'Wrzeciono nie ruszy bez potwierdzonego zacisku narzedzia'},
+    {src:'E-STOP nieaktywny',tgt:'Obroty wrzeciona',type:'requires',desc:'E-STOP musi byc nieaktywny aby wrzeciono moglo pracowac'},
+    {src:'Falownik',tgt:'Wrzeciono',type:'powers',desc:'Falownik steruje predkoscia obrotowa wrzeciona'},
+    {src:'Przeciazenie falownika',tgt:'Wrzeciono STOP',type:'activates',desc:'Przeciazenie falownika powoduje natychmiastowe zatrzymanie'},
+    {src:'Termiczny wrzeciona',tgt:'Alarm + STOP',type:'activates',desc:'Przegrzanie wrzeciona aktywuje alarm i zatrzymanie'},
+    {src:'Override wrzeciona',tgt:'Predkosc wrzeciona',type:'controls',desc:'Potencjometr/klawisze reguluja predkosc 0-150%'},
+  ]},
+  // NARZEDZIA
+  {group:'System narzedzi',icon:'\uD83D\uDD27',color:'var(--cat-tool)', items:[
+    {src:'Polecenie M6',tgt:'Sekwencja wymiany',type:'activates',desc:'M6 w programie uruchamia pelna sekwencje wymiany narzedzia'},
+    {src:'Wrzeciono STOP',tgt:'Wymiana narzedzia',type:'requires',desc:'Wrzeciono musi byc zatrzymane przed wymiana narzedzia'},
+    {src:'Z na wysokosci bezp.',tgt:'Wymiana narzedzia',type:'requires',desc:'Os Z musi byc w bezpiecznej pozycji (gora)'},
+    {src:'Oslona magazynu otwarta',tgt:'Magazyn wysuniety',type:'sequence',desc:'Najpierw otworz oslone, potem wysun magazyn'},
+    {src:'Magazyn w pozycji',tgt:'Zwolnienie narzedzia',type:'sequence',desc:'Magazyn musi byc w pozycji przed zwolnieniem chuck'},
+    {src:'Nowe narzedzie pobrane',tgt:'Zacisk + powrot',type:'sequence',desc:'Po pobraniu: zacisniecie, cofniecie magazynu, zamkniecie oslony'},
+    {src:'Czujnik narzedzia',tgt:'Status has-tool',type:'controls',desc:'Czujnik wykrywa obecnosc narzedzia w kazdej kieszeni'},
+    {src:'Wymiana zakonczona',tgt:'Auto-pomiar',type:'activates',desc:'Po wymianie automatyczne ustawianie dlugosci narzedzia'},
+  ]},
+  // PROZNIA
+  {group:'Uklad prozniowy',icon:'\uD83D\uDD2E',color:'var(--cat-vacuum)', items:[
+    {src:'Pompa prozniowa ON',tgt:'Zawory ssania',type:'powers',desc:'Pompa musi pracowac aby zawory ssania mialy proznie'},
+    {src:'Zawory strefowe',tgt:'Przyssawki',type:'controls',desc:'Poszczegolne strefy ssania mozna wlaczac niezaleznie'},
+    {src:'Material na stole',tgt:'Przyssanie aktywne',type:'activates',desc:'Po ulozeniu materialu przyssawki go trzymaja'},
+    {src:'Brak ruchu osi',tgt:'Pompa AUTO-OFF',type:'controls',desc:'Pompa wylacza sie automatycznie gdy osie stoja zbyt dlugo'},
+    {src:'Przeciazenie prozni',tgt:'Alarm',type:'activates',desc:'Przeciazenie pompy generuje alarm'},
+    {src:'Przyssanie OK',tgt:'Program START',type:'requires',desc:'Program startuje dopiero gdy material jest poprawnie przyssany'},
+  ]},
+  // PNEUMATYKA
+  {group:'Uklad pneumatyczny',icon:'\uD83D\uDCA8',color:'var(--cat-pneum)', items:[
+    {src:'Sprezarka',tgt:'Cisnienie w ukladzie',type:'powers',desc:'Sprezarka dostarcza sprezonne powietrze 6-8 bar'},
+    {src:'Presostat',tgt:'Blokada przy niskim cisn.',type:'controls',desc:'Zbyt niskie cisnienie blokuje operacje pneumatyczne'},
+    {src:'Cyl. pozycjonowania',tgt:'Ustawienie materialu',type:'controls',desc:'Cylinder dosuwa material do zderzakow pozycjonujacych'},
+    {src:'Cyl. boczny',tgt:'Dosuw boczny',type:'controls',desc:'Cylinder boczny prostuje material (side push)'},
+    {src:'Cyl. tylny',tgt:'Podparcie tylne',type:'controls',desc:'Cylinder tylny podpiera material od tylu'},
+    {src:'Nadmuch prowadnic',tgt:'Czystosc prowadnic',type:'controls',desc:'Sprezony nadmuch chroni prowadnice przed zanieczyszczeniami'},
+    {src:'Nadmuch obrobki',tgt:'Odpylanie/chlodzenie',type:'controls',desc:'Nadmuch w strefie ciecia odsuwa wiory i pyl'},
+  ]},
+  // LADOWANIE
+  {group:'Ladowanie / rozladunek',icon:'\uD83D\uDCE6',color:'var(--cat-io)', items:[
+    {src:'Przycisk 1-key',tgt:'Sekwencja ladowania',type:'activates',desc:'Jednym przyciskiem: pozycjonuj + przyssaj + start programu'},
+    {src:'Cyl. zaladunkowe',tgt:'Pozycja materialu',type:'sequence',desc:'1) Podaj material 2) Pozycjonuj 3) Przyssaj'},
+    {src:'Fotoelektryczne czuj.',tgt:'Detekcja materialu',type:'controls',desc:'Czujniki fotoelektryczne wykrywaja obecnosc materialu'},
+    {src:'Stan ladowania',tgt:'Blokada startu prog.',type:'controls',desc:'Program nie startuje jesli material nie jest poprawnie zaladowany'},
+    {src:'Zakonczenie obrobki',tgt:'Rozladowanie auto',type:'activates',desc:'Po obrobce automatyczny rozladunek gotowego elementu'},
+    {src:'Przycisk 1-key rozl.',tgt:'Sekwencja rozlad.',type:'activates',desc:'Jednym przyciskiem: zwolnij + wysun + cofnij cylindry'},
+  ]},
+  // PROGRAM
+  {group:'Sterowanie programem',icon:'\u25B6\uFE0F',color:'var(--cat-motion)', items:[
+    {src:'Bazowanie wykonane',tgt:'Start programu',type:'requires',desc:'Wszystkie osie musza byc zbazowane przed startem'},
+    {src:'Brak alarmow',tgt:'Start programu',type:'requires',desc:'Nie moze byc aktywnych alarmow przy starcie programu'},
+    {src:'Material przyssany',tgt:'Start programu',type:'requires',desc:'Material musi byc bezpiecznie przyssany'},
+    {src:'Feed Hold',tgt:'Pauza ruchu',type:'controls',desc:'Wstrzymanie posuwu - osie zwalniaja do zatrzymania, wrzeciono dalej'},
+    {src:'Override posuwu',tgt:'Predkosc posuwu',type:'controls',desc:'Potencjometr/klawisze reguluja % posuwu 0-150%'},
+    {src:'Pojedynczy blok',tgt:'Krokowe wykonanie',type:'controls',desc:'Tryb blok-po-bloku - zatrzymanie po kazdym bloku G-code'},
+    {src:'Program RESET',tgt:'Powrot do poczatku',type:'activates',desc:'Reset programu - powrot do pierwszej linii G-code'},
+  ]},
+  // SYGNALIZACJA
+  {group:'Sygnalizacja swietlna',icon:'\uD83D\uDCFA',color:'var(--cat-display)', items:[
+    {src:'Maszyna gotowa',tgt:'Lampka ZIELONA',type:'activates',desc:'Zielona = maszyna pracuje lub jest gotowa do pracy'},
+    {src:'Oczekiwanie/warning',tgt:'Lampka ZOLTA',type:'activates',desc:'Zolta = stan gotowosci, oczekiwanie na dzialanie operatora'},
+    {src:'Alarm aktywny',tgt:'Lampka CZERWONA',type:'activates',desc:'Czerwona = aktywny alarm, wymaga interwencji'},
+    {src:'E-STOP aktywne',tgt:'Lampka CZERWONA',type:'activates',desc:'Czerwona migajaca = E-STOP wcisniety'},
+  ]},
+];
+
+// STATE
+const state = { files: {}, currentFile: null, selectedSection: -1 };
+
+// FILE LOADING
+document.getElementById('ladFile').addEventListener('change', e => loadFiles(e.target.files));
+document.getElementById('ladFolder').addEventListener('change', e => {
+  const lads = Array.from(e.target.files).filter(f => f.name.toLowerCase().endsWith('.lad'));
+  if (lads.length) loadFiles(lads); else setStatus('Nie znaleziono plikow .lad');
+});
+const dz = document.getElementById('dropZone');
+dz.addEventListener('dragover', e => { e.preventDefault(); dz.classList.add('drag-over'); });
+dz.addEventListener('dragleave', () => dz.classList.remove('drag-over'));
+dz.addEventListener('drop', e => {
+  e.preventDefault(); dz.classList.remove('drag-over');
+  const files = Array.from(e.dataTransfer.files).filter(f => f.name.toLowerCase().endsWith('.lad'));
+  if (files.length) loadFiles(files);
+});
+
+async function loadFiles(fileList) {
+  for (const f of fileList) {
+    if (!f.name.toLowerCase().endsWith('.lad')) continue;
+    const buf = await f.arrayBuffer();
+    const bytes = new Uint8Array(buf);
+    const parsed = parseLadder(bytes, f.name);
+    state.files[f.name] = { bytes, parsed };
+  }
+  const names = Object.keys(state.files);
+  if (!names.length) return;
+  document.getElementById('welcomeScreen').style.display = 'none';
+  document.getElementById('sidePanel').style.display = '';
+  document.getElementById('contentPanel').style.display = '';
+  document.getElementById('btnExport').style.display = '';
+  document.getElementById('btnLabels').style.display = '';
+  document.getElementById('btnIoMap').style.display = '';
+  const sel = document.getElementById('fileSelect');
+  sel.innerHTML = names.map(n => '<option value="'+esc(n)+'">'+esc(n)+'</option>').join('');
+  const largest = names.reduce((a, b) => (state.files[a].bytes.length > state.files[b].bytes.length ? a : b));
+  sel.value = largest;
+  selectFile(largest);
+  setStatus('Wczytano ' + names.length + ' plik(ow): ' + names.join(', '));
+  document.getElementById('fileInfo').textContent = names.map(n => n+' ('+fmtSize(state.files[n].bytes.length)+')').join(' | ');
+}
+function selectFile(name) {
+  state.currentFile = name; state.selectedSection = -1;
+  populateCatFilter(); renderSections(); renderAllTabs();
+}
+function populateCatFilter() {
+  const file = state.files[state.currentFile]; if (!file) return;
+  const cats = new Set(file.parsed.sections.map(s => s.category.id));
+  const sel = document.getElementById('catFilter');
+  sel.innerHTML = '<option value="">Wszystkie</option>' +
+    CATEGORIES.filter(c => cats.has(c.id)).map(c => '<option value="'+c.id+'">'+c.icon+' '+c.name+'</option>').join('');
+}
+
+// PARSER
+function parseLadder(bytes, filename) {
+  const result = { filename, size: bytes.length, header: parseHeader(bytes), sections: [], labels: [], registers: new Set(), instructionStats: {}, sectionRegisters: {} };
+  result.labels = extractLabels(bytes);
+  result.sections = buildSections(bytes, result.labels);
+  result.registers = extractRegisters(bytes);
+  result.sectionRegisters = buildSectionRegisters(bytes, result.sections);
+  analyzeInstructions(bytes, result);
+  for (const sec of result.sections) { sec.translation = translate(sec.label); sec.category = categorize(sec.label); }
+  return result;
+}
+function parseHeader(bytes) {
+  const hdr = { magic: (bytes[2] << 8) | bytes[3], machineType:'', description:'', version:'', date:'', registerRanges:[], headerEnd:0 };
+  if (bytes[6] >= 0x20 && bytes[6] <= 0x7E) hdr.machineType += String.fromCharCode(bytes[6]);
+  if (bytes[7] >= 0x20 && bytes[7] <= 0x7E) hdr.machineType += String.fromCharCode(bytes[7]);
+  for (let i = 8; i < Math.min(bytes.length, 2000); i++) {
+    if (bytes[i] === 0x0D && i > 0 && bytes[i-1] === 0 && bytes[i-2] === 0) { hdr.headerEnd = i - 2; break; }
+  }
+  if (!hdr.headerEnd) hdr.headerEnd = Math.min(bytes.length, 512);
+  const headerText = decodeBig5Pairs(bytes, 8, hdr.headerEnd);
+  hdr.description = headerText;
+  const vm = headerText.match(/V(\d+[\.\d]*)/); if (vm) hdr.version = vm[0];
+  const dm = headerText.match(/(\d{4}\/\d{1,2}\/\d{1,2})/); if (dm) hdr.date = dm[1];
+  const rm = headerText.match(/R\d+-R\d+/g); if (rm) hdr.registerRanges = rm;
+  return hdr;
+}
+function decodeBig5Pairs(bytes, start, end) {
+  let text = '';
+  const dec = new TextDecoder('big5', { fatal: false });
+  for (let i = start; i < end - 3; i += 4) {
+    if (bytes[i] === 0 && bytes[i+1] === 0) {
+      const hi = bytes[i+2], lo = bytes[i+3];
+      if (hi === 0 && lo === 0) { text += ' '; continue; }
+      if (hi === 0x0D) continue;
+      if (hi >= 0xA1) text += dec.decode(new Uint8Array([hi, lo]));
+      else if (hi >= 0x20 && hi <= 0x7E && lo >= 0x20 && lo <= 0x7E) text += String.fromCharCode(hi) + String.fromCharCode(lo);
+      else if (hi >= 0x20 && hi <= 0x7E) text += String.fromCharCode(hi);
+    }
+  }
+  return text;
+}
+function extractLabels(bytes) {
+  const labels = [];
+  const dec = new TextDecoder('big5', { fatal: false });
+  let i = 0;
+  while (i < bytes.length - 3) {
+    if (bytes[i] === 0 && bytes[i+1] === 0 && bytes[i+2] >= 0xA1) {
+      const start = i; let text = '';
+      while (i < bytes.length - 3 && bytes[i] === 0 && bytes[i+1] === 0 && bytes[i+2] >= 0xA1) {
+        text += dec.decode(new Uint8Array([bytes[i+2], bytes[i+3]])); i += 4;
+      }
+      if (text.length >= 2) labels.push({ offset: start, text, byteLen: i - start });
+    } else { i++; }
+  }
+  return labels;
+}
+function buildSections(bytes, labels) {
+  const sections = [];
+  const nopRuns = [];
+  let i = 0;
+  while (i < bytes.length) {
+    if (bytes[i] === 0x0D && i > 0 && bytes[i-1] === 0) {
+      const start = i - 1;
+      while (i < bytes.length && (bytes[i] === 0x0D || bytes[i] === 0)) i++;
+      nopRuns.push({ start, end: i, len: i - start });
+    } else { i++; }
+  }
+  for (let li = 0; li < labels.length; li++) {
+    const label = labels[li];
+    const nextLabel = labels[li + 1];
+    const sectionEnd = nextLabel ? nextLabel.offset : bytes.length;
+    let secStart = label.offset;
+    for (let n = nopRuns.length - 1; n >= 0; n--) {
+      if (nopRuns[n].end <= label.offset && nopRuns[n].end >= label.offset - 20) { secStart = nopRuns[n].start; break; }
+    }
+    sections.push({ index: li, label: label.text, labelOffset: label.offset, start: secStart, end: sectionEnd, size: sectionEnd - secStart, instrBytes: Math.max(0, sectionEnd - label.offset - label.byteLen), translation: '', category: null });
+  }
+  return sections;
+}
+function extractRegisters(bytes) {
+  let ascii = '';
+  for (let i = 0; i < bytes.length; i++) ascii += (bytes[i] >= 0x20 && bytes[i] <= 0x7E) ? String.fromCharCode(bytes[i]) : '\0';
+  const regs = new Set(); let m; const rx = /[RKDCTM]\d{1,5}/g;
+  while ((m = rx.exec(ascii)) !== null) regs.add(m[0]);
+  return regs;
+}
+function analyzeInstructions(bytes, result) {
+  const stats = {};
+  for (let i = 2; i < bytes.length - 4; i++) {
+    if (bytes[i-2]===0 && bytes[i-1]===0x0D && bytes[i]===0 && bytes[i+1]===0 && bytes[i+2]!==0 && bytes[i+2]!==0x0D) {
+      const k = '0x'+bytes[i+2].toString(16).toUpperCase().padStart(2,'0'); stats[k] = (stats[k]||0)+1;
+    }
+  }
+  let oe=0,ld=0,out=0;
+  for (let i=1;i<bytes.length;i++){if(bytes[i]===0x0E&&bytes[i-1]===0)oe++;}
+  for (let i=0;i<bytes.length;i++){if(bytes[i]===0x70)ld++;if(bytes[i]===0x6E)out++;}
+  stats['0x0E_total']=oe; stats['0x70_total']=ld; stats['0x6E_total']=out;
+  result.instructionStats = stats;
+}
+// TABS
+function switchTab(tab) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.tab === tab));
+  document.querySelectorAll('.tab-content').forEach(c => c.classList.toggle('active', c.id === 'tab-' + tab));
+}
+
+// SIDEBAR RENDER
+function renderSections() {
+  const file = state.files[state.currentFile]; if (!file) return;
+  const p = file.parsed;
+  document.getElementById('secCount').textContent = p.sections.length;
+  const list = document.getElementById('secList');
+  list.innerHTML = p.sections.map((s, i) => {
+    const note = getNote(p.filename, i);
+    const regs = p.sectionRegisters[i] ? [...p.sectionRegisters[i]].slice(0, 6) : [];
+    return '<div class="sec-item'+(state.selectedSection===i?' active':'')+'" style="border-left-color:'+cat.color+'" onclick="selectSection('+i+')" data-cat="'+cat.id+'">'+
+      '<div class="sec-idx">'+(i+1)+'</div>'+
+      '<div class="sec-body">'+
+        '<div class="sec-name-cn">'+esc(s.label)+'</div>'+
+        (pl ? '<div class="sec-name-pl">'+esc(pl)+'</div>' : '')+
+        '<div class="sec-meta">'+
+          '<span class="cat-badge" style="background:'+cat.color+'">'+cat.icon+' '+cat.name+'</span>'+
+          '<span style="font-family:monospace;color:var(--cy);font-size:8px">0x'+s.labelOffset.toString(16).toUpperCase()+'</span>'+
+          '<span style="color:var(--or);font-size:8px">'+s.size+'B</span>'+
+          (regs.length?'<span style="color:var(--gn);font-size:8px">'+regs.length+'+ reg</span>':'')+
+        '</div>'+
+        (note ? '<div style="font-size:9px;color:var(--yl);margin-top:2px;opacity:.8" title="Notatka">&#x1F4DD; '+esc(note.substring(0,40))+(note.length>40?'...':'')+'</div>' : '')+
+        (state.selectedSection===i?'<div class="note-area" style="margin-top:4px" onclick="event.stopPropagation()"><textarea placeholder="Dodaj notatke do tej sekcji..." onblur="saveNote('+i+',this.value)" onkeydown="if(event.ctrlKey&&event.key===\'Enter\'){saveNote('+i+',this.value);event.preventDefault()}">'+(note?esc(note):'')+'</textarea></div>':'')+
+      'n style="color:var(--or);font-size:8px">'+s.size+'B</span>'+
+        '</div></div></div>';
+  }).join('');
+}
+function filterSections() {
+  const q = document.getElementById('secFilter').value.toLowerCase();
+  const cat = document.getElementById('catFilter').value;
+  document.querySelectorAll('.sec-item').forEach(el => {
+    const text = el.textContent.toLowerCase();
+    const elCat = el.getAttribute('data-cat');
+    el.style.display = ((!q || text.includes(q)) && (!cat || elCat === cat)) ? '' : 'none';
+  });
+}
+function selectSection(idx) {
+  state.selectedSection = idx;
+  renderSections();
+  const file = state.files[state.currentFile]; if (!file) return;
+  const sec = file.parsed.sections[idx];
+  if (sec) { switchTab('hex'); renderHex(file.bytes, sec.start, Math.min(sec.end, sec.start + 1024)); }
+}
+function renderAllTabs() {
+  renderVisualMap(); renderOverview(); renderSectionsTab(); renderFlow();
+  renderLadder(); renderRegistersTab();
+  renderHex(state.files[state.currentFile]?.bytes, 0, 512);
+  renderCompare(); renderIOTab(); renderSystemTab();
+  renderXrefTab(); renderHelpTab();
+}
+
+// VISUAL MAP TAB
+function renderVisualMap() {
+  const file = state.files[state.currentFile]; if (!file) return;
+  const p = file.parsed; const el = document.getElementById('tab-visual');
+  const groups = {};
+  for (const sec of p.sections) {
+    const cid = sec.category.id;
+    if (!groups[cid]) groups[cid] = { cat: sec.category, sections: [] };
+    groups[cid].sections.push(sec);
+  }
+  const groupList = Object.values(groups).sort((a,b) => b.sections.length - a.sections.length);
+  const totalSec = p.sections.length;
+  const translatedCount = p.sections.filter(s => s.translation).length;
+
+  el.innerHTML = '<h3 style="color:var(--ac);margin-bottom:8px">Wizualna mapa programu PLC: '+esc(p.filename)+'</h3>'+
+    '<div class="sum-cards">'+
+      '<div class="sum-card"><div class="sc-num" style="color:var(--ac)">'+totalSec+'</div><div class="sc-lbl">Sekcji</div></div>'+
+      '<div class="sum-card"><div class="sc-num" style="color:var(--yl)">'+translatedCount+'</div><div class="sc-lbl">Przetlumaczono</div></div>'+
+      '<div class="sum-card"><div class="sc-num" style="color:var(--gn)">'+groupList.length+'</div><div class="sc-lbl">Kategorii</div></div>'+
+      '<div class="sum-card"><div class="sc-num" style="color:var(--cy)">'+p.registers.size+'</div><div class="sc-lbl">Rejestrow</div></div>'+
+      '<div class="sum-card"><div class="sc-num" style="color:var(--or)">'+fmtSize(p.size)+'</div><div class="sc-lbl">Rozmiar</div></div>'+
+      '<div class="sum-card"><div class="sc-num" style="color:var(--yl)">'+(esc(p.header.machineType)||'?')+'</div><div class="sc-lbl">Typ maszyny</div></div>'+
+    '</div>'+
+    '<h4 style="color:var(--ac);font-size:11px;margin:12px 0 4px">Mapa rozmiaru sekcji <span style="color:var(--td);font-weight:400">(wieksze bloki = wiecej danych binarnych)</span></h4>'+
+    '<div class="treemap" id="treemapContainer"></div>'+
+    '<h4 style="color:var(--ac);font-size:11px;margin:16px 0 8px">Sekcje wg kategorii</h4>'+
+    groupList.map(g => {
+      return '<div style="margin-bottom:12px">'+
+        '<div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">'+
+          '<span class="cat-badge" style="background:'+g.cat.color+';font-size:10px;padding:2px 8px">'+g.cat.icon+' '+g.cat.name+'</span>'+
+          '<span style="color:var(--td);font-size:10px">'+g.sections.length+' sekcji</span>'+
+        '</div>'+
+        '<div style="display:flex;flex-wrap:wrap;gap:4px">'+
+          g.sections.map(s => {
+            return '<div onclick="selectSection('+s.index+');switchTab(\'hex\')" style="cursor:pointer;padding:4px 8px;border:1px solid '+g.cat.color+'33;border-radius:4px;background:'+g.cat.color+'11;font-size:10px;transition:all .12s;max-width:300px">'+
+              '<div style="color:var(--tx);font-weight:600">'+esc(s.label)+'</div>'+
+              (s.translation ? '<div style="color:var(--yl);font-size:9px;font-style:italic">'+esc(s.translation)+'</div>' : '')+
+            '</div>';
+          }).join('')+
+        '</div></div>';
+    }).join('');
+
+  renderTreemap(p.sections);
+}
+function renderTreemap(sections) {
+  const container = document.getElementById('treemapContainer');
+  if (!container) return;
+  const totalSize = sections.reduce((a, s) => a + Math.max(s.size, 50), 0);
+  const cw = container.offsetWidth || 800;
+  container.innerHTML = sections.map((s, i) => {
+    const pct = Math.max(s.size, 50) / totalSize;
+    const w = Math.max(20, Math.floor(pct * cw * 3));
+    const h = Math.max(18, Math.min(40, Math.floor(pct * 1000)));
+    return '<div class="treemap-cell" style="width:'+w+'px;height:'+h+'px;background:'+s.category.color+'88" onclick="selectSection('+i+');switchTab(\'hex\')" title="'+esc(s.label)+(s.translation?'\n-> '+s.translation:'')+'"><span>'+(w > 40 ? esc(s.label.substring(0,6)) : '')+'</span></div>';
+  }).join('');
+}
+// OVERVIEW TAB
+function renderOverview() {
+  const file = state.files[state.currentFile]; if (!file) return;
+  const p = file.parsed, bytes = file.bytes, h = p.header;
+  let nopBytes=0, textBytes=0;
+  for (let i=0;i<bytes.length;i++) if(bytes[i]===0x0D) nopBytes++;
+  for (const l of p.labels) textBytes+=l.byteLen;
+  const instrBytes=bytes.length-nopBytes-textBytes-h.headerEnd;
+  const pcts={hdr:(h.headerEnd/bytes.length*100).toFixed(1),nop:(nopBytes/bytes.length*100).toFixed(1),txt:(textBytes/bytes.length*100).toFixed(1),instr:(instrBytes/bytes.length*100).toFixed(1)};
+  const catCounts = {};
+  for (const s of p.sections) { catCounts[s.category.id] = (catCounts[s.category.id]||0)+1; }
+  document.getElementById('tab-overview').innerHTML =
+    '<h3 style="color:var(--ac);margin-bottom:12px">Przeglad: '+esc(p.filename)+'</h3>'+
+    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px">'+
+      '<div style="border:1px solid var(--bd);border-radius:6px;padding:12px;background:var(--sf)">'+
+        '<h4 style="color:var(--ac);font-size:11px;margin-bottom:8px">Naglowek</h4>'+
+        '<div class="info-grid">'+
+          '<span class="info-label">Plik:</span><span class="info-val">'+esc(p.filename)+'</span>'+
+          '<span class="info-label">Rozmiar:</span><span class="info-val">'+fmtSize(p.size)+' ('+p.size.toLocaleString()+' B)</span>'+
+          '<span class="info-label">Magic:</span><span class="info-val">0x'+h.magic.toString(16).toUpperCase().padStart(4,'0')+'</span>'+
+          '<span class="info-label">Typ maszyny:</span><span class="info-val" style="color:var(--yl);font-size:14px;font-weight:700">'+(esc(h.machineType)||'-')+'</span>'+
+          '<span class="info-label">Wersja:</span><span class="info-val">'+(esc(h.version)||'-')+'</span>'+
+          '<span class="info-label">Data:</span><span class="info-val">'+(esc(h.date)||'-')+'</span>'+
+          '<span class="info-label">Zakresy R:</span><span class="info-val">'+(h.registerRanges.map(r=>esc(r)).join(', ')||'-')+'</span>'+
+        '</div>'+
+        (h.description?'<div style="margin-top:6px;padding:6px;background:var(--pb);border-radius:4px;font-size:10px;color:var(--td);word-break:break-all">'+esc(h.description)+'</div>':'')+
+      '</div>'+
+      '<div style="border:1px solid var(--bd);border-radius:6px;padding:12px;background:var(--sf)">'+
+        '<h4 style="color:var(--ac);font-size:11px;margin-bottom:8px">Statystyki</h4>'+
+        '<div class="info-grid">'+
+          '<span class="info-label">Sekcji:</span><span class="info-val" style="color:var(--gn);font-size:16px;font-weight:700">'+p.sections.length+'</span>'+
+          '<span class="info-label">Etykiet:</span><span class="info-val">'+p.labels.length+'</span>'+
+          '<span class="info-label">Rejestrow:</span><span class="info-val">'+p.registers.size+'</span>'+
+        '</div>'+
+        '<h4 style="color:var(--ac);font-size:11px;margin:10px 0 4px">Rozklad bajtow</h4>'+
+        '<div class="ov-bar"><div style="width:'+pcts.hdr+'%;background:var(--ac)"></div><div style="width:'+pcts.txt+'%;background:var(--yl)"></div><div style="width:'+pcts.instr+'%;background:var(--gn)"></div><div style="width:'+pcts.nop+'%;background:var(--td)"></div></div>'+
+        '<div class="legend"><div class="legend-item"><div class="legend-dot" style="background:var(--ac)"></div>Naglowek ('+pcts.hdr+'%)</div><div class="legend-item"><div class="legend-dot" style="background:var(--yl)"></div>Tekst ('+pcts.txt+'%)</div><div class="legend-item"><div class="legend-dot" style="background:var(--gn)"></div>Instrukcje ('+pcts.instr+'%)</div><div class="legend-item"><div class="legend-dot" style="background:var(--td)"></div>NOP ('+pcts.nop+'%)</div></div>'+
+        '<h4 style="color:var(--ac);font-size:11px;margin:10px 0 4px">Kategorie sekcji</h4>'+
+        '<div style="display:flex;flex-wrap:wrap;gap:4px">'+CATEGORIES.filter(c=>catCounts[c.id]).map(c=>'<div style="display:flex;align-items:center;gap:4px;padding:2px 8px;border-radius:4px;background:'+c.color+'22;border:1px solid '+c.color+'44;font-size:10px"><span>'+c.icon+'</span><span style="color:'+c.color+'">'+c.name+'</span><span style="font-weight:700">'+catCounts[c.id]+'</span></div>').join('')+'</div>'+
+      '</div></div>';
+}
+
+// SECTIONS TAB
+function renderSectionsTab() {
+  const file = state.files[state.currentFile]; if (!file) return;
+  const p = file.parsed;
+  document.getElementById('tab-sections').innerHTML =
+    '<h3 style="color:var(--ac);margin-bottom:8px">Sekcje programu ('+p.sections.length+') - z tlumaczeniami</h3>'+
+    '<div style="display:flex;gap:8px;margin-bottom:8px;align-items:center">'+
+      '<input id="secSearchTab" placeholder="Szukaj (chinski/polski)..." oninput="filterSectionsTab()" style="background:var(--pb);border:1px solid var(--bd);color:var(--tx);padding:4px 8px;border-radius:4px;font-size:11px;width:260px">'+
+      '<button class="top-btn" onclick="copySections()">Kopiuj</button>'+
+    '</div>'+
+    '<table style="width:100%;border-collapse:collapse;font-size:11px" id="secTableTab">'+
+      '<thead><tr style="background:var(--sf2)">'+
+        '<th style="padding:4px 8px;text-align:right;color:var(--ac);font-size:10px;width:30px">#</th>'+
+        '<th style="padding:4px 8px;text-align:left;color:var(--ac);font-size:10px;width:20px">Kat.</th>'+
+        '<th style="padding:4px 8px;text-align:left;color:var(--ac);font-size:10px">Etykieta (chinski)</th>'+
+        '<th style="padding:4px 8px;text-align:left;color:var(--ac);font-size:10px">Tlumaczenie (polski)</th>'+
+        '<th style="padding:4px 8px;text-align:right;color:var(--ac);font-size:10px;width:70px">Offset</th>'+
+        '<th style="padding:4px 8px;text-align:right;color:var(--ac);font-size:10px;width:60px">Rozmiar</th>'+
+      '</tr></thead><tbody>'+
+      p.sections.map((s, i) =>
+        '<tr class="sec-row" style="cursor:pointer;border-bottom:1px solid rgba(45,45,80,.3);border-left:3px solid '+s.category.color+'" onclick="selectSection('+i+')">'+
+          '<td style="padding:3px 8px;text-align:right;color:var(--td);font-size:10px">'+(i+1)+'</td>'+
+          '<td style="padding:3px 8px;font-size:12px" title="'+esc(s.category.name)+'">'+s.category.icon+'</td>'+
+          '<td style="padding:3px 8px;font-weight:600">'+esc(s.label)+'</td>'+
+          '<td style="padding:3px 8px;color:var(--yl);font-style:italic">'+(esc(s.translation)||'<span style="color:var(--td)">-</span>')+'</td>'+
+          '<td style="padding:3px 8px;text-align:right;font-family:monospace;color:var(--cy);font-size:10px">0x'+s.labelOffset.toString(16).toUpperCase()+'</td>'+
+          '<td style="padding:3px 8px;text-align:right;font-family:monospace;color:var(--or);font-size:10px">'+s.size+'B</td>'+
+        '</tr>'
+      ).join('')+'</tbody></table>';
+}
+function filterSectionsTab() {
+  const q = document.getElementById('secSearchTab')?.value.toLowerCase()||'';
+  document.querySelectorAll('#secTableTab .sec-row').forEach(r=>{r.style.display=r.textContent.toLowerCase().includes(q)?'':'none'});
+}
+function copySections() {
+  const file = state.files[state.currentFile]; if (!file) return;
+  const lines = ['#\tKategoria\tChinski\tPolski\tOffset\tRozmiar'];
+  file.parsed.sections.forEach((s, i) => { lines.push((i+1)+'\t'+s.category.name+'\t'+s.label+'\t'+(s.translation||'')+'\t0x'+s.labelOffset.toString(16).toUpperCase()+'\t'+s.size+'B'); });
+  navigator.clipboard.writeText(lines.join('\n'));
+  setStatus('Skopiowano tabele sekcji do schowka');
+}
+// FLOW/STRUCTURE TAB
+function renderFlow() {
+  const file = state.files[state.currentFile]; if (!file) return;
+  const p = file.parsed;
+  const groups = {};
+  for (const sec of p.sections) {
+    const cid = sec.category.id;
+    if (!groups[cid]) groups[cid] = { cat: sec.category, sections: [] };
+    groups[cid].sections.push(sec);
+  }
+  const groupList = Object.values(groups).sort((a,b) => b.sections.length - a.sections.length);
+  document.getElementById('tab-flow').innerHTML =
+    '<h3 style="color:var(--ac);margin-bottom:8px">Struktura programu PLC</h3>'+
+    '<p style="font-size:10px;color:var(--td);margin-bottom:12px">Sekcje pogrupowane wg funkcji. Kliknij blok aby zobaczyc szczegoly w hex.</p>'+
+    groupList.map(g =>
+      '<div class="flow-group" style="border-color:'+g.cat.color+'44">'+
+        '<div class="flow-group-hdr" style="background:'+g.cat.color+'33;color:'+g.cat.color+'">'+g.cat.icon+' '+g.cat.name+' ('+g.sections.length+')</div>'+
+        '<div class="flow-group-body">'+
+          g.sections.map(s =>
+            '<div class="flow-node" style="border-color:'+g.cat.color+'66" onclick="selectSection('+s.index+');switchTab(\'hex\')">'+
+              '<div class="fn-idx">#'+(s.index+1)+'</div>'+
+              '<div class="fn-cn">'+esc(s.label)+'</div>'+
+              (s.translation?'<div class="fn-pl">'+esc(s.translation)+'</div>':'')+
+              '<div style="font-size:8px;color:var(--td);margin-top:2px">'+s.size+'B @ 0x'+s.labelOffset.toString(16).toUpperCase()+'</div>'+
+            '</div>'
+          ).join('<span style="color:var(--bd);font-size:14px;display:flex;align-items:center;padding:0 2px">&rarr;</span>')+
+        '</div></div>'
+    ).join('');
+}
+
+// LADDER DIAGRAM TAB
+function renderLadder() {
+  const file = state.files[state.currentFile]; if (!file) return;
+  const p = file.parsed, bytes = file.bytes;
+  const rungs = p.sections.map(sec => decodeLadderRung(bytes, sec));
+  document.getElementById('tab-ladder').innerHTML =
+    '<h3 style="color:var(--ac);margin-bottom:8px">Diagram drabinkowy - proba dekodowania</h3>'+
+    '<p style="font-size:10px;color:var(--td);margin-bottom:6px">Format binarny .lad nie jest oficjalnie udokumentowany. Etykiety i struktura sekcji sa pewne. Instrukcje to heurystyczna proba dekodowania.</p>'+
+    '<div style="display:flex;gap:8px;margin-bottom:12px;align-items:center">'+
+      '<input id="ladSearch" placeholder="Szukaj sekcji..." oninput="filterLadder()" style="background:var(--pb);border:1px solid var(--bd);color:var(--tx);padding:4px 8px;border-radius:4px;font-size:11px;width:200px">'+
+      '<label style="font-size:10px;color:var(--td)"><input type="checkbox" id="ladHideEmpty" onchange="filterLadder()"> Ukryj puste</label>'+
+    '</div>'+
+    '<div style="max-width:1000px" id="ladderContainer">'+
+      rungs.map((r, i) => renderLadderRung(r, i, p.sections[i])).join('')+
+    '</div>';
+}
+function filterLadder() {
+  const q = (document.getElementById('ladSearch')?.value||'').toLowerCase();
+  const hideEmpty = document.getElementById('ladHideEmpty')?.checked;
+  document.querySelectorAll('.ladder-rung').forEach(el => {
+    const text = el.textContent.toLowerCase();
+    const isEmpty = el.classList.contains('lad-empty');
+    el.style.display = ((!q || text.includes(q)) && (!hideEmpty || !isEmpty)) ? '' : 'none';
+  });
+}
+function decodeLadderRung(bytes, section) {
+  const rung = { label:section.label, translation:section.translation, category:section.category, instructions:[], rawOpcodes:[] };
+  const instrStart = section.labelOffset + (section.label.length * 4 + 4);
+  const instrEnd = section.end;
+  for (let i = Math.max(instrStart, section.labelOffset); i < instrEnd && i < bytes.length - 2; i++) {
+    if (bytes[i] === 0x0D || bytes[i] === 0) continue;
+    const b=bytes[i], b1=bytes[i+1]||0, b2=bytes[i+2]||0;
+    if (b===0x70&&b1<0x80){rung.instructions.push({op:'LD',addr:fmtAddr(b1,b2),off:i});i+=2;}
+    else if(b===0x6E&&b1<0x80){rung.instructions.push({op:'OUT',addr:fmtAddr(b1,b2),off:i});i+=2;}
+    else if(b===0x0E){rung.instructions.push({op:'OR',addr:fmtAddr(b1,b2),off:i});i+=2;}
+    else if(b===0xC8){rung.instructions.push({op:'CALL',addr:fmtAddr(b1,b2),off:i});i+=1;}
+    else if(b===0xC6){rung.instructions.push({op:'MOV',addr:fmtAddr(b1,b2),off:i});i+=2;}
+    else if(b===0xC5){rung.instructions.push({op:'END',addr:'',off:i});}
+    else if(b===0x05){rung.instructions.push({op:'SEC',addr:fmtAddr(b1,b2),off:i});i+=2;}
+    else if(b===0x12||b===0x14){rung.instructions.push({op:b===0x12?'SET':'RST',addr:fmtAddr(b1,b2),off:i});i+=2;}
+    else if(b>=0x20&&b<0xA1){rung.rawOpcodes.push(b);}
+  }
+  return rung;
+}
+function fmtAddr(b1,b2){return b1===0&&b2===0?'':''+b1.toString(16).toUpperCase().padStart(2,'0')+'.'+b2.toString(16).toUpperCase().padStart(2,'0');}
+function renderLadderRung(rung, index, section) {
+  const instrs = rung.instructions;
+  const isEmpty = instrs.length === 0;
+  const cat = rung.category;
+  let body = '';
+  if (isEmpty) {
+    body = '<div class="ladder-unresolved">Brak rozpoznanych instrukcji w tym bloku</div>';
+  } else {
+    const ops = {LD:{cls:'ladder-contact',fmt:function(s){return '\u2014[ '+s+' ]\u2014'}}, OUT:{cls:'ladder-coil',fmt:function(s){return '\u2014( '+s+' )\u2014'}},
+      SET:{cls:'ladder-coil',fmt:function(s){return '\u2014(S '+s+')\u2014'}}, RST:{cls:'ladder-coil',fmt:function(s){return '\u2014(R '+s+')\u2014'}},
+      OR:{cls:'ladder-func',fmt:function(s){return '[OR '+s+']'}}, CALL:{cls:'ladder-func',fmt:function(s){return '[CALL '+s+']'}},
+      MOV:{cls:'ladder-func',fmt:function(s){return '[MOV '+s+']'}}, END:{cls:'ladder-func',fmt:function(s){return '[END]'}},
+      SEC:{cls:'ladder-func',fmt:function(s){return '[SEC '+s+']'}}};
+    body = '<div class="ladder-rail"><span class="lw">|\u2014</span>';
+    for (const instr of instrs) {
+      const def = ops[instr.op] || {cls:'ladder-func',fmt:function(s){return '['+instr.op+' '+s+']'}};
+      body += '<span class="'+def.cls+'" title="'+instr.op+' '+instr.addr+' @ 0x'+instr.off.toString(16)+'">'+def.fmt(instr.addr)+'</span><span class="lw">\u2014</span>';
+    }
+    body += '<span class="lw">|</span></div>';
+    body += '<div style="font-size:9px;color:var(--td);margin-top:2px">'+instrs.length+' instrukcji rozpoznanych</div>';
+  }
+  return '<div class="ladder-rung'+(isEmpty?' lad-empty':'')+'" style="border-left:3px solid '+cat.color+'">'+
+    '<div class="ladder-rung-hdr">'+
+      '<span class="ladder-rung-num" style="color:'+cat.color+'">#'+(index+1)+'</span>'+
+      '<span style="font-size:12px">'+cat.icon+'</span>'+
+      '<span class="ladder-rung-lbl">'+esc(rung.label)+'</span>'+
+      (rung.translation?'<span class="ladder-rung-pl">&rarr; '+esc(rung.translation)+'</span>':'')+
+      '<span style="margin-left:auto;font-size:9px;color:var(--td)">'+section.size+'B</span>'+
+    '</div>'+
+    '<div class="ladder-rung-body">'+body+'</div></div>';
+}
+// REGISTERS TAB
+function renderRegistersTab() {
+  const file = state.files[state.currentFile]; if (!file) return;
+  const p = file.parsed;
+  const regs = [...p.registers].sort((a,b)=>{if(a[0]!==b[0])return a[0].localeCompare(b[0]);return parseInt(a.slice(1))-parseInt(b.slice(1));});
+  const groups = {};
+  for (const r of regs) { const t=r[0]; if(!groups[t])groups[t]=[]; groups[t].push(r); }
+  const regTypeNames = {R:'R - Relay (przekaznik)',K:'K - Keep (pamiec)',D:'D - Data (dane)',T:'T - Timer (timer)',C:'C - Counter (licznik)',M:'M - Marker'};
+  document.getElementById('tab-registers').innerHTML =
+    '<h3 style="color:var(--ac);margin-bottom:8px">Rejestry PLC ('+regs.length+')</h3>'+
+    '<p style="font-size:10px;color:var(--td);margin-bottom:12px">Zakresy z naglowka: '+(p.header.registerRanges.map(r=>'<b style="color:var(--gn)">'+esc(r)+'</b>').join(', ')||'brak')+'</p>'+
+    Object.entries(groups).map(function(entry){
+      var t=entry[0], rs=entry[1];
+      return '<div style="margin-bottom:14px;border:1px solid var(--bd);border-radius:6px;padding:10px;background:var(--sf)">'+
+        '<h4 style="font-size:11px;margin-bottom:6px"><span class="reg-chip '+t+'" style="font-size:12px;font-weight:700">'+t+'</span> '+(regTypeNames[t]||t)+' - '+rs.length+' rejestrow</h4>'+
+        '<div style="display:flex;flex-wrap:wrap;gap:2px">'+rs.map(function(r){return '<span class="reg-chip '+t+'">'+r+'</span>'}).join('')+'</div></div>';
+    }).join('');
+}
+
+// HEX TAB
+function renderHex(bytes, start, end) {
+  if (!bytes) return;
+  start = Math.max(0, start||0); end = Math.min(bytes.length, end||512);
+  const el = document.getElementById('tab-hex');
+  const file = state.files[state.currentFile];
+  let secInfo = '';
+  if (file && state.selectedSection >= 0) {
+    const sec = file.parsed.sections[state.selectedSection];
+    if (sec) secInfo = '<span style="color:var(--yl);font-weight:600">'+sec.category.icon+' '+esc(sec.label)+'</span>'+(sec.translation?'<span style="color:var(--yl);opacity:.7;font-style:italic"> &rarr; '+esc(sec.translation)+'</span>':'');
+  }
+  const nav = '<div style="padding:6px 12px;background:var(--sf);border-bottom:1px solid var(--bd);display:flex;gap:8px;align-items:center;font-size:11px;flex-wrap:wrap">'+
+    (secInfo?secInfo+'<span style="color:var(--bd)">|</span>':'')+
+    '<span style="color:var(--td)">Offset:</span>'+
+    '<input id="hexStart" type="number" value="'+start+'" min="0" max="'+bytes.length+'" style="width:80px;background:var(--pb);border:1px solid var(--bd);color:var(--cy);padding:2px 6px;border-radius:3px;font-family:monospace;font-size:11px">'+
+    '<span style="color:var(--td)">-</span>'+
+    '<input id="hexEnd" type="number" value="'+end+'" min="0" max="'+bytes.length+'" style="width:80px;background:var(--pb);border:1px solid var(--bd);color:var(--cy);padding:2px 6px;border-radius:3px;font-family:monospace;font-size:11px">'+
+    '<button class="top-btn" onclick="goHex()">Pokaz</button>'+
+    '<button class="top-btn" onclick="goHexPrev()">&laquo;</button>'+
+    '<button class="top-btn" onclick="goHexNext()">&raquo;</button>'+
+    '<span style="color:var(--td);margin-left:auto">'+bytes.length.toLocaleString()+' B | '+start+'-'+end+'</span></div>';
+  const labelOffsets = new Set();
+  if (file) for (const l of file.parsed.labels) for (let o=l.offset;o<l.offset+l.byteLen;o++) labelOffsets.add(o);
+  let hexHTML = '';
+  for (let row = start; row < end; row += 16) {
+    let hp='', ap='';
+    for (let col=0; col<16 && row+col<end; col++) {
+      const pos=row+col, b=bytes[pos], bHex=b.toString(16).toUpperCase().padStart(2,'0');
+      let cls='hex-byte';
+      if (labelOffsets.has(pos)) cls='hex-text';
+      else if (b===0x0D) cls='hex-marker';
+      else if (b===0) cls='hex-nop';
+      hp+='<span class="'+cls+'">'+bHex+'</span> ';
+      if (col===7) hp+=' ';
+      if (b>=32&&b<=126) ap+='<span class="'+(labelOffsets.has(pos)?'hex-text':'hex-ascii')+'">'+escChar(b)+'</span>';
+      else if (b===0x0D) ap+='<span class="hex-marker">.</span>';
+      else ap+='<span class="hex-nop">.</span>';
+    }
+    hexHTML+='<span class="hex-off">'+row.toString(16).toUpperCase().padStart(6,'0')+'</span> <span class="hex-sep">|</span> '+hp.padEnd(52)+'  <span class="hex-sep">|</span>'+ap+'\n';
+  }
+  el.innerHTML = nav + '<div style="padding:8px 12px;overflow:auto;flex:1"><div class="hex-view">'+hexHTML+'</div></div>';
+}
+function goHex(){var s=parseInt(document.getElementById('hexStart').value)||0,e=parseInt(document.getElementById('hexEnd').value)||s+512;renderHex(state.files[state.currentFile]?.bytes,s,e);}
+function goHexPrev(){var s=parseInt(document.getElementById('hexStart').value)||0,r=(parseInt(document.getElementById('hexEnd').value)||s+512)-s,ns=Math.max(0,s-r);renderHex(state.files[state.currentFile]?.bytes,ns,ns+r);}
+function goHexNext(){var s=parseInt(document.getElementById('hexStart').value)||0,r=(parseInt(document.getElementById('hexEnd').value)||s+512)-s,b=state.files[state.currentFile]?.bytes;if(!b)return;var ns=Math.min(b.length-r,s+r);renderHex(b,ns,ns+r);}
+
+// COMPARE TAB
+function renderCompare() {
+  const names = Object.keys(state.files);
+  const el = document.getElementById('tab-compare');
+  if (names.length < 2) { el.innerHTML = '<div style="text-align:center;padding:40px;color:var(--td)"><h3 style="color:var(--ac);margin-bottom:8px">Porownanie</h3><p>Wczytaj 2+ pliki .lad aby porownac.</p></div>'; return; }
+  const n1=names[0],n2=names[1], f1=state.files[n1].parsed, f2=state.files[n2].parsed;
+  const l1=new Set(f1.labels.map(l=>l.text)), l2=new Set(f2.labels.map(l=>l.text));
+  const common=[...l1].filter(l=>l2.has(l)), only1=[...l1].filter(l=>!l2.has(l)), only2=[...l2].filter(l=>!l1.has(l));
+  el.innerHTML =
+    '<h3 style="color:var(--ac);margin-bottom:12px">Porownanie: '+esc(n1)+' &harr; '+esc(n2)+'</h3>'+
+    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px">'+
+      '<div class="cmp-box"><h3>'+esc(n1)+'</h3><div class="info-grid"><span class="info-label">Rozmiar:</span><span class="info-val">'+fmtSize(state.files[n1].bytes.length)+'</span><span class="info-label">Sekcji:</span><span class="info-val">'+f1.sections.length+'</span><span class="info-label">Typ:</span><span class="info-val">'+esc(f1.header.machineType)+'</span></div></div>'+
+      '<div class="cmp-box"><h3>'+esc(n2)+'</h3><div class="info-grid"><span class="info-label">Rozmiar:</span><span class="info-val">'+fmtSize(state.files[n2].bytes.length)+'</span><span class="info-label">Sekcji:</span><span class="info-val">'+f2.sections.length+'</span><span class="info-label">Typ:</span><span class="info-val">'+esc(f2.header.machineType)+'</span></div></div>'+
+    '</div>'+
+    '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px">'+
+      '<div class="cmp-box"><h3 style="color:var(--gn)">Wspolne ('+common.length+')</h3><div style="max-height:200px;overflow-y:auto;font-size:10px">'+common.map(l=>'<div style="padding:1px 0">'+esc(l)+' <span style="color:var(--yl);font-style:italic">'+esc(translate(l))+'</span></div>').join('')+'</div></div>'+
+      '<div class="cmp-box"><h3 style="color:var(--or)">Tylko '+esc(n1)+' ('+only1.length+')</h3><div style="max-height:200px;overflow-y:auto;font-size:10px">'+only1.map(l=>'<div style="padding:1px 0">'+esc(l)+' <span style="color:var(--yl);font-style:italic">'+esc(translate(l))+'</span></div>').join('')+'</div></div>'+
+      '<div class="cmp-box"><h3 style="color:var(--a2)">Tylko '+esc(n2)+' ('+only2.length+')</h3><div style="max-height:200px;overflow-y:auto;font-size:10px">'+only2.map(l=>'<div style="padding:1px 0">'+esc(l)+' <span style="color:var(--yl);font-style:italic">'+esc(translate(l))+'</span></div>').join('')+'</div></div>'+
+    '</div>';
+}
+
+// I/O TAB
+function renderIOTab() {
+  const file = state.files[state.currentFile]; if (!file) return;
+  const p = file.parsed;
+  const el = document.getElementById('tab-io');
+  // Extract R/K/M registers used as I/O from the actual PLC data
+  const usedRegs = [...p.registers].sort((a,b)=>{if(a[0]!==b[0])return a.localeCompare(b);return parseInt(a.slice(1))-parseInt(b.slice(1))});
+  const rRegs = usedRegs.filter(r=>r[0]==='R');
+  const kRegs = usedRegs.filter(r=>r[0]==='K');
+  const mRegs = usedRegs.filter(r=>r[0]==='M');
+  const dRegs = usedRegs.filter(r=>r[0]==='D');
+
+  // Build I/O section descriptions from PLC sections
+  const ioSections = p.sections.filter(s=>
+    s.category.id==='board'||s.category.id==='vacuum'||s.category.id==='pneum'||
+    s.label.includes('\u8F38\u5165')||s.label.includes('\u8F38\u51FA')||
+    s.label.includes('\u5438')||s.label.includes('\u6C23\u7F38')||
+    s.label.includes('\u71C8')||s.label.includes('\u6CF5')
+  );
+
+  const inCount = IO_DB.inputs.length;
+  const outCount = IO_DB.outputs.length;
+  const catColors = {};
+  for (const c of CATEGORIES) catColors[c.id] = c.color;
+
+  el.innerHTML =
+    '<h3 style="color:var(--ac);margin-bottom:8px">&#x1F50C; Mapa wejsc/wyjsc I/O - Syntec CNC</h3>'+
+    '<p style="font-size:10px;color:var(--td);margin-bottom:12px">Typowe przypisania sygnalow I/O dla sterownika Syntec (router CNC drewna). '+
+    'Adresy X = wejscia fizyczne, Y = wyjscia fizyczne, R = przekazniki wewnetrzne, K = przekazniki z podtrzymaniem.</p>'+
+    '<div style="display:flex;gap:12px;margin-bottom:16px;flex-wrap:wrap">'+
+      '<div class="io-stat" style="background:var(--gn)22;border:1px solid var(--gn)44;color:var(--gn)">&#x2B05; '+inCount+' wejsc (inputs)</div>'+
+      '<div class="io-stat" style="background:var(--or)22;border:1px solid var(--or)44;color:var(--or)">&#x27A1; '+outCount+' wyjsc (outputs)</div>'+
+      '<div class="io-stat" style="background:var(--cy)22;border:1px solid var(--cy)44;color:var(--cy)">R: '+rRegs.length+' rejestrow</div>'+
+      '<div class="io-stat" style="background:var(--yl)22;border:1px solid var(--yl)44;color:var(--yl)">K: '+kRegs.length+' keep</div>'+
+      '<div class="io-stat" style="background:var(--a2)22;border:1px solid var(--a2)44;color:var(--a2)">D: '+dRegs.length+' data</div>'+
+    '</div>'+
+    '<div style="display:flex;gap:8px;margin-bottom:12px;align-items:center">'+
+      '<input id="ioSearch" placeholder="Szukaj I/O..." oninput="filterIO()" style="background:var(--pb);border:1px solid var(--bd);color:var(--tx);padding:4px 8px;border-radius:4px;font-size:11px;width:240px">'+
+      '<label style="font-size:10px;color:var(--td)"><input type="checkbox" id="ioShowUsed" onchange="filterIO()"> Podswietl uzywane w PLC</label>'+
+    '</div>'+
+    // INPUTS TABLE
+    '<h4 style="color:var(--gn);margin:16px 0 6px;font-size:12px">&#x2B05; WEJSCIA (Inputs) - co maszyna \"widzi\"</h4>'+
+    '<p style="font-size:9px;color:var(--td);margin-bottom:6px">Sygnaly z czujnikow, przelacznikow i detektorow do sterownika PLC</p>'+
+    '<table class="io-table" id="ioTableIn"><thead><tr>'+
+      '<th style="width:55px">Adres</th><th style="width:40px">Kier.</th><th style="width:160px">Nazwa (PL)</th><th>Opis dzialania</th><th style="width:70px">Kategoria</th>'+
+    '</tr></thead><tbody>'+
+    IO_DB.inputs.map(io=>{
+      const cc = catColors[io.cat]||'var(--td)';
+      const catObj = CATEGORIES.find(c=>c.id===io.cat);
+      return '<tr class="io-row"><td class="io-addr">'+esc(io.addr)+'</td><td class="io-dir-in">WEJ</td>'+
+        '<td style="font-weight:600">'+esc(io.name)+'</td>'+
+        '<td style="font-size:10px;color:var(--td)">'+esc(io.desc)+'</td>'+
+        '<td><span class="cat-badge" style="background:'+cc+';font-size:8px">'+(catObj?catObj.icon:'')+' '+(catObj?catObj.name:io.cat)+'</span></td></tr>';
+    }).join('')+'</tbody></table>'+
+    // OUTPUTS TABLE
+    '<h4 style="color:var(--or);margin:24px 0 6px;font-size:12px">&#x27A1; WYJSCIA (Outputs) - co maszyna \"robi\"</h4>'+
+    '<p style="font-size:9px;color:var(--td);margin-bottom:6px">Sygnaly sterujace do silnikow, zaworow, przekaznikow i lampek</p>'+
+    '<table class="io-table" id="ioTableOut"><thead><tr>'+
+      '<th style="width:55px">Adres</th><th style="width:40px">Kier.</th><th style="width:160px">Nazwa (PL)</th><th>Opis dzialania</th><th style="width:70px">Kategoria</th>'+
+    '</tr></thead><tbody>'+
+    IO_DB.outputs.map(io=>{
+      const cc = catColors[io.cat]||'var(--td)';
+      const catObj = CATEGORIES.find(c=>c.id===io.cat);
+      return '<tr class="io-row"><td class="io-addr">'+esc(io.addr)+'</td><td class="io-dir-out">WYJ</td>'+
+        '<td style="font-weight:600">'+esc(io.name)+'</td>'+
+        '<td style="font-size:10px;color:var(--td)">'+esc(io.desc)+'</td>'+
+        '<td><span class="cat-badge" style="background:'+cc+';font-size:8px">'+(catObj?catObj.icon:'')+' '+(catObj?catObj.name:io.cat)+'</span></td></tr>';
+    }).join('')+'</tbody></table>'+
+    // PLC REGISTERS
+    '<h4 style="color:var(--cy);margin:24px 0 6px;font-size:12px">&#x1F527; Rejestry PLC uzywane w programie</h4>'+
+    '<p style="font-size:9px;color:var(--td);margin-bottom:6px">R=Relay (przekaznik wew.), K=Keep (z podtrzymaniem), D=Data, T=Timer, C=Counter, M=Marker</p>'+
+    '<div style="display:flex;flex-wrap:wrap;gap:2px;margin-bottom:8px">'+
+      rRegs.slice(0,80).map(r=>'<span class="reg-chip R">'+r+'</span>').join('')+
+      (rRegs.length>80?'<span style="color:var(--td);font-size:10px;padding:2px 6px">...+'+(rRegs.length-80)+' wiecej</span>':'')+
+    '</div>'+
+    '<div style="display:flex;flex-wrap:wrap;gap:2px;margin-bottom:8px">'+
+      kRegs.slice(0,60).map(r=>'<span class="reg-chip K">'+r+'</span>').join('')+
+      (kRegs.length>60?'<span style="color:var(--td);font-size:10px;padding:2px 6px">...+'+(kRegs.length-60)+' wiecej</span>':'')+
+    '</div>'+
+    // I/O Related PLC sections
+    '<h4 style="color:var(--ac);margin:24px 0 6px;font-size:12px">&#x1F4CB; Sekcje PLC powiazane z I/O ('+ioSections.length+')</h4>'+
+    '<div style="display:flex;flex-wrap:wrap;gap:4px">'+
+      ioSections.map(s=>{
+        return '<div style="padding:4px 8px;border:1px solid '+s.category.color+'33;border-radius:4px;background:'+s.category.color+'11;font-size:10px;cursor:pointer" onclick="selectSection('+s.index+');switchTab(\'hex\')">'+
+          '<div style="color:var(--tx);font-weight:600">'+esc(s.label)+'</div>'+
+          (s.translation?'<div style="color:var(--yl);font-size:9px;font-style:italic">'+esc(s.translation)+'</div>':'')+
+        '</div>';
+      }).join('')+
+    '</div>'+
+    // IOMAP XML DATA
+    (state.ioMap ? renderIoMapSection() : '<div style="margin-top:24px;padding:12px;border:1px dashed var(--bd);border-radius:8px;text-align:center;color:var(--td);font-size:11px">&#x1F50C; Wczytaj plik IoMap_*.xml (przycisk w gornym pasku) aby zobaczyc mapowanie sprzetowe I/O z konfiguracji maszyny.<br><span style="font-size:10px">Sciezka: Project/DiskC/OpenCNC/Data/IO/IoMap_*.xml</span></div>');
+}
+function filterIO(){
+  const q=(document.getElementById('ioSearch')?.value||'').toLowerCase();
+  document.querySelectorAll('.io-row').forEach(r=>{r.style.display=r.textContent.toLowerCase().includes(q)?'':'none'});
+}
+
+// SYSTEM DEPENDENCIES TAB
+function renderSystemTab() {
+  const file = state.files[state.currentFile]; if (!file) return;
+  const p = file.parsed;
+  const el = document.getElementById('tab-system');
+
+  // Count how many PLC sections match each dependency group
+  const groupStats = SYS_DEPS.map(g=>{
+    const kws = g.items.map(i=>i.src).concat(g.items.map(i=>i.tgt));
+    let matched = 0;
+    for (const sec of p.sections) {
+      const txt = sec.label + (sec.translation||'');
+      for (const kw of kws) {
+        if (txt.toLowerCase().includes(kw.toLowerCase().substring(0,4))) { matched++; break; }
+      }
+    }
+    return matched;
+  });
+
+  const typeLabels = {blocks:'BLOKUJE',requires:'WYMAGA',controls:'STERUJE',powers:'ZASILA',activates:'AKTYWUJE',sequence:'SEKWENCJA'};
+  const typeIcons = {blocks:'\u26D4',requires:'\u26A0',controls:'\u2699',powers:'\u26A1',activates:'\u27A1',sequence:'\u2192'};
+
+  el.innerHTML =
+    '<h3 style="color:var(--ac);margin-bottom:4px">&#x1F3D7; Mapa zaleznosci systemowych CNC</h3>'+
+    '<p style="font-size:10px;color:var(--td);margin-bottom:4px">Co od czego zalezy, co co zalacza, co co blokuje - pelna mapa dzialania maszyny CNC.</p>'+
+    '<p style="font-size:9px;color:var(--td);margin-bottom:12px">'+
+      '<span class="dep-tag blocks">'+typeIcons.blocks+' BLOKUJE</span> '+
+      '<span class="dep-tag requires">'+typeIcons.requires+' WYMAGA</span> '+
+      '<span class="dep-tag controls">'+typeIcons.controls+' STERUJE</span> '+
+      '<span class="dep-tag powers">'+typeIcons.powers+' ZASILA</span> '+
+      '<span class="dep-tag activates">'+typeIcons.activates+' AKTYWUJE</span> '+
+      '<span class="dep-tag sequence">'+typeIcons.sequence+' SEKWENCJA</span>'+
+    '</p>'+
+    '<div class="dep-grid">'+
+      SYS_DEPS.map((g,gi)=>{
+        return '<div class="dep-block" style="border-left:4px solid '+g.color+'">'+
+          '<h4 style="color:'+g.color+'">'+g.icon+' '+g.group+
+            '<span style="margin-left:auto;font-size:9px;color:var(--td);font-weight:400">'+groupStats[gi]+' sekcji PLC</span></h4>'+
+          g.items.map(item=>{
+            const tl = typeLabels[item.type]||item.type;
+            const ti = typeIcons[item.type]||'\u2192';
+            return '<div class="dep-item">'+
+              '<span style="font-weight:600;color:var(--tx);min-width:120px;font-size:10px">'+esc(item.src)+'</span>'+
+              '<span class="dep-tag '+item.type+'">'+ti+' '+tl+'</span>'+
+              '<span style="font-weight:600;color:var(--ac);font-size:10px">'+esc(item.tgt)+'</span>'+
+            '</div>'+
+            '<div style="font-size:9px;color:var(--td);padding:0 0 4px 8px;border-bottom:1px solid rgba(45,45,80,.1)">'+esc(item.desc)+'</div>';
+          }).join('')+
+        '</div>';
+      }).join('')+
+    '</div>'+
+    // SIGNAL FLOW SUMMARY
+    '<h4 style="color:var(--ac);margin:20px 0 8px;font-size:12px">&#x1F4A1; Schemat przeplywu sygnalow (uproszczony)</h4>'+
+    '<div style="border:1px solid var(--bd);border-radius:8px;padding:16px;background:var(--sf);font-size:11px;line-height:2.2">'+
+      '<div style="text-align:center;display:flex;flex-wrap:wrap;gap:4px;justify-content:center;align-items:center">'+
+        '<span style="padding:4px 10px;background:var(--cat-safety)22;border:1px solid var(--cat-safety);border-radius:6px;color:var(--cat-safety);font-weight:700">\uD83D\uDED1 E-STOP / Limity</span>'+
+        '<span style="color:var(--rd);font-weight:700;font-size:16px">\u2192</span>'+
+        '<span style="padding:4px 10px;background:var(--cat-init)22;border:1px solid var(--cat-init);border-radius:6px;color:var(--cat-init);font-weight:700">\u2699 Bazowanie osi</span>'+
+        '<span style="color:var(--or);font-weight:700;font-size:16px">\u2192</span>'+
+        '<span style="padding:4px 10px;background:var(--cat-io)22;border:1px solid var(--cat-io);border-radius:6px;color:var(--cat-io);font-weight:700">\uD83D\uDCE6 Zaladuj material</span>'+
+        '<span style="color:var(--or);font-weight:700;font-size:16px">\u2192</span>'+
+        '<span style="padding:4px 10px;background:var(--cat-vacuum)22;border:1px solid var(--cat-vacuum);border-radius:6px;color:var(--cat-vacuum);font-weight:700">\uD83D\uDD2E Przyssanie prozniowe</span>'+
+        '<span style="color:var(--gn);font-weight:700;font-size:16px">\u2192</span>'+
+        '<span style="padding:4px 10px;background:var(--cat-motion)22;border:1px solid var(--cat-motion);border-radius:6px;color:var(--cat-motion);font-weight:700">\u25B6 START programu</span>'+
+        '<span style="color:var(--gn);font-weight:700;font-size:16px">\u2192</span>'+
+        '<span style="padding:4px 10px;background:var(--cat-spindle)22;border:1px solid var(--cat-spindle);border-radius:6px;color:var(--cat-spindle);font-weight:700">\uD83D\uDD04 Wrzeciono + Ruch</span>'+
+        '<span style="color:var(--cy);font-weight:700;font-size:16px">\u2192</span>'+
+        '<span style="padding:4px 10px;background:var(--cat-tool)22;border:1px solid var(--cat-tool);border-radius:6px;color:var(--cat-tool);font-weight:700">\uD83D\uDD27 Wymiana narzedzia</span>'+
+        '<span style="color:var(--cy);font-weight:700;font-size:16px">\u2192</span>'+
+        '<span style="padding:4px 10px;background:var(--cat-io)22;border:1px solid var(--cat-io);border-radius:6px;color:var(--cat-io);font-weight:700">\uD83D\uDCE6 Rozladunek</span>'+
+      '</div>'+
+      '<div style="text-align:center;margin-top:12px;color:var(--td);font-size:10px">'+
+        '<div style="margin-bottom:4px"><b style="color:var(--rd)">Lancuch bezp.:</b> E-STOP \u2192 blokuje WSZYSTKO | Limity \u2192 blokuja kierunek | Cisnienie \u2192 blokuje pneumatyke</div>'+
+        '<div style="margin-bottom:4px"><b style="color:var(--cy)">Warunki startu:</b> Bazowanie OK + Brak alarmow + Material przyssany + Cisnienie OK = mozna startowac</div>'+
+        '<div><b style="color:var(--gn)">Lampki:</b> \uD83D\uDFE2 Zielona = praca | \uD83D\uDFE1 Zolta = gotowe/czeka | \uD83D\uDD34 Czerwona = alarm/E-STOP</div>'+
+      '</div>'+
+    '</div>'+
+    // Matched PLC sections
+    '<h4 style="color:var(--ac);margin:20px 0 8px;font-size:12px">&#x1F4CA; Powiazanie z sekcjami PLC ('+p.sections.length+' sekcji w pliku)</h4>'+
+    '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:6px">'+
+      SYS_DEPS.map((g,gi)=>{
+        const matched = [];
+        for (const sec of p.sections) {
+          const txt = (sec.label+(sec.translation||'')).toLowerCase();
+          for (const item of g.items) {
+            if (txt.includes(item.src.substring(0,3).toLowerCase()) || txt.includes(item.tgt.substring(0,3).toLowerCase())) {
+              if (!matched.includes(sec)) matched.push(sec);
+            }
+          }
+        }
+        if (!matched.length) return '';
+        return '<div style="border:1px solid '+g.color+'44;border-radius:6px;padding:6px;background:'+g.color+'08">'+
+          '<div style="font-size:10px;font-weight:700;color:'+g.color+';margin-bottom:4px">'+g.icon+' '+g.group+' ('+matched.length+')</div>'+
+          matched.slice(0,8).map(s=>'<div style="font-size:9px;padding:1px 0;cursor:pointer;color:var(--tx)" onclick="selectSection('+s.index+');switchTab(\'hex\')">'+
+            esc(s.label.substring(0,15))+(s.translation?' <span style="color:var(--yl)">'+esc(s.translation.substring(0,20))+'</span>':'')+
+          '</div>').join('')+
+          (matched.length>8?'<div style="font-size:8px;color:var(--td)">...+'+(matched.length-8)+' wiecej</div>':'')+
+        '</div>';
+      }).filter(Boolean).join('')+
+    '</div>';
+}
+
+// XREF TAB - Cross Reference Registers <-> Sections
+function buildSectionRegisters(bytes, sections) {
+  const map = {};
+  const regTypes = [0x52, 0x4B, 0x44, 0x54, 0x43, 0x4D]; // R K D T C M
+  for (let si = 0; si < sections.length; si++) {
+    const sec = sections[si];
+    const regs = new Set();
+    for (let i = sec.start; i < sec.end && i < bytes.length - 4; i++) {
+      if (regTypes.includes(bytes[i])) {
+        let num = '';
+        let j = i + 1;
+        while (j < sec.end && j < bytes.length && bytes[j] >= 0x30 && bytes[j] <= 0x39) {
+          num += String.fromCharCode(bytes[j]); j++;
+        }
+        if (num.length >= 1 && num.length <= 6) { regs.add(String.fromCharCode(bytes[i]) + num); i = j - 1; }
+      }
+    }
+    map[si] = regs;
+  }
+  return map;
+}
+function renderXrefTab() {
+
+// KEYBOARD SHORTCUTS
+document.addEventListener('keydown', function(e) {
+  if (e.ctrlKey && e.key === 'k') { e.preventDefault(); openGlobalSearch(); }
+  if (e.ctrlKey && e.key === 'e') { e.preventDefault(); exportJSON(); }
+  if (e.key === 'Escape' && document.getElementById('gsOverlay').classList.contains('open')) { closeGlobalSearch(); }
+  var tabKeys = {'1':'visual','2':'overview','3':'sections','4':'flow','5':'ladder','6':'registers','7':'hex','8':'compare','9':'io','0':'system'};
+  if (e.ctrlKey && tabKeys[e.key]) { e.preventDefault(); switchTab(tabKeys[e.key]); }
+});
+// Init global search state
+state.gsResults = [];
+state.gsSelected = 0;
+state.ioMap = null;
+  const file = state.files[state.currentFile]; if (!file) return;
+  const p = file.parsed;
+  const xref = {};
+  for (const si of Object.keys(p.sectionRegisters)) {
+    for (const reg of p.sectionRegisters[si]) {
+      if (!xref[reg]) xref[reg] = [];
+      xref[reg].push(parseInt(si));
+    }
+  }
+  const sortedRegs = Object.keys(xref).sort((a, b) => {
+    if (a[0] !== b[0]) return a[0].localeCompare(b[0]);
+    return parseInt(a.slice(1)) - parseInt(b.slice(1));
+  });
+  const types = {};
+  for (const reg of sortedRegs) { const t = reg[0]; if (!types[t]) types[t] = []; types[t].push(reg); }
+  const regTypeNames = {R:'R - Relay',K:'K - Keep',D:'D - Data',T:'T - Timer',C:'C - Counter',M:'M - Marker'};
+  const el = document.getElementById('tab-xref');
+  el.innerHTML =
+    '<h3 style="color:var(--ac);margin-bottom:8px">&#x1F517; Cross-Reference (Xref) - Rejestry &harr; Sekcje</h3>'+
+    '<p style="font-size:10px;color:var(--td);margin-bottom:12px">Gdzie kazdy rejestr jest uzywany w programie PLC. Kliknij sekcje aby przejsc do widoku hex.</p>'+
+    '<div class="sum-cards" style="grid-template-columns:repeat(auto-fill,minmax(130px,1fr))">'+
+      '<div class="sum-card"><div class="sc-num" style="color:var(--ac)">'+sortedRegs.length+'</div><div class="sc-lbl">Rejestrow z xref</div></div>'+
+      '<div class="sum-card"><div class="sc-num" style="color:var(--gn)">'+Object.keys(types).length+'</div><div class="sc-lbl">Typow rejestrow</div></div>'+
+      '<div class="sum-card"><div class="sc-num" style="color:var(--yl)">'+sortedRegs.filter(r => xref[r].length > 3).length+'</div><div class="sc-lbl">Czesto uzywanych (&gt;3)</div></div>'+
+      '<div class="sum-card"><div class="sc-num" style="color:var(--or)">'+sortedRegs.filter(r => xref[r].length === 1).length+'</div><div class="sc-lbl">Unikalne (1 sekcja)</div></div>'+
+    '</div>'+
+    '<div style="display:flex;gap:8px;margin-bottom:12px;align-items:center">'+
+      '<input id="xrefSearch" placeholder="Szukaj rejestru (np. R100, K50, D200)..." oninput="filterXref()" style="background:var(--pb);border:1px solid var(--bd);color:var(--tx);padding:4px 8px;border-radius:4px;font-size:11px;width:240px">'+
+      '<select id="xrefType" onchange="filterXref()" style="background:var(--pb);border:1px solid var(--bd);color:var(--tx);padding:4px;border-radius:4px;font-size:10px"><option value="">Wszystkie typy</option>'+
+        Object.keys(types).map(function(t){return '<option value="'+t+'">'+(regTypeNames[t]||t)+' ('+types[t].length+')</option>'}).join('')+
+      '</select>'+
+      '<label style="font-size:10px;color:var(--td)"><input type="checkbox" id="xrefMulti" onchange="filterXref()"> Tylko wielokrotne (&gt;1)</label>'+
+    '</div>'+
+    '<div style="overflow:auto;max-height:calc(100vh - 300px)">'+
+    '<table class="xref-table" id="xrefTable"><thead><tr>'+
+      '<th style="width:70px">Rejestr</th><th style="width:40px">Typ</th><th style="width:50px">Uzyc</th><th>Sekcje uzywajace tego rejestru</th>'+
+    '</tr></thead><tbody>'+
+    sortedRegs.map(function(reg) {
+      var secs = xref[reg];
+      return '<tr class="xref-row" data-type="'+reg[0]+'" data-count="'+secs.length+'">'+
+        '<td><span class="reg-chip '+reg[0]+'">'+reg+'</span></td>'+
+        '<td style="font-size:10px;color:var(--td)">'+reg[0]+'</td>'+
+        '<td style="text-align:center;font-weight:700;color:'+(secs.length>5?'var(--or)':secs.length>2?'var(--yl)':'var(--td)')+'">'+secs.length+'</td>'+
+        '<td><div style="display:flex;flex-wrap:wrap;gap:3px">'+
+          secs.slice(0,15).map(function(si) {
+            var s = p.sections[si];
+            return '<span style="padding:1px 6px;border-radius:3px;font-size:9px;cursor:pointer;background:'+s.category.color+'22;border:1px solid '+s.category.color+'44;color:var(--tx);transition:background .1s" onclick="selectSection('+si+');switchTab(\'hex\')" title="'+esc(s.label)+(s.translation?' -> '+esc(s.translation):'')+'" onmouseover="this.style.background=\''+s.category.color+'44\'" onmouseout="this.style.background=\''+s.category.color+'22\'">#'+(si+1)+' '+esc(s.label.substring(0,10))+'</span>';
+          }).join('')+
+          (secs.length>15?'<span style="font-size:9px;color:var(--td)">...+'+(secs.length-15)+'</span>':'')+
+        '</div></td></tr>';
+    }).join('')+
+    '</tbody></table></div>';
+}
+function filterXref() {
+  var q = (document.getElementById('xrefSearch')?.value||'').toLowerCase();
+  var t = document.getElementById('xrefType')?.value||'';
+  var multi = document.getElementById('xrefMulti')?.checked;
+  document.querySelectorAll('#xrefTable .xref-row').forEach(function(r) {
+    var text = r.textContent.toLowerCase();
+    var type = r.getAttribute('data-type');
+    var cnt = parseInt(r.getAttribute('data-count'));
+    r.style.display = ((!q||text.includes(q))&&(!t||type===t)&&(!multi||cnt>1)) ? '' : 'none';
+  });
+}
+
+// HELP / POMOC TAB
+function renderHelpTab() {
+  var el = document.getElementById('tab-help');
+  var instructions = [
+    {op:'LD',sym:'--[ ]--',desc:'Kontakt normalnie otwarty (NO). Laduje stan bitu do akumulatora.',cat:'Wejscie',color:'var(--gn)'},
+    {op:'LDI',sym:'--[/]--',desc:'Kontakt normalnie zamkniety (NC). Laduje zanegowany stan bitu.',cat:'Wejscie',color:'var(--gn)'},
+    {op:'OUT',sym:'--( )--',desc:'Cewka wyjsciowa (Output Coil). Zapisuje stan akumulatora do bitu.',cat:'Wyjscie',color:'var(--or)'},
+    {op:'SET',sym:'--(S)--',desc:'Ustaw (Set). Ustawia bit na 1 i utrzymuje do RST.',cat:'Wyjscie',color:'var(--or)'},
+    {op:'RST',sym:'--(R)--',desc:'Kasuj (Reset). Kasuje bit na 0.',cat:'Wyjscie',color:'var(--or)'},
+    {op:'OR',sym:'[OR]',desc:'Logiczne LUB. Polaczenie rownolegle kontaktow.',cat:'Logika',color:'var(--cy)'},
+    {op:'AND',sym:'[AND]',desc:'Logiczne I. Polaczenie szeregowe kontaktow.',cat:'Logika',color:'var(--cy)'},
+    {op:'MOV',sym:'[MOV]',desc:'Przesun dane. Kopiuje wartosc z jednego rejestru do drugiego.',cat:'Transfer',color:'var(--yl)'},
+    {op:'CALL',sym:'[CALL]',desc:'Wywolanie podprogramu. Skok do wskazanej sekcji.',cat:'Sterowanie',color:'var(--a2)'},
+    {op:'END',sym:'[END]',desc:'Koniec programu / sekcji.',cat:'Sterowanie',color:'var(--a2)'},
+    {op:'TMR',sym:'[TMR]',desc:'Timer. Odmierza czas (ms/s). Gdy uplynie -> wyjscie ON.',cat:'Czas',color:'#ce93d8'},
+    {op:'CNT',sym:'[CNT]',desc:'Licznik. Zlicza impulsy. Gdy osiagnie wartosc -> wyjscie ON.',cat:'Czas',color:'#ce93d8'},
+    {op:'CMP',sym:'[CMP]',desc:'Porownanie dwoch wartosci. Wynik w bitach statusowych.',cat:'Porownanie',color:'var(--ac)'},
+    {op:'ADD',sym:'[ADD]',desc:'Dodawanie wartosci rejestrowych.',cat:'Arytmetyka',color:'var(--ac)'},
+    {op:'SUB',sym:'[SUB]',desc:'Odejmowanie wartosci rejestrowych.',cat:'Arytmetyka',color:'var(--ac)'},
+    {op:'SEC',sym:'[SEC]',desc:'Selektor sekcji / poczatek bloku warunkowego.',cat:'Sterowanie',color:'var(--a2)'},
+  ];
+  var regTypes = [
+    {type:'R',name:'Relay (Przekaznik)',color:'#6f6',desc:'Wewnetrzny przekaznik bitowy. Traci stan po wylaczeniu. R0-R9999.',use:'Zmienne tymczasowe, stany maszyny, flagi wewnetrzne'},
+    {type:'K',name:'Keep (Podtrzymanie)',color:'#ff6',desc:'Przekaznik z podtrzymaniem. Zachowuje stan po wylaczeniu. K0-K9999.',use:'Stany trwale: tryby, offsety, konfiguracja'},
+    {type:'D',name:'Data (Dane)',color:'#6cf',desc:'Rejestr danych 16/32-bit. D0-D9999.',use:'Wartosci liczbowe: predkosci, czasy, pozycje'},
+    {type:'T',name:'Timer',color:'#f6f',desc:'Timer odmierzajacy czas. T0-T999. Jednostka zwykle 10ms.',use:'Opoznienia, timeouty, odmierzanie cykli'},
+    {type:'C',name:'Counter (Licznik)',color:'#6ff',desc:'Licznik impulsow. C0-C999.',use:'Zliczanie cykli, narzedzi, detali'},
+    {type:'M',name:'Marker',color:'#fc6',desc:'Marker systemowy. M0-M999. Flagi komunikacji z CNC.',use:'M-kody, statusy osi, alarmy systemowe'},
+  ];
+  el.innerHTML =
+    '<h3 style="color:var(--ac);margin-bottom:12px">&#x2753; Pomoc - Instrukcja PLC Ladder &amp; Przewodnik</h3>'+
+    // KEYBOARD SHORTCUTS
+    '<div class="help-card">'+
+      '<h4>&#x2328; Skroty klawiszowe</h4>'+
+      '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:8px;font-size:11px">'+
+        '<div><span class="kbd">Ctrl+K</span> Globalne wyszukiwanie</div>'+
+        '<div><span class="kbd">Ctrl+E</span> Eksport JSON</div>'+
+        '<div><span class="kbd">Esc</span> Zamknij wyszukiwanie</div>'+
+        '<div><span class="kbd">&#x2191;&#x2193;</span> Nawigacja wynikow</div>'+
+        '<div><span class="kbd">Enter</span> Wybierz wynik</div>'+
+        '<div><span class="kbd">Ctrl+1-9</span> Przelacz zakladke</div>'+
+      '</div>'+
+    '</div>'+
+    // FILE PATH GUIDE
+    '<div class="help-card">'+
+      '<h4>&#x1F4C2; Gdzie znalezc pliki Ladder w projekcie Syntec</h4>'+
+      '<p style="font-size:10px;color:var(--td);margin-bottom:8px">Struktura katalogow projektu Syntec CNC z zaznaczonymi plikami ladder:</p>'+
+      '<div class="path-tree">'+
+        '&#x1F4C1; <span class="pt-dir">Project/</span><br>'+
+        '&nbsp;&nbsp;&#x1F4C1; <span class="pt-dir">DiskC/</span> <span class="pt-desc">- dysk C kontrolera CNC</span><br>'+
+        '&nbsp;&nbsp;&nbsp;&nbsp;&#x1F4C1; <span class="pt-dir">OpenCNC/</span> <span class="pt-desc">- glowny katalog systemu</span><br>'+
+        '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&#x1F4C1; <span class="pt-dir pt-hl">Ladder/</span> <span class="pt-desc" style="color:var(--gn);font-weight:700">&larr; TU SA PLIKI LADDER</span><br>'+
+        '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&#x1F4C4; <span class="pt-file pt-hl">cnc.lad</span> <span class="pt-desc" style="color:var(--yl)">&larr; GLOWNY program PLC maszyny</span><br>'+
+        '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&#x1F4C4; <span class="pt-file">cnc_server.lad</span> <span class="pt-desc">&larr; Program PLC serwera (multi-CPU)</span><br>'+
+        '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&#x1F4C4; <span class="pt-file">develop.lad</span> <span class="pt-desc">&larr; Wersja deweloperska / testowa</span><br>'+
+        '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&#x1F4C1; <span class="pt-dir">Data/IO/</span> <span class="pt-desc">- mapowanie wejsc/wyjsc</span><br>'+
+        '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&#x1F4C4; <span class="pt-file">IoMap_*.xml</span> <span class="pt-desc">&larr; Konfiguracja sprawdzenia I/O (laduj przez przycisk IoMap XML)</span><br>'+
+        '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&#x1F4C1; <span class="pt-dir">Res/</span> <span class="pt-desc">- pliki ekranow CNC (.scr)</span><br>'+
+        '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&#x1F4C1; <span class="pt-dir">cdb/</span> <span class="pt-desc">- baza parametrow CNC</span><br>'+
+        '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&#x1F4C1; <span class="pt-dir">NcFiles/</span> <span class="pt-desc">- programy NC (G-code)</span><br>'+
+        '&nbsp;&nbsp;&nbsp;&nbsp;&#x1F4C1; <span class="pt-dir">MachineData/CNC/</span> <span class="pt-desc">- parametry maszyny</span><br>'+
+        '&nbsp;&nbsp;&nbsp;&nbsp;&#x1F4C1; <span class="pt-dir">MakerData/</span> <span class="pt-desc">- parametry producenta</span><br>'+
+      '</div>'+
+      '<p style="font-size:10px;color:var(--td);margin-top:8px"><b style="color:var(--ac)">Warianty projektu:</b> Pliki .lad moga istniec w roznych podkatalogach projektu (Project/5AXIS/, Project/PT/, itp.) - kazdy wariant maszyny moze miec osobny ladder.</p>'+
+      '<p style="font-size:10px;color:var(--td);margin-top:4px"><b style="color:var(--ac)">Backup:</b> Kopie zapasowe w BackupEnv/[wariant]/DiskC/OpenCNC/Ladder/</p>'+
+    '</div>'+
+    // PLC INSTRUCTIONS
+    '<div class="help-card">'+
+      '<h4>&#x26D3; Instrukcje PLC Ladder - Kompletna Referencja</h4>'+
+      '<p style="font-size:10px;color:var(--td);margin-bottom:8px">Instrukcje PLC stosowane w programach drabinkowych Syntec CNC:</p>'+
+      '<table><thead><tr>'+
+        '<th style="width:50px">Kod</th><th style="width:80px">Symbol</th><th style="width:70px">Kategoria</th><th>Opis dzialania</th>'+
+      '</tr></thead><tbody>'+
+      instructions.map(function(instr) {
+        return '<tr><td style="font-family:monospace;font-weight:700;color:'+instr.color+'">'+instr.op+'</td>'+
+          '<td style="font-family:monospace;font-size:10px;color:var(--td)">'+esc(instr.sym)+'</td>'+
+          '<td><span style="font-size:9px;padding:1px 5px;border-radius:3px;background:'+instr.color+'22;color:'+instr.color+';border:1px solid '+instr.color+'44">'+instr.cat+'</span></td>'+
+          '<td style="font-size:10px">'+instr.desc+'</td></tr>';
+      }).join('')+
+      '</tbody></table>'+
+    '</div>'+
+    // REGISTER TYPES
+    '<div class="help-card">'+
+      '<h4>&#x1F527; Typy rejestrow PLC</h4>'+
+      '<p style="font-size:10px;color:var(--td);margin-bottom:8px">Rejestry to pamiec PLC - kazdy typ ma inne zastosowanie:</p>'+
+      '<table><thead><tr>'+
+        '<th style="width:40px">Typ</th><th style="width:150px">Nazwa</th><th>Opis</th><th style="width:200px">Typowe zastosowanie</th>'+
+      '</tr></thead><tbody>'+
+      regTypes.map(function(rt) {
+        return '<tr><td><span class="reg-chip '+rt.type+'" style="font-size:14px;font-weight:700">'+rt.type+'</span></td>'+
+          '<td style="font-weight:600;color:'+rt.color+'">'+rt.name+'</td>'+
+          '<td style="font-size:10px">'+rt.desc+'</td>'+
+          '<td style="font-size:10px;color:var(--yl)">'+rt.use+'</td></tr>';
+      }).join('')+
+      '</tbody></table>'+
+    '</div>'+
+    // BINARY FORMAT
+    '<div class="help-card">'+
+      '<h4>&#x1F4BE; Format binarny .lad</h4>'+
+      '<p style="font-size:10px;color:var(--td);margin-bottom:8px">Pliki .lad to skompilowane programy PLC w formacie binarnym Syntec:</p>'+
+      '<div style="font-size:11px;line-height:1.8">'+
+        '<div><span style="color:var(--ac);font-weight:700">Naglowek (offset 0x00):</span> Magic bytes + typ maszyny + wersja + zakresy rejestrow</div>'+
+        '<div><span style="color:var(--yl);font-weight:700">Etykiety (Big5):</span> Nazwy sekcji kodowane w chinski tradycyjny Big5. Kazda etykieta to para bajtow (high+low).</div>'+
+        '<div><span style="color:var(--gn);font-weight:700">Instrukcje:</span> Opkody 1-3 bajtowe (np. 0x70=LD, 0x6E=OUT, 0x12=SET, 0x14=RST)</div>'+
+        '<div><span style="color:var(--td);font-weight:700">NOP (0x0D):</span> Bajty wypelnienia miedzy instrukcjami</div>'+
+        '<div><span style="color:var(--a2);font-weight:700">Rejestry:</span> Zakodowane jako ASCII w strumieniu bajtow (np. R, 0x31, 0x30, 0x30 = "R100")</div>'+
+      '</div>'+
+    '</div>'+
+    // ABOUT
+    '<div class="help-card">'+
+      '<h4>&#x2139; O programie</h4>'+
+      '<div style="font-size:11px;line-height:1.6">'+
+        '<div><b style="color:var(--ac)">Syntec Ladder Viewer v4.0</b> - Wizualna przegladarka programow PLC</div>'+
+        '<div style="color:var(--td)">Narzedie do analizy skompilowanych programow drabinkowych (.lad) dla sterownikow Syntec CNC.</div>'+
+        '<div style="margin-top:6px"><b>Funkcje:</b></div>'+
+        '<ul style="margin:4px 0 0 16px;color:var(--td);font-size:10px">'+
+          '<li>Mapa wizualna sekcji PLC z kategoryzacja i treemap</li>'+
+          '<li>Pelne tlumaczenie chinskich etykiet (Big5) na polski (229+ hasel)</li>'+
+          '<li>Diagram drabinkowy z dekodowaniem instrukcji</li>'+
+          '<li>Cross-reference rejestrow (Xref) - gdzie kazdy rejestr jest uzywany</li>'+
+          '<li>Mapa I/O z mozliwoscia importu IoMap XML</li>'+
+          '<li>System zaleznosci i przeplyw sygnalow CNC</li>'+
+          '<li>Porownanie wielu plikow .lad</li>'+
+          '<li>Widok hex z kolorowaniem sekcji</li>'+
+          '<li>Notatki/adnotacje do sekcji (localStorage)</li>'+
+          '<li>Globalne wyszukiwanie (Ctrl+K)</li>'+
+          '<li>Eksport do JSON i etykiet tekstowych</li>'+
+        '</ul>'+
+      '</div>'+
+    '</div>';
+}
+
+// GLOBAL SEARCH (Ctrl+K)
+function openGlobalSearch() {
+  document.getElementById('gsOverlay').classList.add('open');
+  var inp = document.getElementById('gsInput');
+  inp.value = '';
+  inp.focus();
+  document.getElementById('gsResults').innerHTML = '<div style="padding:16px;text-align:center;color:var(--td);font-size:11px">Wpisz aby szukac sekcji, rejestrow, I/O, tlumaczen...</div>';
+}
+function closeGlobalSearch() {
+  document.getElementById('gsOverlay').classList.remove('open');
+}
+function doGlobalSearch(q) {
+  var el = document.getElementById('gsResults');
+  if (!q || q.length < 2) { el.innerHTML = '<div style="padding:16px;text-align:center;color:var(--td);font-size:11px">Wpisz min. 2 znaki...</div>'; return; }
+  q = q.toLowerCase();
+  var results = [];
+  var file = state.files[state.currentFile];
+  if (file) {
+    var p = file.parsed;
+    // Search sections
+    for (var i = 0; i < p.sections.length; i++) {
+      var s = p.sections[i];
+      var match = s.label.toLowerCase().includes(q) || (s.translation||'').toLowerCase().includes(q) || s.category.name.toLowerCase().includes(q);
+      if (match) results.push({type:'Sekcja',typeColor:'var(--ac)',text:s.label+(s.translation?' -> '+s.translation:''),sub:s.category.icon+' '+s.category.name+' | '+s.size+'B',action:'selectSection('+i+');switchTab(\'hex\');closeGlobalSearch()'});
+    }
+    // Search registers
+    for (var reg of p.registers) {
+      if (reg.toLowerCase().includes(q)) results.push({type:'Rejestr',typeColor:'var(--gn)',text:reg,sub:'Typ: '+reg[0],action:'switchTab(\'xref\');closeGlobalSearch();setTimeout(function(){var inp=document.getElementById(\"xrefSearch\");if(inp){inp.value=\"'+reg+'\";filterXref();}},100)'});
+    }
+  }
+  // Search static I/O
+  for (var io of IO_DB.inputs) {
+    if (io.addr.toLowerCase().includes(q)||io.name.toLowerCase().includes(q)||io.desc.toLowerCase().includes(q))
+      results.push({type:'Wejscie',typeColor:'var(--gn)',text:io.addr+' - '+io.name,sub:io.desc.substring(0,60),action:'switchTab(\'io\');closeGlobalSearch()'});
+  }
+  for (var io2 of IO_DB.outputs) {
+    if (io2.addr.toLowerCase().includes(q)||io2.name.toLowerCase().includes(q)||io2.desc.toLowerCase().includes(q))
+      results.push({type:'Wyjscie',typeColor:'var(--or)',text:io2.addr+' - '+io2.name,sub:io2.desc.substring(0,60),action:'switchTab(\'io\');closeGlobalSearch()'});
+  }
+  // Search dictionary
+  for (var cn in CN_PL) {
+    if (CN_PL[cn].toLowerCase().includes(q)||cn.includes(q))
+      results.push({type:'Slownik',typeColor:'var(--yl)',text:cn+' -> '+CN_PL[cn],sub:'Tlumaczenie CN/PL',action:'closeGlobalSearch()'});
+  }
+  results = results.slice(0, 50);
+  if (!results.length) { el.innerHTML = '<div style="padding:16px;text-align:center;color:var(--td)">Brak wynikow dla "'+esc(q)+'"</div>'; return; }
+  el.innerHTML = '<div style="padding:6px 18px;font-size:10px;color:var(--td);border-bottom:1px solid var(--bd)">'+results.length+' wynikow</div>'+
+    results.map(function(r, idx) {
+      return '<div class="gsearch-item'+(idx===0?' sel':'')+'" onclick="'+r.action+'" data-idx="'+idx+'">'+
+        '<span class="gs-type" style="background:'+r.typeColor+'22;color:'+r.typeColor+'">'+r.type+'</span>'+
+        '<span class="gs-text">'+esc(r.text)+'</span>'+
+        '<span class="gs-sub">'+esc(r.sub)+'</span>'+
+      '</div>';
+    }).join('');
+  state.gsResults = results;
+  state.gsSelected = 0;
+}
+function gsKeyNav(e) {
+  if (e.key === 'Escape') { closeGlobalSearch(); return; }
+  if (!state.gsResults || !state.gsResults.length) return;
+  if (e.key === 'Ar & RENDER
+function renderIoMapSection() {
+  var m = state.ioMap; if (!m) return '';
+  return '<h4 style="color:var(--cy);margin:24px 0 6px;font-size:12px">&#x1F50C; Mapowanie sprzetowe I/O z pliku: '+esc(m.filename)+'</h4>'+
+    '<p style="font-size:9px;color:var(--td);margin-bottom:6px">Dane z IoMap XML - mapowanie fizycznych modulow I/O na adresy logiczne sterownika</p>'+
+    (m.inputs.length ? '<h5 style="color:var(--gn);margin:12px 0 4px;font-size:11px">&#x2B05; Moduly wejsc ('+m.inputs.length+')</h5>'+
+    '<table class="io-table"><thead><tr><th>Modul</th><th>Nazwa</th><th>Port</th><th>Logic Start</th><th>Physic Start</th><th>Bity</th><th>Stacja</th></tr></thead><tbody>'+
+    m.inputs.map(function(io) {
+      return '<tr class="io-row"><td style="font-weight:600;color:var(--ac)">'+esc(io.module)+'</td>'+
+        '<td style="font-family:monospace;color:var(--gn)">'+esc(io.name)+'</td>'+
+        '<td style="font-family:monospace;color:var(--cy)">'+esc(io.port)+'</td>'+
+        '<td style="font-family:monospace;color:'+(io.logicStart<0?'var(--rd)':'var(--yl)')+'">'+io.logicStart+'</td>'+
+        '<td style="font-family:monospace">'+io.physicStart+'</td>'+
+        '<td style="font-family:monospace;color:var(--or)">'+io.length+'</td>'+
+        '<td style="color:var(--td)">'+esc(io.station)+'</td></tr>';
+    }).join('')+'</tbody></table>' : '')+
+    (m.outputs.length ? '<h5 style="color:var(--or);margin:12px 0 4px;font-size:11px">&#x27A1; Moduly wyjsc ('+m.outputs.length+')</h5>'+
+    '<table class="io-table"><thead><tr><th>Modul</th><th>Nazwa</th><th>Port</th><th>Logic Start</th><th>Physic Start</th><th>Bity</th><th>Stacja</th></tr></thead><tbody>'+
+    m.outputs.map(function(io) {
+      return '<tr class="io-row"><td style="font-weight:600;color:var(--ac)">'+esc(io.module)+'</td>'+
+        '<td style="font-family:monospace;color:var(--or)">'+esc(io.name)+'</td>'+
+        '<td style="font-family:monospace;color:var(--cy)">'+esc(io.port)+'</td>'+
+        '<td style="font-family:monospace;color:'+(io.logicStart<0?'var(--rd)':'var(--yl)')+'">'+io.logicStart+'</td>'+
+        '<td style="font-family:monospace">'+io.physicStart+'</td>'+
+        '<td style="font-family:monospace;color:var(--or)">'+io.length+'</td>'+
+        '<td style="color:var(--td)">'+esc(io.station)+'</td></tr>';
+    }).join('')+'</tbody></table>' : '');
+}rowDown') { e.preventDefault(); state.gsSelected = Math.min(state.gsSelected + 1, state.gsResults.length - 1); gsHighlight(); }
+  else if (e.key === 'ArrowUp') { e.preventDefault(); state.gsSelected = Math.max(state.gsSelected - 1, 0); gsHighlight(); }
+  else if (e.key === 'Enter') {
+    e.preventDefault();
+    var items = document.querySelectorAll('.gsearch-item');
+    if (items[state.gsSelected]) items[state.gsSelected].click();
+  }
+}
+function gsHighlight() {
+  document.querySelectorAll('.gsearch-item').forEach(function(el, i) {
+    el.classList.toggle('sel', i === state.gsSelected);
+    if (i === state.gsSelected) el.scrollIntoView({block:'nearest'});
+  });
+}
+
+// IOMAP XML IMPORT
+function loadIoMapXML(input) {
+  var file = input.files[0]; if (!file) return;
+  var reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      var parser = new DOMParser();
+      var doc = parser.parseFromString(e.target.result, 'text/xml');
+      var ioMap = { inputs: [], outputs: [], filename: file.name };
+      // Parse IBitMap (inputs)
+      var ibitmap = doc.querySelector('IBitMap');
+      if (ibitmap) {
+        ibitmap.querySelectorAll('*').forEach(function(node) {
+          var name = node.querySelector('Name');
+          var port = node.querySelector('Port');
+          var logicStart = node.querySelector('LogicStart');
+          var physicStart = node.querySelector('PhysicStart');
+          var length = node.querySelector('Length');
+          if (name && logicStart && length) {
+            ioMap.inputs.push({
+              module: node.tagName,
+              name: name.textContent,
+              port: port ? port.textContent : '',
+              logicStart: parseInt(logicStart.textContent),
+              physicStart: parseInt(physicStart.textContent),
+              length: parseInt(length.textContent),
+              station: node.getAttribute('Station') || ''
+            });
+          }
+        });
+      }
+      // Parse OBitMap (outputs)
+      var obitmap = doc.querySelector('OBitMap');
+      if (obitmap) {
+        obitmap.querySelectorAll('*').forEach(function(node) {
+          var name = node.querySelector('Name');
+          var port = node.querySelector('Port');
+          var logicStart = node.querySelector('LogicStart');
+          var physicStart = node.querySelector('PhysicStart');
+          var length = node.querySelector('Length');
+          if (name && logicStart && length) {
+            ioMap.outputs.push({
+              module: node.tagName,
+              name: name.textContent,
+              port: port ? port.textContent : '',
+              logicStart: parseInt(logicStart.textContent),
+              physicStart: parseInt(physicStart.textContent),
+              length: parseInt(length.textContent),
+              station: node.getAttribute('Station') || ''
+            });
+          }
+        });
+      }
+      state.ioMap = ioMap;
+      setStatus('Wczytano IoMap: ' + file.name + ' (' + ioMap.inputs.length + ' in, ' + ioMap.outputs.length + ' out)');
+      if (document.querySelector('.tab.active')?.getAttribute('data-tab') === 'io') renderIOTab();
+      else { switchTab('io'); }
+    } catch (err) {
+      setStatus('Blad parsowania IoMap XML: ' + err.message);
+    }
+  };
+  reader.readAsText(file);
+  input.value = '';
+}
+
+// ANNOTATIONS (localStorage)
+function saveNote(secIdx, text) {
+  var file = state.files[state.currentFile]; if (!file) return;
+  var key = 'ladnote_' + file.parsed.filename + '_' + secIdx;
+  if (text && text.trim()) {
+    try { localStorage.setItem(key, text.trim()); } catch(e) {}
+  } else {
+    try { localStorage.removeItem(key); } catch(e) {}
+  }
+  setStatus('Notatka '+(text&&text.trim()?'zapisana':'usunieta')+' dla sekcji #'+(secIdx+1));
+}
+function getNote(filename, secIdx) {
+  try { return localStorage.getItem('ladnote_' + filename + '_' + secIdx) || ''; } catch(e) { return ''; }
+}
+
+// EXPORT
+function exportJSON() {
+  const file = state.files[state.currentFile]; if (!file) return;
+  const data = { filename:file.parsed.filename, size:file.parsed.size, header:file.parsed.header,
+    sections:file.parsed.sections.map(s=>({label:s.label,translation:s.translation,category:s.category.name,offset:s.labelOffset,size:s.size})),
+    registers:[...file.parsed.registers].sort()
+  };
+  downloadFile(JSON.stringify(data,null,2), file.parsed.filename.replace('.lad','_analysis.json'), 'application/json');
+}
+function exportLabels() {
+  const file = state.files[state.currentFile]; if (!file) return;
+  const lines = ['#\tKategoria\tChinski\tPolski\tOffset\tRozmiar'];
+  file.parsed.sections.forEach((s,i)=>lines.push((i+1)+'\t'+s.category.name+'\t'+s.label+'\t'+(s.translation||'')+'\t0x'+s.labelOffset.toString(16).toUpperCase()+'\t'+s.size));
+  downloadFile(lines.join('\n'), file.parsed.filename.replace('.lad','_labels.txt'), 'text/plain');
+}
+function downloadFile(c,n,t){var b=new Blob([c],{type:t}),u=URL.createObjectURL(b),a=document.createElement('a');a.href=u;a.download=n;a.click();URL.revokeObjectURL(u);}
+
+// UTILS
+function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+function escChar(b){var c=String.fromCharCode(b);return c==='<'?'&lt;':c==='>'?'&gt;':c==='&'?'&amp;':c;}
+function fmtSize(n){return n<1024?n+' B':n<1048576?(n/1024).toFixed(1)+' KB':(n/1048576).toFixed(1)+' MB';}
+function setStatus(msg){document.getElementById('status').textContent=msg;}
+</script>
+</body>
+</html>

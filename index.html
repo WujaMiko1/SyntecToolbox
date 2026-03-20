@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Syntec Toolbox - CNC Development Tools</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#0a0a16;--sf:#12122a;--sf2:#1a1a35;--bd:#2a2a50;--tx:#d0d0ee;--td:#7070a0;--ac:#6c8cff;--gn:#4caf50;--or:#ff9800;--yl:#ffeb3b;--cy:#00bcd4;--a2:#ff6c8c;--rd:#f44336}
+body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--tx);min-height:100vh;overflow-x:hidden}
+a{color:var(--ac);text-decoration:none;transition:color .15s}a:hover{color:#8aa4ff}
+
+/* HERO */
+.hero{text-align:center;padding:60px 20px 40px;position:relative;overflow:hidden}
+.hero::before{content:'';position:absolute;top:0;left:50%;transform:translateX(-50%);width:800px;height:400px;background:radial-gradient(ellipse,rgba(108,140,255,.12) 0%,transparent 70%);pointer-events:none}
+.hero h1{font-size:42px;font-weight:800;letter-spacing:-1px;margin-bottom:8px;position:relative}
+.hero h1 .icon{font-size:48px;vertical-align:middle;margin-right:8px}
+.hero h1 .brand{background:linear-gradient(135deg,var(--ac),var(--cy));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.hero .sub{font-size:16px;color:var(--td);margin-bottom:24px;max-width:600px;margin-left:auto;margin-right:auto;line-height:1.6}
+.hero .version{display:inline-block;padding:4px 14px;background:var(--sf2);border:1px solid var(--bd);border-radius:20px;font-size:12px;color:var(--td);margin-bottom:16px}
+
+/* TOOL CARDS */
+.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:20px;max-width:1100px;margin:0 auto;padding:0 24px 60px}
+.card{border:1px solid var(--bd);border-radius:16px;background:var(--sf);overflow:hidden;transition:all .2s;position:relative}
+.card:hover{border-color:var(--ac);transform:translateY(-4px);box-shadow:0 8px 32px rgba(108,140,255,.15)}
+.card-header{padding:20px 24px 16px;border-bottom:1px solid var(--bd);display:flex;align-items:center;gap:12px}
+.card-icon{font-size:32px;width:50px;height:50px;display:flex;align-items:center;justify-content:center;border-radius:12px;flex-shrink:0}
+.card-title{font-size:18px;font-weight:700}
+.card-ver{font-size:10px;color:var(--td);margin-top:2px}
+.card-body{padding:16px 24px}
+.card-desc{font-size:13px;color:var(--td);line-height:1.6;margin-bottom:14px}
+.card-features{list-style:none;margin-bottom:16px}
+.card-features li{font-size:11px;color:var(--tx);padding:3px 0;display:flex;align-items:center;gap:6px}
+.card-features li::before{content:'✓';color:var(--gn);font-weight:700;font-size:12px}
+.card-actions{display:flex;gap:8px;flex-wrap:wrap}
+.btn{display:inline-flex;align-items:center;gap:6px;padding:8px 18px;border-radius:8px;font-size:12px;font-weight:600;border:1px solid var(--bd);cursor:pointer;transition:all .15s;text-decoration:none;font-family:inherit}
+.btn-primary{background:var(--ac);color:#fff;border-color:var(--ac)}.btn-primary:hover{background:#5a7ae6;-webkit-text-fill-color:#fff}
+.btn-secondary{background:transparent;color:var(--ac)}.btn-secondary:hover{background:rgba(108,140,255,.1)}
+
+/* TECH BAR */
+.tech-bar{display:flex;justify-content:center;gap:24px;flex-wrap:wrap;padding:20px;margin-bottom:30px}
+.tech-pill{display:flex;align-items:center;gap:6px;padding:6px 14px;background:var(--sf);border:1px solid var(--bd);border-radius:20px;font-size:11px;color:var(--td)}
+.tech-pill .dot{width:8px;height:8px;border-radius:50%}
+
+/* FOOTER */
+.footer{text-align:center;padding:30px;border-top:1px solid var(--bd);background:var(--sf);font-size:11px;color:var(--td)}
+.footer a{color:var(--ac)}
+
+/* SECTION HEADING */
+.section-hdr{text-align:center;margin:40px 0 24px;font-size:12px;text-transform:uppercase;letter-spacing:2px;color:var(--td);font-weight:700}
+.section-hdr span{display:inline-block;padding:0 16px;background:var(--bg);position:relative;z-index:1}
+.section-hdr::after{content:'';display:block;height:1px;background:var(--bd);margin-top:-7px}
+
+/* INFO GRID */
+.info-section{max-width:1100px;margin:0 auto 40px;padding:0 24px}
+.info-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:16px}
+.info-card{border:1px solid var(--bd);border-radius:12px;padding:16px;background:var(--sf)}
+.info-card h4{color:var(--ac);font-size:12px;margin-bottom:8px;display:flex;align-items:center;gap:6px}
+.info-card p{font-size:11px;color:var(--td);line-height:1.6}
+.info-card code{background:var(--sf2);padding:1px 5px;border-radius:3px;font-size:10px;color:var(--yl)}
+</style>
+</head>
+<body>
+
+<div class="hero">
+  <div class="version">v1.0 &mdash; Public Release</div>
+  <h1><span class="icon">&#x2699;</span><span class="brand">Syntec Toolbox</span></h1>
+  <p class="sub">Zestaw narz&#x119;dzi webowych do analizy, edycji i wizualizacji projekt&oacute;w CNC Syntec.<br>
+  Standalone HTML &mdash; zero zale&#x17C;no&#x15B;ci &mdash; dzia&#x142;a offline w przegl&#x105;darce.</p>
+</div>
+
+<div class="tech-bar">
+  <div class="tech-pill"><span class="dot" style="background:var(--or)"></span> Standalone HTML</div>
+  <div class="tech-pill"><span class="dot" style="background:var(--gn)"></span> Zero Dependencies</div>
+  <div class="tech-pill"><span class="dot" style="background:var(--cy)"></span> Offline Ready</div>
+  <div class="tech-pill"><span class="dot" style="background:var(--yl)"></span> Dark Theme</div>
+  <div class="tech-pill"><span class="dot" style="background:var(--a2)"></span> PL / CN Translation</div>
+</div>
+
+<div class="section-hdr"><span>&#x1F6E0; Narz&#x119;dzia</span></div>
+
+<div class="cards">
+  <!-- LADDER VIEWER -->
+  <div class="card">
+    <div class="card-header">
+      <div class="card-icon" style="background:rgba(108,140,255,.15)">&#x26D3;</div>
+      <div>
+        <div class="card-title">Ladder Viewer</div>
+        <div class="card-ver">v4.0 &bull; Wizualny analizator PLC</div>
+      </div>
+    </div>
+    <div class="card-body">
+      <p class="card-desc">Przegladarka skompilowanych program&oacute;w PLC (.lad) dla sterownik&oacute;w Syntec CNC. Pe&#x142;ne t&#x142;umaczenie chi&#x144;skich etykiet na polski, cross-reference rejestr&oacute;w, mapa zale&#x17C;no&#x15B;ci.</p>
+      <ul class="card-features">
+        <li>Dekodowanie binarnych .lad z etykietami Big5</li>
+        <li>229+ t&#x142;umacze&#x144; chi&#x144;ski &#x2192; polski</li>
+        <li>12 zak&#x142;adek: Mapa, Xref, Diagram, I/O, System, Pomoc...</li>
+        <li>Import IoMap XML &mdash; mapowanie sprz&#x119;towe I/O</li>
+        <li>Globalne wyszukiwanie (Ctrl+K), notatki, eksport JSON</li>
+        <li>Por&oacute;wnanie wielu plik&oacute;w .lad</li>
+      </ul>
+      <div class="card-actions">
+        <a href="tools/SyntecLadderViewer.html" class="btn btn-primary">&#x1F680; Otw&oacute;rz</a>
+        <a href="docs/ladder-viewer.md" class="btn btn-secondary">&#x1F4D6; Dokumentacja</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- WORKSHOP -->
+  <div class="card">
+    <div class="card-header">
+      <div class="card-icon" style="background:rgba(255,152,0,.15)">&#x1F3ED;</div>
+      <div>
+        <div class="card-title">Workshop</div>
+        <div class="card-ver">v2.0 &bull; Multi-modu&#x142;owy hub</div>
+      </div>
+    </div>
+    <div class="card-body">
+      <p class="card-desc">Zintegrowane &#x15B;rodowisko z 7 modu&#x142;ami: Screen Editor, Parametry CDB, Ladder Explorer, Alarmy, NcFiles, I/O Viewer i wbudowany edytor ekran&oacute;w.</p>
+      <ul class="card-features">
+        <li>Screen Editor &mdash; edycja .scr XML z pe&#x142;nym CRUD element&oacute;w</li>
+        <li>Parametry CDB &mdash; przegl&#x105;darka baz parametr&oacute;w</li>
+        <li>Ladder Explorer &mdash; szybki podgl&#x105;d sekcji PLC</li>
+        <li>Alarm Viewer &mdash; analiza plik&oacute;w .mir/.lkn</li>
+        <li>NC Files &mdash; podgl&#x105;d program&oacute;w G-code</li>
+        <li>I/O Viewer &mdash; mapowanie wej&#x15B;&#x107;/wyj&#x15B;&#x107;</li>
+      </ul>
+      <div class="card-actions">
+        <a href="tools/SyntecWorkshop.html" class="btn btn-primary">&#x1F680; Otw&oacute;rz</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- LAYOUT EDITOR -->
+  <div class="card">
+    <div class="card-header">
+      <div class="card-icon" style="background:rgba(76,175,80,.15)">&#x1F3A8;</div>
+      <div>
+        <div class="card-title">Layout Editor</div>
+        <div class="card-ver">v3.0 &bull; Drag &amp; Drop Screen Designer</div>
+      </div>
+    </div>
+    <div class="card-body">
+      <p class="card-desc">Wizualny edytor uk&#x142;ad&oacute;w ekran&oacute;w CNC (.scr). Drag &amp; drop, siatka, wiele element&oacute;w GUI Syntec, eksport do XML.</p>
+      <ul class="card-features">
+        <li>Drag &amp; drop element&oacute;w na kanwie</li>
+        <li>9 typ&oacute;w element&oacute;w Syntec GUI</li>
+        <li>Edycja w&#x142;a&#x15B;ciwo&#x15B;ci, kolorowanie</li>
+        <li>Import/eksport XML zgodny z formatem .scr</li>
+      </ul>
+      <div class="card-actions">
+        <a href="tools/SyntecLayoutEditor.html" class="btn btn-primary">&#x1F680; Otw&oacute;rz</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="section-hdr"><span>&#x2139; Informacje</span></div>
+
+<div class="info-section">
+  <div class="info-grid">
+    <div class="info-card">
+      <h4>&#x1F4C2; Pliki Ladder</h4>
+      <p>Pliki <code>.lad</code> znajduj&#x105; si&#x119; w:<br>
+      <code>Project/DiskC/OpenCNC/Ladder/</code><br>
+      G&#x142;&oacute;wny program: <code>cnc.lad</code><br>
+      Serwer: <code>cnc_server.lad</code><br>
+      Dev: <code>develop.lad</code></p>
+    </div>
+    <div class="info-card">
+      <h4>&#x1F50C; Mapowanie I/O</h4>
+      <p>Pliki konfiguracji I/O:<br>
+      <code>OpenCNC/Data/IO/IoMap_*.xml</code><br>
+      Mo&#x17C;na je wczyta&#x107; w Ladder Viewer aby zobaczy&#x107; mapowanie modu&#x142;&oacute;w sprz&#x119;towych.</p>
+    </div>
+    <div class="info-card">
+      <h4>&#x1F3A8; Ekrany CNC</h4>
+      <p>Pliki ekran&oacute;w <code>.scr</code> (XML):<br>
+      <code>OpenCNC/Res/</code> i <code>StdRes/</code><br>
+      Edytuj w Layout Editor lub Workshop Screen Editor.</p>
+    </div>
+    <div class="info-card">
+      <h4>&#x1F4BB; Jak u&#x17C;ywa&#x107;</h4>
+      <p>Ka&#x17C;de narz&#x119;dzie to samodzielny plik HTML. Wystarczy otworzy&#x107; w przegl&#x105;darce &mdash; Chrome, Edge, Firefox. Brak potrzeby serwera, instalacji ani internetu.</p>
+    </div>
+  </div>
+</div>
+
+<div class="footer">
+  <p><strong>Syntec Toolbox</strong> &mdash; MikoTech &copy; 2025-2026</p>
+  <p style="margin-top:4px">Narz&#x119;dzia do analizy i edycji projekt&oacute;w CNC Syntec. Standalone HTML, zero zale&#x17C;no&#x15B;ci.</p>
+</div>
+
+</body>
+</html>

@@ -1,0 +1,1328 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Syntec CNC Layout Editor v3</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#1a1a2e;--sf:#242442;--sf2:#1e1e38;--bd:#363660;--bdl:#4a4a7a;
+  --tx:#e0e0f0;--td:#8888aa;--ac:#6c8cff;--ah:#8aa4ff;--a2:#ff6c8c;
+  --gn:#4caf50;--or:#ff9800;--rd:#f44336;--pb:#1c1c36;--sel:rgba(108,140,255,0.25);
+}
+body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--tx);overflow:hidden;height:100vh;display:flex;flex-direction:column;font-size:12px}
+
+/* TOOLBAR */
+.toolbar{display:flex;align-items:center;gap:6px;padding:5px 10px;background:linear-gradient(180deg,#2a2a4e,#222244);border-bottom:1px solid var(--bd);flex-shrink:0;flex-wrap:wrap;min-height:36px}
+.toolbar h1{font-size:13px;font-weight:700;color:var(--ac);margin-right:8px;white-space:nowrap}
+.toolbar h1 span{color:var(--td);font-weight:400;font-size:10px}
+.tg{display:flex;align-items:center;gap:3px;padding:0 6px;border-left:1px solid var(--bd)}
+.tb{background:var(--pb);border:1px solid var(--bd);color:var(--tx);padding:3px 8px;border-radius:3px;cursor:pointer;font-size:11px;white-space:nowrap;transition:all .12s;line-height:1.4}
+.tb:hover{background:var(--ac);color:#fff;border-color:var(--ac)}.tb.active{background:var(--ac);color:#fff}
+.tb.danger:hover{background:var(--rd);border-color:var(--rd)}.tb.green{border-color:var(--gn)}.tb.green:hover{background:var(--gn)}
+.tb.sim{border-color:var(--or);color:var(--or);font-weight:700}.tb.sim:hover{background:var(--or);color:#fff}
+.toolbar input[type="file"]{display:none}
+.toolbar select,.toolbar input[type="number"]{background:var(--pb);border:1px solid var(--bd);color:var(--tx);padding:3px 5px;border-radius:3px;font-size:11px}
+.toolbar input[type="number"]{width:50px}.tl{font-size:10px;color:var(--td)}
+
+/* TABS */
+.tab-bar{display:flex;background:var(--sf2);border-bottom:1px solid var(--bd);overflow-x:auto;flex-shrink:0;min-height:0}
+.tab-bar:empty{display:none}
+.tab{padding:5px 12px;font-size:11px;cursor:pointer;border-right:1px solid var(--bd);white-space:nowrap;display:flex;align-items:center;gap:6px;color:var(--td);transition:all .15s;position:relative}
+.tab:hover{background:rgba(108,140,255,.1);color:var(--tx)}.tab.active{background:var(--sf);color:var(--ac);border-bottom:2px solid var(--ac)}
+.tab .tab-close{font-size:14px;opacity:.4;cursor:pointer;line-height:1}.tab .tab-close:hover{opacity:1;color:var(--rd)}
+.tab .tab-mod{color:var(--or);font-size:8px;margin-left:2px}
+
+/* MAIN */
+.main{display:flex;flex:1;overflow:hidden}
+
+/* LEFT PANEL */
+.left-panel{width:260px;background:var(--sf);border-right:1px solid var(--bd);display:flex;flex-direction:column;flex-shrink:0}
+.panel-tabs{display:flex;border-bottom:1px solid var(--bd)}
+.panel-tab{flex:1;padding:6px;text-align:center;font-size:10px;font-weight:600;cursor:pointer;color:var(--td);border-bottom:2px solid transparent;text-transform:uppercase;letter-spacing:.5px}
+.panel-tab:hover{color:var(--tx)}.panel-tab.active{color:var(--ac);border-bottom-color:var(--ac)}
+.panel-content{flex:1;overflow-y:auto}
+
+/* Tree */
+.tree-header{display:flex;align-items:center;gap:4px;padding:3px 6px;cursor:pointer;border-radius:3px;margin:1px 3px;font-size:11px}
+.tree-header:hover{background:rgba(108,140,255,.1)}
+.tree-header.active-file{background:var(--sel);color:var(--ac)}
+.tree-arrow{font-size:8px;width:12px;text-align:center;color:var(--td);transition:transform .15s;display:inline-block}
+.tree-arrow.open{transform:rotate(90deg)}.tree-icon{font-size:11px}
+.tree-label{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tree-badge{font-size:8px;padding:0 4px;border-radius:6px;background:var(--bd);color:var(--td)}
+.tree-children{padding-left:12px}.tree-children.collapsed{display:none}
+
+/* Element list */
+.el-item{padding:3px 8px;font-size:11px;cursor:pointer;border-radius:3px;display:flex;justify-content:space-between;align-items:center;gap:4px;border:1px solid transparent;margin:1px 3px}
+.el-item:hover{background:rgba(108,140,255,.08)}.el-item.selected{background:var(--sel);border-color:var(--ac)}
+.el-badge{font-size:8px;padding:1px 5px;border-radius:8px;font-weight:700;text-transform:uppercase;letter-spacing:.3px}
+.el-badge.button{background:#1a3a1a;color:#6f6}.el-badge.label{background:#3a3a1a;color:#ff6}
+.el-badge.panel{background:#1a2a4a;color:#6cf}.el-badge.input{background:#3a1a3a;color:#f6f}
+.el-badge.inputline{background:#3a2a1a;color:#fc6}.el-badge.picture{background:#1a3a3a;color:#6ff}
+.el-badge.display{background:#2a2a1a;color:#cf6}.el-badge.coordbox{background:#1a2a2a;color:#6fc}
+.el-badge.marquee{background:#2a1a2a;color:#c6f}.el-badge.other{background:#2a2a2a;color:#aaa}
+
+.file-info{padding:8px 10px;background:var(--sf2);border-bottom:1px solid var(--bd)}
+.file-info .fi-name{font-size:12px;font-weight:700;color:var(--ac);margin-bottom:3px}
+.file-info .fi-detail{font-size:10px;color:var(--td)}
+.file-info .fi-stats{display:flex;gap:6px;flex-wrap:wrap;margin-top:4px}
+.file-info .fi-stat{font-size:9px;padding:1px 5px;background:var(--bd);border-radius:4px}
+
+/* IMAGE BROWSER */
+.img-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:4px;padding:6px}
+.img-thumb{background:var(--pb);border:1px solid var(--bd);border-radius:4px;cursor:pointer;overflow:hidden;aspect-ratio:1;display:flex;flex-direction:column;transition:border-color .15s}
+.img-thumb:hover{border-color:var(--ac)}
+.img-thumb img{width:100%;flex:1;object-fit:contain;background:#111;min-height:0}
+.img-thumb .img-name{font-size:8px;padding:2px;text-align:center;color:var(--td);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.img-thumb.drag-active{border-color:var(--gn);background:rgba(76,175,80,.1)}
+.img-filter{padding:4px 6px;border-bottom:1px solid var(--bd);position:sticky;top:0;z-index:2;background:var(--sf)}
+.img-filter input{width:100%;background:var(--pb);border:1px solid var(--bd);color:var(--tx);padding:3px 6px;border-radius:3px;font-size:10px}
+.img-drop-zone{border:2px dashed var(--bd);border-radius:6px;padding:14px;margin:6px;text-align:center;color:var(--td);font-size:10px;cursor:pointer;transition:border-color .2s}
+.img-drop-zone:hover,.img-drop-zone.active{border-color:var(--ac);color:var(--ac)}
+.img-counter{font-size:9px;color:var(--td);padding:2px 8px;background:var(--sf2);border-bottom:1px solid var(--bd);display:flex;justify-content:space-between}
+
+/* CANVAS */
+.canvas-area{flex:1;overflow:auto;display:flex;align-items:center;justify-content:center;background:#14142a;position:relative}
+.canvas-container{position:relative}.canvas-bg{background:#000;position:relative;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,.5)}
+.grid-overlay{position:absolute;top:0;left:0;right:0;bottom:0;pointer-events:none;z-index:1}
+.element-layer{position:absolute;top:0;left:0;z-index:2}
+.el{position:absolute;cursor:move;display:flex;align-items:center;justify-content:center;text-align:center;overflow:hidden;user-select:none;border:1px solid transparent;transition:border-color .1s}
+.el:hover{border-color:rgba(108,140,255,.4)!important}
+.el.selected{border:2px solid var(--ac)!important;z-index:1000!important;box-shadow:0 0 8px rgba(108,140,255,.3)}
+.el.selected .rh{display:block}
+.el .type-tag{position:absolute;top:1px;left:2px;font-size:7px;opacity:.5;background:rgba(0,0,0,.5);padding:0 3px;border-radius:2px;pointer-events:none;z-index:3}
+.el .el-img{position:absolute;top:0;left:0;width:100%;height:100%;object-fit:fill;pointer-events:none;z-index:0}
+.rh{display:none;position:absolute;width:7px;height:7px;background:var(--ac);border:1px solid #fff;z-index:1001;border-radius:1px}
+.rh.nw{top:-3px;left:-3px;cursor:nw-resize}.rh.ne{top:-3px;right:-3px;cursor:ne-resize}
+.rh.sw{bottom:-3px;left:-3px;cursor:sw-resize}.rh.se{bottom:-3px;right:-3px;cursor:se-resize}
+.rh.n{top:-3px;left:50%;margin-left:-3px;cursor:n-resize}.rh.s{bottom:-3px;left:50%;margin-left:-3px;cursor:s-resize}
+.rh.w{top:50%;margin-top:-3px;left:-3px;cursor:w-resize}.rh.e{top:50%;margin-top:-3px;right:-3px;cursor:e-resize}
+.selection-rect{position:absolute;border:1px dashed var(--ac);background:var(--sel);pointer-events:none;z-index:999;display:none}
+
+/* RIGHT PANEL */
+.right-panel{width:270px;background:var(--sf);border-left:1px solid var(--bd);display:flex;flex-direction:column;flex-shrink:0}
+.right-panel h3{font-size:11px;padding:6px 10px;background:var(--sf2);border-bottom:1px solid var(--bd);position:sticky;top:0;z-index:5;display:flex;justify-content:space-between;align-items:center}
+.right-panel .props-scroll{flex:1;overflow-y:auto}
+.prop-section{padding:6px 10px;border-bottom:1px solid var(--bd)}
+.prop-section h4{font-size:10px;color:var(--ac);margin-bottom:4px;font-weight:700;text-transform:uppercase;letter-spacing:.5px}
+.pr{display:flex;align-items:center;gap:4px;margin-bottom:3px}
+.pr label{font-size:10px;color:var(--td);width:55px;flex-shrink:0}
+.pr input,.pr select{flex:1;background:var(--pb);border:1px solid var(--bd);color:var(--tx);padding:2px 5px;border-radius:3px;font-size:11px}
+.pr input:focus,.pr select:focus{border-color:var(--ac);outline:none}
+.color-dot{display:inline-block;width:14px;height:14px;border:1px solid #555;border-radius:2px;flex-shrink:0}
+.img-preview-box{width:100%;max-height:80px;object-fit:contain;border:1px solid var(--bd);border-radius:3px;margin-top:4px;background:#111}
+
+/* STATUS */
+.statusbar{display:flex;align-items:center;gap:14px;padding:3px 10px;background:var(--ac);color:#fff;font-size:10px;flex-shrink:0;font-weight:500}
+
+/* CTX MENU */
+.ctx-menu{position:fixed;background:var(--sf);border:1px solid var(--bd);border-radius:6px;padding:4px 0;z-index:10000;min-width:200px;box-shadow:0 8px 32px rgba(0,0,0,.6);display:none}
+.ctx-item{padding:5px 14px;font-size:11px;cursor:pointer;display:flex;justify-content:space-between}
+.ctx-item:hover{background:var(--ac);color:#fff}.ctx-sep{height:1px;background:var(--bd);margin:3px 0}
+.ctx-item .sc{color:var(--td);font-size:9px}.ctx-item:hover .sc{color:rgba(255,255,255,.7)}
+
+/* DIALOG */
+.dlg-overlay{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.6);z-index:15000;display:none;align-items:center;justify-content:center}
+.dlg-overlay.active{display:flex}
+.dlg{background:var(--sf);border:1px solid var(--bd);border-radius:8px;padding:16px;min-width:400px;max-width:90vw;max-height:90vh;overflow-y:auto;box-shadow:0 12px 48px rgba(0,0,0,.6)}
+.dlg h3{margin-bottom:10px;font-size:13px;color:var(--ac)}
+.dlg .fr{display:flex;align-items:center;gap:8px;margin-bottom:6px}
+.dlg .fr label{width:80px;font-size:11px;color:var(--td)}
+.dlg .fr input,.dlg .fr select{flex:1;background:var(--pb);border:1px solid var(--bd);color:var(--tx);padding:4px 8px;border-radius:4px;font-size:11px}
+.dlg .btn-row{display:flex;justify-content:flex-end;gap:6px;margin-top:12px}
+.dlg button{padding:5px 14px;border:1px solid var(--bd);border-radius:4px;cursor:pointer;font-size:11px;background:var(--pb);color:var(--tx)}
+.dlg button.primary{background:var(--ac);border-color:var(--ac);color:#fff}
+.dlg button.warn{background:var(--or);border-color:var(--or);color:#fff}
+
+/* IMAGE PICKER GRID IN DIALOG */
+.dlg-img-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:4px;max-height:200px;overflow-y:auto;margin:6px 0;padding:4px;background:var(--pb);border-radius:4px;border:1px solid var(--bd)}
+.dimg{border:2px solid transparent;border-radius:3px;cursor:pointer;overflow:hidden;aspect-ratio:1}
+.dimg:hover{border-color:var(--ac)}.dimg.picked{border-color:var(--gn);background:rgba(76,175,80,.15)}
+.dimg img{width:100%;height:100%;object-fit:contain;background:#111}
+
+/* WELCOME */
+.welcome{display:flex;flex-direction:column;align-items:center;justify-content:center;flex:1;color:var(--td);text-align:center;padding:40px}
+.welcome h2{font-size:20px;color:var(--ac);margin-bottom:12px}
+.welcome p{font-size:12px;max-width:500px;line-height:1.6;margin-bottom:8px}
+.welcome .hint{font-size:10px;color:var(--bdl);margin-top:20px}
+
+/* SIMULATOR */
+.sim-overlay{position:fixed;top:0;left:0;right:0;bottom:0;background:#000;z-index:20000;display:none;flex-direction:column;align-items:center;justify-content:center}
+.sim-overlay.active{display:flex}
+.sim-top{position:absolute;top:0;left:0;right:0;padding:8px 16px;background:rgba(0,0,0,.8);display:flex;align-items:center;justify-content:space-between;z-index:20001}
+.sim-top .sim-title{color:var(--ac);font-size:13px;font-weight:700}
+.sim-top .sim-info{color:var(--td);font-size:10px}
+.sim-canvas{position:relative;background:#000;overflow:hidden;transform-origin:center center}
+.sim-el{position:absolute;display:flex;align-items:center;justify-content:center;text-align:center;overflow:hidden;cursor:pointer;transition:filter .1s}
+.sim-el:hover{filter:brightness(1.2)}
+.sim-el:active{filter:brightness(0.8)}
+.sim-el img{position:absolute;top:0;left:0;width:100%;height:100%;object-fit:fill;pointer-events:none}
+.sim-log{position:absolute;bottom:0;left:0;right:0;max-height:120px;overflow-y:auto;background:rgba(0,0,0,.9);padding:6px;font-family:monospace;font-size:10px;color:#0f0;z-index:20001}
+.sim-log div{padding:1px 0;border-bottom:1px solid rgba(255,255,255,.05)}
+
+/* TOAST */
+.toast{position:fixed;bottom:36px;left:50%;transform:translateX(-50%);background:#333;color:#fff;padding:6px 18px;border-radius:6px;font-size:11px;z-index:25000;opacity:0;transition:opacity .3s;pointer-events:none}
+.toast.show{opacity:1}.toast.success{background:var(--gn)}.toast.error{background:var(--rd)}
+
+::-webkit-scrollbar{width:6px;height:6px}::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--bd);border-radius:3px}::-webkit-scrollbar-thumb:hover{background:var(--bdl)}
+</style>
+</head>
+<body>
+
+<!-- TOOLBAR -->
+<div class="toolbar">
+  <h1>⚙ Syntec Layout Editor <span>v3.0</span></h1>
+  <div class="tg">
+    <label for="fileInput" class="tb">📂 Wczytaj XML</label>
+    <input type="file" id="fileInput" accept=".xml" multiple>
+    <label for="folderInput" class="tb green">📁 Wczytaj OCRes</label>
+    <input type="file" id="folderInput" webkitdirectory directory multiple>
+    <button class="tb" onclick="exportXML()">💾 Zapisz</button>
+    <button class="tb" onclick="exportClip()">📋 Kopiuj</button>
+  </div>
+  <div class="tg">
+    <button class="tb" onclick="showAddDlg()">➕ Nowy</button>
+    <button class="tb" onclick="showAddPicDlg()">🖼️ Obrazek</button>
+    <button class="tb" onclick="dupSel()">📑</button>
+    <button class="tb danger" onclick="delSel()">🗑</button>
+  </div>
+  <div class="tg">
+    <button class="tb" onclick="undo()">↩</button>
+    <button class="tb" onclick="redo()">↪</button>
+  </div>
+  <div class="tg">
+    <span class="tl">Siatka:</span>
+    <input type="number" id="gridSize" value="10" min="1" max="50" onchange="updateGrid()">
+    <button class="tb active" id="snapBtn" onclick="toggleSnap()">🧲</button>
+    <button class="tb active" id="gridBtn" onclick="toggleGrid()">⊞</button>
+  </div>
+  <div class="tg">
+    <span class="tl">Zoom:</span>
+    <select id="zoomSel" onchange="setZoom(this.value)">
+      <option value="0.5">50%</option><option value="0.75">75%</option>
+      <option value="1" selected>100%</option><option value="1.25">125%</option>
+      <option value="1.5">150%</option><option value="2">200%</option>
+    </select>
+  </div>
+  <div class="tg">
+    <button class="tb" onclick="alignSel('left')">⬅</button>
+    <button class="tb" onclick="alignSel('ch')">↔</button>
+    <button class="tb" onclick="alignSel('right')">➡</button>
+    <button class="tb" onclick="alignSel('top')">⬆</button>
+    <button class="tb" onclick="alignSel('cv')">↕</button>
+    <button class="tb" onclick="alignSel('bottom')">⬇</button>
+    <button class="tb" onclick="distSel('h')">⇔</button>
+    <button class="tb" onclick="distSel('v')">⇕</button>
+  </div>
+  <div class="tg">
+    <button class="tb sim" onclick="openSimulator()">▶ SYMULATOR</button>
+  </div>
+</div>
+
+<!-- TABS -->
+<div class="tab-bar" id="tabBar"></div>
+
+<!-- MAIN -->
+<div class="main">
+  <!-- LEFT PANEL -->
+  <div class="left-panel">
+    <div class="panel-tabs">
+      <div class="panel-tab active" data-p="files" onclick="swPanel('files')">📁 Pliki</div>
+      <div class="panel-tab" data-p="elements" onclick="swPanel('elements')">📋 Elem</div>
+      <div class="panel-tab" data-p="images" onclick="swPanel('images')">🖼️ Obrazy</div>
+    </div>
+    <!-- FILES -->
+    <div id="filesPanel" class="panel-content">
+      <div id="fileTree" style="padding:4px"></div>
+      <div id="noFilesHint" style="padding:20px;color:var(--td);font-size:11px;text-align:center">
+        <b style="color:var(--gn)">📁 Wczytaj OCRes</b><br>Załaduj cały folder projektu<br><br>
+        Lub <b>📂 Wczytaj XML</b> dla pojedynczych plików<br><br>
+        <span style="font-size:10px;color:#555">Wskaż <code>OCRes</code> z:<br><code>Project/DiskC/OpenCnc Shared/OCRes</code></span>
+      </div>
+    </div>
+    <!-- ELEMENTS -->
+    <div id="elemPanel" class="panel-content" style="display:none">
+      <div id="fileInfoCard"></div>
+      <div id="elementList"></div>
+    </div>
+    <!-- IMAGES -->
+    <div id="imagesPanel" class="panel-content" style="display:none">
+      <div class="img-drop-zone" id="imgDrop" onclick="document.getElementById('imgFileInput').click()">
+        📎 Przeciąg obrazy z Figma/dysku tutaj<br>
+        <small>Lub kliknij aby wybrać JPG/BMP/GIF/PNG</small>
+        <input type="file" id="imgFileInput" accept="image/*" multiple style="display:none">
+      </div>
+      <div class="img-counter" id="imgCounter">Obrazy: 0 <span></span></div>
+      <div class="img-filter"><input id="imgSearch" placeholder="🔍 Szukaj obrazu..." oninput="filterImages()"></div>
+      <div class="img-grid" id="imgGrid"></div>
+    </div>
+  </div>
+
+  <!-- CANVAS -->
+  <div class="canvas-area" id="canvasArea">
+    <div class="welcome" id="welcomeScreen">
+      <h2>⚙ Syntec CNC Layout Editor v3</h2>
+      <p>Wizualny edytor layoutów ekranów CNC z pełną obsługą obrazów.<br>
+      Wczytaj folder <b style="color:var(--gn)">OCRes</b> — automatycznie załaduje obrazy z CUSTOMIMAGE.</p>
+      <p style="font-size:11px;color:var(--td)">
+        🖼️ <b>Obrazy z Figma</b> — eksportuj JPG, przeciągnij na panel Obrazy<br>
+        ▶ <b>Symulator</b> — podgląd ekranu w pełnym ekranie jak na maszynie<br>
+        📁 <b>OCRes/Common/APPDATA/</b> — pliki ekranów + CUSTOMIMAGE
+      </p>
+      <div class="hint">Drag&drop pliki | Ctrl+Z cofnij | ▶ Symulator do podglądu</div>
+    </div>
+    <div class="canvas-container" id="canvasCont" style="display:none">
+      <div class="canvas-bg" id="canvasBg">
+        <canvas id="gridCanvas" class="grid-overlay"></canvas>
+        <div class="element-layer" id="elLayer"></div>
+        <div class="selection-rect" id="selRect"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- RIGHT PANEL -->
+  <div class="right-panel">
+    <h3>Właściwości <span id="propTitle" style="font-size:9px;color:var(--td)"></span></h3>
+    <div class="props-scroll" id="propsContent">
+      <div style="padding:20px;color:var(--td);font-size:11px;text-align:center">Wybierz element</div>
+    </div>
+  </div>
+</div>
+
+<!-- STATUS -->
+<div class="statusbar">
+  <span>Pos: <b id="stCoord">—</b></span>
+  <span>Canvas: <b id="stSize">—</b></span>
+  <span>Zaznaczono: <b id="stSel">0</b></span>
+  <span>Elem: <b id="stTotal">0</b></span>
+  <span>🖼️ <b id="stImgs">0</b></span>
+  <span style="margin-left:auto" id="stFile">Brak plików</span>
+</div>
+
+<!-- CTX -->
+<div class="ctx-menu" id="ctxMenu">
+  <div class="ctx-item" onclick="showAddDlg()">Nowy element <span class="sc">N</span></div>
+  <div class="ctx-item" onclick="showAddPicDlg()">Nowy obrazek <span class="sc">I</span></div>
+  <div class="ctx-sep"></div>
+  <div class="ctx-item" onclick="dupSel()">Duplikuj <span class="sc">Ctrl+D</span></div>
+  <div class="ctx-item" onclick="copySel()">Kopiuj <span class="sc">Ctrl+C</span></div>
+  <div class="ctx-item" onclick="pasteSel()">Wklej <span class="sc">Ctrl+V</span></div>
+  <div class="ctx-sep"></div>
+  <div class="ctx-item" onclick="zUp()">Na wierzch <span class="sc">PgUp</span></div>
+  <div class="ctx-item" onclick="zDown()">Na spód <span class="sc">PgDn</span></div>
+  <div class="ctx-sep"></div>
+  <div class="ctx-item" onclick="delSel()">Usuń <span class="sc">Del</span></div>
+</div>
+
+<!-- ADD ELEMENT DIALOG -->
+<div class="dlg-overlay" id="addDlg">
+  <div class="dlg">
+    <h3>➕ Nowy element</h3>
+    <div class="fr"><label>Typ:</label>
+      <select id="neType"><option>Button</option><option>Label</option><option>Panel</option>
+        <option>Input</option><option>Inputline</option><option>Picture</option>
+        <option>Display</option><option>CoordBox</option></select></div>
+    <div class="fr"><label>Nazwa:</label><input id="neName" placeholder="np. Button1"></div>
+    <div class="fr"><label>Left:</label><input type="number" id="neL" value="10"></div>
+    <div class="fr"><label>Top:</label><input type="number" id="neT" value="10"></div>
+    <div class="fr"><label>Width:</label><input type="number" id="neW" value="100"></div>
+    <div class="fr"><label>Height:</label><input type="number" id="neH" value="40"></div>
+    <div class="fr"><label>Caption:</label><input id="neC" placeholder="Tekst..."></div>
+    <div class="btn-row"><button onclick="closeDlg('addDlg')">Anuluj</button><button class="primary" onclick="confirmAdd()">Dodaj</button></div>
+  </div>
+</div>
+
+<!-- ADD PICTURE DIALOG -->
+<div class="dlg-overlay" id="picDlg">
+  <div class="dlg" style="min-width:500px">
+    <h3>🖼️ Dodaj obrazek (Picture)</h3>
+    <div class="fr"><label>Nazwa:</label><input id="piName" placeholder="np. Pic_MyImage"></div>
+    <div class="fr"><label>Left:</label><input type="number" id="piL" value="10"></div>
+    <div class="fr"><label>Top:</label><input type="number" id="piT" value="10"></div>
+    <div class="fr"><label>Width:</label><input type="number" id="piW" value="200"></div>
+    <div class="fr"><label>Height:</label><input type="number" id="piH" value="150"></div>
+    <div class="fr"><label>FitType:</label><select id="piFit"><option value="Fit" selected>Fit</option><option value="">Brak</option></select></div>
+    <div class="fr"><label>Ścieżka:</label><input id="piPath" placeholder="CUSTOMImage\myimage.jpg"></div>
+    <p style="font-size:10px;color:var(--td);margin:6px 0">Wybierz obraz z załadowanych (lub wpisz ścieżkę ręcznie):</p>
+    <div class="dlg-img-grid" id="picPickerGrid"></div>
+    <div style="text-align:center;margin:6px 0">
+      <label class="tb" style="display:inline-block;cursor:pointer">📂 Wczytaj z dysku
+        <input type="file" accept="image/*" style="display:none" onchange="picFromDisk(this.files)"></label>
+    </div>
+    <div id="picPreview" style="text-align:center;margin:4px 0"></div>
+    <div class="btn-row"><button onclick="closeDlg('picDlg')">Anuluj</button><button class="primary" onclick="confirmAddPic()">Dodaj Picture</button></div>
+  </div>
+</div>
+
+<!-- SIMULATOR -->
+<div class="sim-overlay" id="simOverlay">
+  <div class="sim-top">
+    <span class="sim-title">▶ SYMULATOR <span id="simName"></span></span>
+    <span class="sim-info" id="simInfo"></span>
+    <div style="display:flex;gap:6px">
+      <button class="tb" onclick="simToggleLog()">📜 Log</button>
+      <button class="tb" onclick="simRotate()">🔄 Obróć</button>
+      <button class="tb danger" onclick="closeSimulator()">✕ Zamknij (Esc)</button>
+    </div>
+  </div>
+  <div class="sim-canvas" id="simCanvas"></div>
+  <div class="sim-log" id="simLog" style="display:none"></div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<script>
+// =====================================================================
+// STATE
+// =====================================================================
+const openFiles = new Map();
+let activeFile = null, selectedIds = new Set(), clipboard = [];
+let snapOn = true, gridOn = true, gridSz = 10, zoom = 1, nextId = 1;
+let isDrag = false, isResize = false, isSel = false;
+let dragSt = null, resDir = '', resSt = null, selSt = null;
+
+// IMAGE STORE: name -> {url, file, name, fromFolder}
+const imageStore = new Map();
+let allFolderFiles = [];  // all File objects from folder load
+
+// =====================================================================
+// INIT
+// =====================================================================
+const $=id=>document.getElementById(id);
+
+$('fileInput').onchange = e => { for(const f of e.target.files) if(f.name.toLowerCase().endsWith('.xml')) loadFile(f,f.name); e.target.value=''; };
+$('folderInput').onchange = handleFolder;
+$('imgFileInput').onchange = e => { addImagesToStore([...e.target.files]); e.target.value=''; };
+$('canvasArea').onmousedown = onCanvasMD;
+$('canvasArea').oncontextmenu = e => { e.preventDefault(); const m=$('ctxMenu');m.style.display='block';m.style.left=e.clientX+'px';m.style.top=e.clientY+'px'; };
+document.onmousemove = onMM;
+document.onmouseup = onMU;
+document.onkeydown = onKD;
+document.onclick = ()=>$('ctxMenu').style.display='none';
+
+// Drag/drop on canvas area
+$('canvasArea').ondragover = e => { e.preventDefault(); e.dataTransfer.dropEffect='copy'; };
+$('canvasArea').ondrop = handleCanvasDrop;
+
+// Drag/drop on image panel
+const imgDrop=$('imgDrop');
+imgDrop.ondragover=e=>{e.preventDefault();e.stopPropagation();imgDrop.classList.add('active')};
+imgDrop.ondragleave=()=>imgDrop.classList.remove('active');
+imgDrop.ondrop=e=>{e.preventDefault();e.stopPropagation();imgDrop.classList.remove('active');addImagesToStore([...e.dataTransfer.files].filter(f=>f.type.startsWith('image/')))};
+
+drawGrid();
+
+// =====================================================================
+// IMAGE STORE
+// =====================================================================
+function addImagesToStore(files) {
+  let added = 0;
+  for (const f of files) {
+    if (!f.type.startsWith('image/')) continue;
+    const key = f.name.toLowerCase();
+    if (imageStore.has(key)) continue;
+    const url = URL.createObjectURL(f);
+    imageStore.set(key, { url, file:f, name:f.name, fromFolder:false });
+    added++;
+  }
+  if (added) { renderImageGrid(); toast(`Dodano ${added} obrazów`, 'success'); }
+}
+
+function addImageFromFolder(file, relativePath) {
+  const key = file.name.toLowerCase();
+  if (imageStore.has(key)) return;
+  const url = URL.createObjectURL(file);
+  imageStore.set(key, { url, file, name:file.name, path:relativePath, fromFolder:true });
+}
+
+function resolveImageUrl(imagePath) {
+  if (!imagePath) return null;
+  // Try exact filename match
+  const fname = imagePath.replace(/\\/g,'/').split('/').pop().toLowerCase();
+  const entry = imageStore.get(fname);
+  if (entry) return entry.url;
+  // Try various key patterns
+  for (const [k,v] of imageStore) {
+    if (k === fname || v.name.toLowerCase() === fname) return v.url;
+  }
+  return null;
+}
+
+function renderImageGrid() {
+  const grid=$('imgGrid'), filter=($('imgSearch').value||'').toLowerCase();
+  grid.innerHTML='';
+  let count = 0;
+  for (const [key,img] of imageStore) {
+    if (filter && !img.name.toLowerCase().includes(filter)) continue;
+    count++;
+    const div = document.createElement('div');
+    div.className = 'img-thumb';
+    div.draggable = true;
+    div.title = img.name + (img.path ? '\n' + img.path : '');
+    div.innerHTML = `<img src="${img.url}" loading="lazy"><div class="img-name">${eh(img.name)}</div>`;
+    div.ondragstart = e => {
+      e.dataTransfer.setData('text/plain', img.name);
+      e.dataTransfer.setData('application/x-syntec-image', JSON.stringify({name:img.name,key}));
+      div.classList.add('drag-active');
+    };
+    div.ondragend = () => div.classList.remove('drag-active');
+    div.onclick = () => {
+      // Quick add picture if a file is open
+      const f = af();
+      if (f) quickAddPicture(img);
+    };
+    grid.appendChild(div);
+  }
+  $('imgCounter').innerHTML = `Obrazy: <b>${count}</b> / ${imageStore.size} <span>${imageStore.size>0?'Kliknij = dodaj na canvas':'Przeciągnij obrazy tutaj'}</span>`;
+  $('stImgs').textContent = imageStore.size;
+}
+
+function filterImages() { renderImageGrid(); }
+
+function quickAddPicture(img) {
+  const f = af(); if (!f) return;
+  saveUndo();
+  // Generate Syntec path
+  const syntecPath = 'CUSTOMImage\\' + img.name;
+  const el = makeEl('Picture', {
+    name: 'Pic_' + img.name.replace(/\.\w+$/,'').replace(/[^a-zA-Z0-9_]/g,'_'),
+    left: 10, top: 10, width: 200, height: 150,
+    picturePath: syntecPath, pictureFitType: 'Fit'
+  });
+  f.elements.push(el);
+  selectedIds = new Set([el.id]);
+  markMod(); renderAll(); showProps();
+  toast('Dodano: ' + img.name, 'success');
+}
+
+// =====================================================================
+// HANDLE CANVAS DROP (images + xml)
+// =====================================================================
+function handleCanvasDrop(e) {
+  e.preventDefault();
+  const imgData = e.dataTransfer.getData('application/x-syntec-image');
+  if (imgData) {
+    // Dropping image from panel onto canvas
+    const f = af(); if (!f) return;
+    const info = JSON.parse(imgData);
+    const r = $('canvasBg').getBoundingClientRect();
+    const x = Math.round((e.clientX - r.left) / zoom);
+    const y = Math.round((e.clientY - r.top) / zoom);
+    saveUndo();
+    const syntecPath = 'CUSTOMImage\\' + info.name;
+    const el = makeEl('Picture', {
+      name: 'Pic_' + info.name.replace(/\.\w+$/,'').replace(/[^a-zA-Z0-9_]/g,'_'),
+      left: snapOn ? Math.round(x/gridSz)*gridSz : x,
+      top: snapOn ? Math.round(y/gridSz)*gridSz : y,
+      width: 200, height: 150,
+      picturePath: syntecPath, pictureFitType: 'Fit'
+    });
+    f.elements.push(el);
+    selectedIds = new Set([el.id]);
+    markMod(); renderAll(); showProps();
+    toast('Upuszczono: ' + info.name, 'success');
+    return;
+  }
+  // Regular file drop
+  for (const f of e.dataTransfer.files) {
+    if (f.name.toLowerCase().endsWith('.xml')) loadFile(f, f.name);
+    else if (f.type.startsWith('image/')) addImagesToStore([f]);
+  }
+}
+
+// =====================================================================
+// FILE MANAGEMENT
+// =====================================================================
+function loadFile(file, path) {
+  const r = new FileReader();
+  r.onload = ev => openXML(path, file.name, ev.target.result);
+  r.readAsText(file);
+}
+
+function openXML(path, name, xmlStr) {
+  if (openFiles.has(path)) { activateTab(path); return; }
+  const p = parseXMLStr(xmlStr);
+  openFiles.set(path, { name, path, elements:p.elements, screenName:p.screenName,
+    canvasW:p.canvasW, canvasH:p.canvasH, modified:false, undoStack:[], redoStack:[] });
+  activeFile = path;
+  renderTabs(); activateTab(path);
+  toast('Otwarto: '+name, 'success');
+}
+
+function activateTab(path) {
+  if (!openFiles.has(path)) return;
+  activeFile = path; selectedIds = new Set();
+  renderTabs(); showCanvas(); renderCanvas(); renderElemList(); showFileInfo(); showProps(); updateStatus();
+}
+
+function closeTab(path, e) {
+  if(e) e.stopPropagation();
+  const d = openFiles.get(path);
+  if (d && d.modified && !confirm(`"${d.name}" ma niezapisane zmiany. Zamknąć?`)) return;
+  openFiles.delete(path);
+  if (activeFile===path) { const k=[...openFiles.keys()]; activeFile=k.length?k[k.length-1]:null; }
+  if (activeFile) activateTab(activeFile);
+  else { hideCanvas(); renderTabs(); updateStatus(); }
+}
+
+// =====================================================================
+// FOLDER LOADING
+// =====================================================================
+function handleFolder(e) {
+  const files = [...e.target.files];
+  if (!files.length) return;
+  allFolderFiles = files;
+  const tree = {};
+  let imgCount = 0;
+  for (const file of files) {
+    const path = file.webkitRelativePath;
+    const parts = path.split('/');
+    let cur = tree;
+    for (let i=0; i<parts.length; i++) {
+      if (i===parts.length-1) {
+        if(!cur._files) cur._files=[];
+        const ext = parts[i].split('.').pop().toLowerCase();
+        cur._files.push({ name:parts[i], path, file, ext });
+        // Auto-load images from CUSTOMIMAGE or Image folders
+        if (['bmp','jpg','jpeg','gif','png'].includes(ext)) {
+          const pathLow = path.toLowerCase();
+          if (pathLow.includes('customimage') || pathLow.includes('/image/') || pathLow.includes('\\image\\')) {
+            addImageFromFolder(file, path);
+            imgCount++;
+          }
+        }
+      } else {
+        if(!cur[parts[i]]) cur[parts[i]]={};
+        cur = cur[parts[i]];
+      }
+    }
+  }
+  renderTree(tree, $('fileTree'), true);
+  $('noFilesHint').style.display='none';
+  renderImageGrid();
+  toast(`Załadowano ${files.length} plików, ${imgCount} obrazów`, 'success');
+  e.target.value='';
+}
+
+function renderTree(node, container, isRoot) {
+  container.innerHTML = '';
+  const dirs = Object.keys(node).filter(k=>k!=='_files').sort();
+  const files = (node._files||[]).sort((a,b)=>a.name.localeCompare(b.name));
+  for (const dir of dirs) {
+    const cnt = countFiles(node[dir]);
+    const dl = dir.toLowerCase();
+    let icon = '📁';
+    if(dl==='appdata')icon='🖥️';else if(dl==='customfenu')icon='🔧';
+    else if(dl==='string')icon='🌐';else if(dl==='customimage')icon='🖼️';
+    else if(dl==='image')icon='🖼️';else if(dl==='screen')icon='📺';
+    else if(dl==='xmldb'||dl==='schema')icon='📐';else if(dl==='attachfenu')icon='➕';
+    else if(dl==='modifyfenu')icon='✏️';else if(dl==='ocres')icon='⚡';else if(dl==='common')icon='📦';
+    const imp=['appdata','customfenu','screen','ocres','common','customimage'].includes(dl);
+    const div=document.createElement('div');
+    div.innerHTML=`<div class="tree-header" onclick="toggleNode(this)" style="${imp?'font-weight:600':''}">
+      <span class="tree-arrow ${isRoot?'open':''}">▶</span><span class="tree-icon">${icon}</span>
+      <span class="tree-label">${eh(dir)}</span><span class="tree-badge">${cnt}</span>
+    </div><div class="tree-children ${isRoot?'':'collapsed'}"></div>`;
+    container.appendChild(div);
+    renderTree(node[dir], div.querySelector('.tree-children'), false);
+  }
+  for (const file of files) {
+    let icon='📄';if(file.ext==='xml')icon='📝';else if(['bmp','jpg','jpeg','gif','png'].includes(file.ext))icon='🖼️';
+    const div=document.createElement('div');div.className='tree-header';div.style.paddingLeft='18px';
+    div.innerHTML=`<span class="tree-icon">${icon}</span><span class="tree-label" title="${eh(file.path)}">${eh(file.name)}</span>`;
+    if(file.ext==='xml'){div.style.cursor='pointer';div.onclick=()=>loadFile(file.file,file.path);}
+    else if(['bmp','jpg','jpeg','gif','png'].includes(file.ext)){
+      div.style.cursor='pointer';
+      div.onclick=()=>{ addImagesToStore([file.file]); swPanel('images'); };
+    }
+    container.appendChild(div);
+  }
+}
+function countFiles(n){let c=(n._files||[]).length;for(const k of Object.keys(n))if(k!=='_files')c+=countFiles(n[k]);return c;}
+function toggleNode(h){const ch=h.nextElementSibling,ar=h.querySelector('.tree-arrow');if(ch){ch.classList.toggle('collapsed');ar.classList.toggle('open');}}
+
+// =====================================================================
+// XML PARSE (with Picture support)
+// =====================================================================
+function parseXMLStr(xmlStr) {
+  let cW=800, cH=470, sn='';
+  const sm = xmlStr.match(/BROWSER SIZE\|H:(\d+)\|W:(\d+)/);
+  if(sm) { cH=+sm[1]; cW=+sm[2]; }
+  // Also check Screen Width/Height tags
+  const doc = new DOMParser().parseFromString(xmlStr, 'text/xml');
+  const root = doc.querySelector('Screen');
+  if(!root) return {elements:[],screenName:'',canvasW:cW,canvasH:cH};
+  const ne = root.querySelector(':scope > Name');
+  if(ne) sn = ne.textContent.trim();
+  const sw = root.querySelector(':scope > Width'), sh = root.querySelector(':scope > Height');
+  if(sw) cW = +sw.textContent.trim() || cW;
+  if(sh) cH = +sh.textContent.trim() || cH;
+
+  const elements = [];
+  const known = new Set(['Button','Label','Panel','Input','Inputline','Picture','Display',
+    'CoordBox','OCText','OCSimu','DynamicPicture','Marquee']);
+  for(const ch of root.children) {
+    if(['Name','Width','Height'].includes(ch.tagName)) continue;
+    if(known.has(ch.tagName) || ch.querySelector('Left') || ch.querySelector('Top'))
+      elements.push(parseEl(ch, ch.tagName));
+  }
+  elements.sort((a,b)=>(b.depth||0)-(a.depth||0));
+  return {elements, screenName:sn, canvasW:cW, canvasH:cH};
+}
+
+function parseEl(node, type) {
+  const g = tag => { const c=node.querySelector(':scope > '+tag); return c?c.textContent.trim():''; };
+  const ga = (tag, attr) => { const c=node.querySelector(':scope > '+tag); return c?c.getAttribute(attr)||'':''; };
+
+  const el = {
+    id:nextId++, type, name:g('Name'), left:+g('Left')||0, top:+g('Top')||0,
+    width:+g('Width')||80, height:+g('Height')||30, caption:g('Caption'),
+    backColor:g('BackColor'), foreColor:g('ForeColor'), fontSize:+g('FontSize')||0,
+    borderStyle:g('BorderStyle'), borderColor:g('BorderColor'), depth:+g('Depth')||0,
+    enabled:g('Enabled'), alignment:g('Alignment'), wrap:g('Wrap'),
+    button3D:g('Button3D'), level3D:g('Level3D'), displaySource:g('DisplaySource'),
+    enableRule:g('EnableRule'), inputFormat:g('InputFormat'), inputStorage:g('InputStorage'),
+    enterEff:g('EnterEff'), visibleRule:g('VisibleRule'),
+    role:node.getAttribute('Role')||'',
+    // Picture-specific: nested <Picture FitType="Fit">path</Picture>
+    picturePath: type==='Picture' ? g('Picture') : '',
+    pictureFitType: type==='Picture' ? ga('Picture','FitType') : '',
+    _raw:{}
+  };
+  const simple = new Set(['Name','Left','Top','Width','Height','Caption','BackColor','ForeColor',
+    'FontSize','BorderStyle','BorderColor','Depth','Enabled','Alignment','Wrap',
+    'Button3D','Level3D','DisplaySource','EnableRule','InputFormat','InputStorage','EnterEff',
+    'VisibleRule','Picture']);
+  for(const c of node.children) if(!simple.has(c.tagName)) el._raw[c.tagName] = new XMLSerializer().serializeToString(c);
+  return el;
+}
+
+// =====================================================================
+// XML EXPORT
+// =====================================================================
+function genXML() {
+  const f=af(); if(!f) return '';
+  let x='<?xml version="1.0" encoding="utf-8"?>\n';
+  x+=`<!--BROWSER SIZE|H:${f.canvasH}|W:${f.canvasW}-->\n<Screen>\n`;
+  if(f.screenName) x+=`\t<Name>${ex(f.screenName)}</Name>\n`;
+  const sorted=[...f.elements].sort((a,b)=>(b.depth||0)-(a.depth||0));
+  for(const e of sorted) {
+    const ra = e.role ? ` Role="${ex(e.role)}"` : '';
+    x+=`\t<${e.type}${ra}>\n`;
+    if(e.name) x+=`\t\t<Name>${ex(e.name)}</Name>\n`;
+    x+=`\t\t<Left>${e.left}</Left>\n\t\t<Top>${e.top}</Top>\n`;
+    if(e.width) x+=`\t\t<Width>${e.width}</Width>\n`;
+    if(e.height) x+=`\t\t<Height>${e.height}</Height>\n`;
+    if(e.enableRule) x+=`\t\t<EnableRule>${ex(e.enableRule)}</EnableRule>\n`;
+    if(e.visibleRule) x+=`\t\t<VisibleRule>${ex(e.visibleRule)}</VisibleRule>\n`;
+    if(e.fontSize) x+=`\t\t<FontSize>${e.fontSize}</FontSize>\n`;
+    if(e.borderStyle!=='') x+=`\t\t<BorderStyle>${e.borderStyle}</BorderStyle>\n`;
+    if(e.depth) x+=`\t\t<Depth>${e.depth}</Depth>\n`;
+    if(e.borderColor) x+=`\t\t<BorderColor>${ex(e.borderColor)}</BorderColor>\n`;
+    if(e.foreColor) x+=`\t\t<ForeColor>${ex(e.foreColor)}</ForeColor>\n`;
+    if(e.backColor) x+=`\t\t<BackColor>${ex(e.backColor)}</BackColor>\n`;
+    if(e.caption) x+=`\t\t<Caption>${ex(e.caption)}</Caption>\n`;
+    if(e.alignment) x+=`\t\t<Alignment>${e.alignment}</Alignment>\n`;
+    if(e.wrap) x+=`\t\t<Wrap>${e.wrap}</Wrap>\n`;
+    if(e.enabled) x+=`\t\t<Enabled>${e.enabled}</Enabled>\n`;
+    if(e.displaySource) x+=`\t\t<DisplaySource>${ex(e.displaySource)}</DisplaySource>\n`;
+    if(e.enterEff) x+=`\t\t<EnterEff>${e.enterEff}</EnterEff>\n`;
+    if(e.button3D) x+=`\t\t<Button3D>${e.button3D}</Button3D>\n`;
+    if(e.level3D) x+=`\t\t<Level3D>${e.level3D}</Level3D>\n`;
+    if(e.inputFormat) x+=`\t\t<InputFormat>${ex(e.inputFormat)}</InputFormat>\n`;
+    if(e.inputStorage) x+=`\t\t<InputStorage>${ex(e.inputStorage)}</InputStorage>\n`;
+    // Picture path
+    if(e.type==='Picture' && e.picturePath) {
+      const ft = e.pictureFitType ? ` FitType="${ex(e.pictureFitType)}"` : '';
+      x+=`\t\t<Picture${ft}>${ex(e.picturePath)}</Picture>\n`;
+    }
+    for(const rv of Object.values(e._raw||{})) x+='\t\t'+rv+'\n';
+    x+=`\t</${e.type}>\n`;
+  }
+  x+='</Screen>\n'; return x;
+}
+
+function exportXML() {
+  const x=genXML();if(!x)return;const f=af();
+  const b=new Blob([x],{type:'text/xml'});const a=document.createElement('a');
+  a.href=URL.createObjectURL(b);a.download=f.name||'layout.xml';a.click();URL.revokeObjectURL(a.href);
+  f.modified=false;renderTabs();toast('Zapisano: '+f.name,'success');
+}
+function exportClip(){const x=genXML();if(!x)return;navigator.clipboard.writeText(x).then(()=>toast('XML w schowku!','success'));}
+function ex(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+function eh(s){const d=document.createElement('div');d.textContent=s;return d.innerHTML;}
+
+// =====================================================================
+// TABS
+// =====================================================================
+function renderTabs() {
+  const bar=$('tabBar');bar.innerHTML='';
+  for(const [p,d] of openFiles) {
+    const t=document.createElement('div');
+    t.className='tab'+(p===activeFile?' active':'');
+    const mod=d.modified?'<span class="tab-mod">●</span>':'';
+    t.innerHTML=`📝 ${eh(d.name)} ${mod} <span class="tab-close">×</span>`;
+    t.onclick=()=>activateTab(p);
+    t.querySelector('.tab-close').onclick=e=>closeTab(p,e);
+    bar.appendChild(t);
+  }
+}
+
+// =====================================================================
+// LEFT PANEL
+// =====================================================================
+function swPanel(p) {
+  document.querySelectorAll('.panel-tab').forEach(t=>t.classList.toggle('active',t.dataset.p===p));
+  $('filesPanel').style.display=p==='files'?'':'none';
+  $('elemPanel').style.display=p==='elements'?'':'none';
+  $('imagesPanel').style.display=p==='images'?'':'none';
+}
+
+function showFileInfo() {
+  const f=af(),c=$('fileInfoCard');if(!f){c.innerHTML='';return;}
+  const tc={};for(const e of f.elements)tc[e.type]=(tc[e.type]||0)+1;
+  c.innerHTML=`<div class="file-info"><div class="fi-name">📝 ${eh(f.name)}</div>
+    <div class="fi-detail">Screen: <b>${eh(f.screenName)}</b> | ${f.canvasW}×${f.canvasH} | ${f.elements.length} elem.</div>
+    <div class="fi-stats">${Object.entries(tc).map(([t,n])=>`<span class="fi-stat">${t}:${n}</span>`).join('')}</div></div>`;
+}
+
+function renderElemList() {
+  const f=af(),list=$('elementList');if(!f){list.innerHTML='';return;}list.innerHTML='';
+  for(const el of f.elements) {
+    const d=document.createElement('div');d.className='el-item'+(selectedIds.has(el.id)?' selected':'');
+    const bc=getBadge(el.type);
+    const dn=el.name||shortCap(el.caption)||(el.type==='Picture'?el.picturePath:'')||el.type;
+    const hasImg=el.type==='Picture'&&el.picturePath?'🖼️ ':'';
+    d.innerHTML=`<span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;font-size:10px" title="${eh(el.name)} [${el.left},${el.top} ${el.width}x${el.height}]">${hasImg}${eh(dn)}</span><span class="el-badge ${bc}">${el.type}</span>`;
+    d.onclick=e=>{if(e.ctrlKey){selectedIds.has(el.id)?selectedIds.delete(el.id):selectedIds.add(el.id);}else selectedIds=new Set([el.id]);renderElemList();renderCanvas();showProps();};
+    list.appendChild(d);
+  }
+}
+function getBadge(t){return{Button:'button',Label:'label',Panel:'panel',Input:'input',Inputline:'inputline',Picture:'picture',Display:'display',CoordBox:'coordbox',Marquee:'marquee'}[t]||'other';}
+function shortCap(c){if(!c)return'';if(c.includes('::')){const p=c.split('::');return p[p.length-1];}return c.length>20?c.substring(0,18)+'…':c;}
+
+// =====================================================================
+// CANVAS
+// =====================================================================
+function af(){return activeFile?openFiles.get(activeFile):null;}
+
+function showCanvas() {
+  $('welcomeScreen').style.display='none';
+  $('canvasCont').style.display='';
+  const f=af();if(!f)return;
+  $('canvasBg').style.width=f.canvasW+'px';$('canvasBg').style.height=f.canvasH+'px';
+  $('elLayer').style.width=f.canvasW+'px';$('elLayer').style.height=f.canvasH+'px';
+  drawGrid();
+}
+function hideCanvas(){$('welcomeScreen').style.display='';$('canvasCont').style.display='none';}
+
+function renderCanvas() {
+  const layer=$('elLayer');layer.innerHTML='';
+  const f=af();if(!f)return;
+  for(const el of [...f.elements].reverse()) {
+    const d=document.createElement('div');
+    d.className='el'+(selectedIds.has(el.id)?' selected':'');
+    d.dataset.id=el.id;
+    const bg=rgb(el.backColor)||defBg(el.type),fg=rgb(el.foreColor)||'#ddd';
+    const brd=el.borderStyle==='2'?'2px solid '+(rgb(el.borderColor)||'#888'):el.borderStyle==='1'?'1px solid '+(rgb(el.borderColor)||'#888'):'none';
+    let shd='none';
+    if(el.button3D==='True'){const lv=+el.level3D||2;shd=`${lv}px ${lv}px ${lv*2}px rgba(0,0,0,.5),inset 1px 1px ${lv}px rgba(255,255,255,.15)`;}
+    d.style.cssText=`left:${el.left}px;top:${el.top}px;width:${el.width}px;height:${el.height}px;background:${bg};color:${fg};font-size:${el.fontSize||10}px;border:${brd};box-shadow:${shd};z-index:${el.depth||0};`;
+
+    // Image for Picture elements
+    let imgHtml = '';
+    if (el.type==='Picture' && el.picturePath) {
+      const url = resolveImageUrl(el.picturePath);
+      if (url) imgHtml = `<img class="el-img" src="${url}" draggable="false">`;
+      else imgHtml = `<span style="font-size:8px;color:#888;pointer-events:none;z-index:1;position:relative">🖼️ ${eh(el.picturePath.split(/[\\\/]/).pop())}</span>`;
+    }
+
+    const cap=el.type!=='Picture'?shortCap(el.caption):'';
+    d.innerHTML=`${imgHtml}<span class="type-tag">${el.type.substring(0,3).toUpperCase()}</span>${cap?`<span style="padding:2px;pointer-events:none;line-height:1.2;position:relative;z-index:1">${eh(cap)}</span>`:''}
+      <div class="rh nw" data-d="nw"></div><div class="rh ne" data-d="ne"></div><div class="rh sw" data-d="sw"></div><div class="rh se" data-d="se"></div>
+      <div class="rh n" data-d="n"></div><div class="rh s" data-d="s"></div><div class="rh w" data-d="w"></div><div class="rh e" data-d="e"></div>`;
+    d.onmousedown=e=>onElMD(e,el);
+    layer.appendChild(d);
+  }
+}
+
+function defBg(t){return{Panel:'rgba(40,40,80,.4)',Button:'rgba(60,60,100,.5)',Label:'transparent',Input:'rgba(0,0,30,.6)',Inputline:'rgba(0,0,100,.5)',CoordBox:'rgba(0,60,60,.4)',Display:'rgba(40,60,40,.4)',Picture:'rgba(30,30,30,.2)',DynamicPicture:'rgba(30,30,30,.3)',OCSimu:'rgba(30,50,30,.4)',Marquee:'rgba(50,30,50,.4)'}[t]||'rgba(40,40,40,.3)';}
+function rgb(s){if(!s)return null;const p=s.split(',').map(x=>+x.trim());return p.length>=3&&p.every(x=>!isNaN(x))?`rgb(${p[0]},${p[1]},${p[2]})`:null;}
+
+// =====================================================================
+// GRID
+// =====================================================================
+function drawGrid(){
+  const f=af();if(!f)return;
+  const c=$('gridCanvas');c.width=f.canvasW;c.height=f.canvasH;
+  const ctx=c.getContext('2d');ctx.clearRect(0,0,f.canvasW,f.canvasH);if(!gridOn)return;
+  for(let x=0;x<=f.canvasW;x+=gridSz){ctx.beginPath();ctx.strokeStyle=x%(gridSz*10)===0?'rgba(100,100,180,.3)':'rgba(100,100,180,.1)';ctx.lineWidth=x%(gridSz*10)===0?1:.5;ctx.moveTo(x,0);ctx.lineTo(x,f.canvasH);ctx.stroke();}
+  for(let y=0;y<=f.canvasH;y+=gridSz){ctx.beginPath();ctx.strokeStyle=y%(gridSz*10)===0?'rgba(100,100,180,.3)':'rgba(100,100,180,.1)';ctx.lineWidth=y%(gridSz*10)===0?1:.5;ctx.moveTo(0,y);ctx.lineTo(f.canvasW,y);ctx.stroke();}
+}
+function updateGrid(){gridSz=+$('gridSize').value||10;drawGrid();}
+function toggleSnap(){snapOn=!snapOn;$('snapBtn').classList.toggle('active',snapOn);}
+function toggleGrid(){gridOn=!gridOn;$('gridBtn').classList.toggle('active',gridOn);drawGrid();}
+function setZoom(v){zoom=+v;$('canvasCont').style.transform=`scale(${zoom})`;$('canvasCont').style.transformOrigin='center center';}
+
+// =====================================================================
+// MOUSE
+// =====================================================================
+function onElMD(e,el){
+  e.stopPropagation();
+  if(e.target.classList.contains('rh')){
+    isResize=true;resDir=e.target.dataset.d;
+    resSt={x:e.clientX,y:e.clientY,left:el.left,top:el.top,width:el.width,height:el.height};
+    if(!selectedIds.has(el.id)){selectedIds=new Set([el.id]);renderAll();showProps();}return;
+  }
+  if(e.ctrlKey){selectedIds.has(el.id)?selectedIds.delete(el.id):selectedIds.add(el.id);}
+  else if(!selectedIds.has(el.id))selectedIds=new Set([el.id]);
+  isDrag=true;
+  const f=af(),offs={};
+  for(const id of selectedIds){const em=f.elements.find(e=>e.id===id);if(em)offs[id]={dx:e.clientX/zoom-em.left,dy:e.clientY/zoom-em.top};}
+  dragSt={offs,sx:e.clientX,sy:e.clientY,moved:false};
+  renderAll();showProps();
+}
+
+function onCanvasMD(e){
+  if(e.target.closest('.el')||e.button!==0)return;
+  if(!e.ctrlKey)selectedIds=new Set();
+  const r=$('canvasBg').getBoundingClientRect();
+  isSel=true;selSt={x:(e.clientX-r.left)/zoom,y:(e.clientY-r.top)/zoom};
+  renderAll();showProps();
+}
+
+function onMM(e){
+  const r=$('canvasBg').getBoundingClientRect();
+  const mx=Math.round((e.clientX-r.left)/zoom),my=Math.round((e.clientY-r.top)/zoom);
+  $('stCoord').textContent=`${mx}, ${my}`;
+  const f=af();
+  if(isDrag&&dragSt&&f){
+    if(Math.abs(e.clientX-dragSt.sx)>2||Math.abs(e.clientY-dragSt.sy)>2){
+      if(!dragSt.moved){saveUndo();dragSt.moved=true;}
+      for(const id of selectedIds){const em=f.elements.find(x=>x.id===id),off=dragSt.offs[id];if(!em||!off)continue;
+        let nl=e.clientX/zoom-off.dx,nt=e.clientY/zoom-off.dy;
+        if(snapOn){nl=Math.round(nl/gridSz)*gridSz;nt=Math.round(nt/gridSz)*gridSz;}
+        em.left=Math.max(0,Math.min(f.canvasW-em.width,Math.round(nl)));
+        em.top=Math.max(0,Math.min(f.canvasH-em.height,Math.round(nt)));
+      }markMod();renderCanvas();showProps();
+    }
+  }
+  if(isResize&&resSt&&f){
+    const dx=(e.clientX-resSt.x)/zoom,dy=(e.clientY-resSt.y)/zoom;
+    const el=f.elements.find(x=>selectedIds.has(x.id));if(!el)return;
+    if(!resSt.saved){saveUndo();resSt.saved=true;}
+    let nL=resSt.left,nT=resSt.top,nW=resSt.width,nH=resSt.height;
+    if(resDir.includes('e'))nW=Math.max(10,resSt.width+dx);
+    if(resDir.includes('w')){nW=Math.max(10,resSt.width-dx);nL=resSt.left+dx;}
+    if(resDir.includes('s'))nH=Math.max(10,resSt.height+dy);
+    if(resDir.includes('n')){nH=Math.max(10,resSt.height-dy);nT=resSt.top+dy;}
+    if(snapOn){nL=Math.round(nL/gridSz)*gridSz;nT=Math.round(nT/gridSz)*gridSz;nW=Math.round(nW/gridSz)*gridSz;nH=Math.round(nH/gridSz)*gridSz;}
+    el.left=Math.round(nL);el.top=Math.round(nT);el.width=Math.round(nW);el.height=Math.round(nH);
+    markMod();renderCanvas();showProps();
+  }
+  if(isSel&&selSt){
+    const sr=$('selRect');
+    const cx=(e.clientX-r.left)/zoom,cy=(e.clientY-r.top)/zoom;
+    const x1=Math.min(selSt.x,cx),y1=Math.min(selSt.y,cy),x2=Math.max(selSt.x,cx),y2=Math.max(selSt.y,cy);
+    sr.style.cssText=`display:block;left:${x1}px;top:${y1}px;width:${x2-x1}px;height:${y2-y1}px;`;
+    selectedIds=new Set();
+    if(f)for(const el of f.elements)if(el.left+el.width>x1&&el.left<x2&&el.top+el.height>y1&&el.top<y2)selectedIds.add(el.id);
+    renderElemList();
+  }
+}
+
+function onMU(){if(isSel)$('selRect').style.display='none';isDrag=isResize=isSel=false;dragSt=resSt=selSt=null;renderAll();showProps();}
+
+// =====================================================================
+// KEYBOARD
+// =====================================================================
+function onKD(e){
+  // Close simulator with Escape
+  if(e.key==='Escape'&&$('simOverlay').classList.contains('active')){closeSimulator();return;}
+  if(['INPUT','SELECT','TEXTAREA'].includes(e.target.tagName))return;
+  const f=af();if(!f)return;
+  if(e.key==='Delete'||e.key==='Backspace'){e.preventDefault();delSel();}
+  else if(e.key==='a'&&e.ctrlKey){e.preventDefault();selectedIds=new Set(f.elements.map(x=>x.id));renderAll();showProps();}
+  else if(e.key==='z'&&e.ctrlKey){e.preventDefault();undo();}
+  else if(e.key==='y'&&e.ctrlKey){e.preventDefault();redo();}
+  else if(e.key==='d'&&e.ctrlKey){e.preventDefault();dupSel();}
+  else if(e.key==='c'&&e.ctrlKey){e.preventDefault();copySel();}
+  else if(e.key==='v'&&e.ctrlKey){e.preventDefault();pasteSel();}
+  else if(e.key==='s'&&e.ctrlKey){e.preventDefault();exportXML();}
+  else if(e.key==='n'&&!e.ctrlKey)showAddDlg();
+  else if(e.key==='i'&&!e.ctrlKey)showAddPicDlg();
+  else if(e.key==='Escape'){selectedIds=new Set();closeDlg('addDlg');closeDlg('picDlg');renderAll();showProps();}
+  else if(['ArrowLeft','ArrowRight','ArrowUp','ArrowDown'].includes(e.key)&&selectedIds.size>0){
+    e.preventDefault();const st=e.shiftKey?gridSz:1;saveUndo();
+    for(const id of selectedIds){const el=f.elements.find(x=>x.id===id);if(!el)continue;
+    if(e.key==='ArrowLeft')el.left=Math.max(0,el.left-st);if(e.key==='ArrowRight')el.left=Math.min(f.canvasW-el.width,el.left+st);
+    if(e.key==='ArrowUp')el.top=Math.max(0,el.top-st);if(e.key==='ArrowDown')el.top=Math.min(f.canvasH-el.height,el.top+st);}
+    markMod();renderCanvas();showProps();
+  }
+  else if(e.key==='PageUp'){e.preventDefault();zUp();}
+  else if(e.key==='PageDown'){e.preventDefault();zDown();}
+}
+
+// =====================================================================
+// PROPERTIES (with image support)
+// =====================================================================
+function showProps() {
+  const p=$('propsContent'),tt=$('propTitle');
+  if(!selectedIds.size){p.innerHTML='<div style="padding:20px;color:var(--td);font-size:11px;text-align:center">Wybierz element</div>';tt.textContent='';return;}
+  if(selectedIds.size>1){p.innerHTML=`<div style="padding:20px;color:var(--td);font-size:11px;text-align:center">Zaznaczono <b>${selectedIds.size}</b> elem.<br>Użyj wyrównania w toolbarze</div>`;tt.textContent=`(${selectedIds.size})`;return;}
+  const f=af();if(!f)return;
+  const el=f.elements.find(x=>selectedIds.has(x.id));if(!el)return;
+  tt.textContent=el.name||el.type;
+  const rawKeys=Object.keys(el._raw||{});
+  const isPic = el.type==='Picture';
+  const imgUrl = isPic ? resolveImageUrl(el.picturePath) : null;
+
+  let html = `
+  <div class="prop-section"><h4>Identyfikacja</h4>
+    <div class="pr"><label>Typ:</label><select onchange="uP(${el.id},'type',this.value)">${['Button','Label','Panel','Input','Inputline','Picture','Display','CoordBox','OCText','OCSimu','DynamicPicture','Marquee'].map(t=>`<option ${t===el.type?'selected':''}>${t}</option>`).join('')}</select></div>
+    <div class="pr"><label>Nazwa:</label><input value="${eh(el.name)}" onchange="uP(${el.id},'name',this.value)"></div>
+    <div class="pr"><label>Caption:</label><input value="${eh(el.caption)}" onchange="uP(${el.id},'caption',this.value)"></div>
+  </div>
+  <div class="prop-section"><h4>Pozycja & rozmiar</h4>
+    <div class="pr"><label>Left:</label><input type="number" value="${el.left}" onchange="uP(${el.id},'left',+this.value)"></div>
+    <div class="pr"><label>Top:</label><input type="number" value="${el.top}" onchange="uP(${el.id},'top',+this.value)"></div>
+    <div class="pr"><label>Width:</label><input type="number" value="${el.width}" onchange="uP(${el.id},'width',+this.value)"></div>
+    <div class="pr"><label>Height:</label><input type="number" value="${el.height}" onchange="uP(${el.id},'height',+this.value)"></div>
+    <div class="pr"><label>Depth:</label><input type="number" value="${el.depth||0}" onchange="uP(${el.id},'depth',+this.value)"></div>
+  </div>`;
+
+  if (isPic) {
+    html += `<div class="prop-section"><h4>🖼️ Obraz</h4>
+      <div class="pr"><label>Ścieżka:</label><input value="${eh(el.picturePath)}" onchange="uP(${el.id},'picturePath',this.value)" placeholder="CUSTOMImage\\plik.jpg"></div>
+      <div class="pr"><label>FitType:</label><select onchange="uP(${el.id},'pictureFitType',this.value)"><option value="Fit" ${el.pictureFitType==='Fit'?'selected':''}>Fit</option><option value="" ${!el.pictureFitType?'selected':''}>Brak</option></select></div>
+      <button class="tb" style="width:100%;margin:4px 0" onclick="pickImageForEl(${el.id})">📂 Zmień obraz...</button>
+      ${imgUrl?`<img src="${imgUrl}" class="img-preview-box">`:`<div style="font-size:10px;color:var(--td);margin:4px 0">⚠️ Obraz nie załadowany — wczytaj folder OCRes</div>`}
+    </div>`;
+  }
+
+  html += `<div class="prop-section"><h4>Wygląd</h4>
+    <div class="pr"><label>BackClr:</label><input value="${eh(el.backColor)}" onchange="uP(${el.id},'backColor',this.value)" placeholder="R,G,B">${el.backColor?`<span class="color-dot" style="background:${rgb(el.backColor)||'transparent'}"></span>`:''}</div>
+    <div class="pr"><label>ForeClr:</label><input value="${eh(el.foreColor)}" onchange="uP(${el.id},'foreColor',this.value)" placeholder="R,G,B">${el.foreColor?`<span class="color-dot" style="background:${rgb(el.foreColor)||'transparent'}"></span>`:''}</div>
+    <div class="pr"><label>FontSize:</label><input type="number" value="${el.fontSize||''}" onchange="uP(${el.id},'fontSize',+this.value)"></div>
+    <div class="pr"><label>Border:</label><select onchange="uP(${el.id},'borderStyle',this.value)"><option value="" ${!el.borderStyle?'selected':''}>—</option><option value="0" ${el.borderStyle==='0'?'selected':''}>0</option><option value="1" ${el.borderStyle==='1'?'selected':''}>1 Cienki</option><option value="2" ${el.borderStyle==='2'?'selected':''}>2 Gruby</option></select></div>
+    <div class="pr"><label>BrdClr:</label><input value="${eh(el.borderColor)}" onchange="uP(${el.id},'borderColor',this.value)"></div>
+    <div class="pr"><label>Align:</label><select onchange="uP(${el.id},'alignment',this.value)"><option value="" ${!el.alignment?'selected':''}>—</option><option value="0" ${el.alignment==='0'?'selected':''}>Lewo</option><option value="1" ${el.alignment==='1'?'selected':''}>Środek</option><option value="4" ${el.alignment==='4'?'selected':''}>Prawo</option></select></div>
+    <div class="pr"><label>Visible:</label><input value="${eh(el.visibleRule||'')}" onchange="uP(${el.id},'visibleRule',this.value)" placeholder="np. R13eq4"></div>
+  </div>
+  <div class="prop-section"><h4>3D / Przycisk</h4>
+    <div class="pr"><label>3D:</label><select onchange="uP(${el.id},'button3D',this.value)"><option value="" ${!el.button3D?'selected':''}>—</option><option value="True" ${el.button3D==='True'?'selected':''}>True</option><option value="False" ${el.button3D==='False'?'selected':''}>False</option></select></div>
+    <div class="pr"><label>Level3D:</label><input type="number" value="${el.level3D||''}" onchange="uP(${el.id},'level3D',this.value)"></div>
+    <div class="pr"><label>Enabled:</label><select onchange="uP(${el.id},'enabled',this.value)"><option value="" ${!el.enabled?'selected':''}>—</option><option value="True" ${el.enabled==='True'?'selected':''}>True</option><option value="False" ${el.enabled==='False'?'selected':''}>False</option></select></div>
+  </div>
+  <div class="prop-section"><h4>Dane / PLC</h4>
+    <div class="pr"><label>Display:</label><input value="${eh(el.displaySource)}" onchange="uP(${el.id},'displaySource',this.value)" placeholder="R3376"></div>
+    <div class="pr"><label>Enable:</label><input value="${eh(el.enableRule)}" onchange="uP(${el.id},'enableRule',this.value)"></div>
+    <div class="pr"><label>InFormat:</label><input value="${eh(el.inputFormat)}" onchange="uP(${el.id},'inputFormat',this.value)"></div>
+    <div class="pr"><label>InStore:</label><input value="${eh(el.inputStorage)}" onchange="uP(${el.id},'inputStorage',this.value)"></div>
+  </div>`;
+  if(rawKeys.length) html+=`<div class="prop-section"><h4>Zachowane (${rawKeys.length})</h4>${rawKeys.map(k=>`<div style="font-size:10px;color:var(--td);padding:1px 0">✓ &lt;${eh(k)}&gt;</div>`).join('')}</div>`;
+  p.innerHTML=html;
+}
+
+function uP(id,prop,val){saveUndo();const f=af();if(!f)return;const el=f.elements.find(x=>x.id===id);if(el){el[prop]=val;markMod();renderCanvas();showProps();}}
+
+function pickImageForEl(elId) {
+  // Open picker dialog style - reuse picDlg with pre-selection
+  const f=af();if(!f)return;
+  const el=f.elements.find(x=>x.id===elId);if(!el)return;
+  _pickTargetElId = elId;
+  showImagePicker();
+}
+let _pickTargetElId = null;
+
+function showImagePicker() {
+  const grid=$('picPickerGrid');grid.innerHTML='';
+  for(const [key,img] of imageStore) {
+    const d=document.createElement('div');d.className='dimg';
+    d.innerHTML=`<img src="${img.url}" title="${eh(img.name)}">`;
+    d.onclick=()=>{
+      document.querySelectorAll('.dimg.picked').forEach(x=>x.classList.remove('picked'));
+      d.classList.add('picked');
+      $('piPath').value='CUSTOMImage\\'+img.name;
+      $('picPreview').innerHTML=`<img src="${img.url}" style="max-height:60px;border-radius:3px">`;
+      _pickedImageName = img.name;
+    };
+    grid.appendChild(d);
+  }
+}
+let _pickedImageName = '';
+
+// =====================================================================
+// UNDO/REDO
+// =====================================================================
+function saveUndo(){const f=af();if(!f)return;f.undoStack.push(JSON.stringify(f.elements));if(f.undoStack.length>80)f.undoStack.shift();f.redoStack=[];}
+function undo(){const f=af();if(!f||!f.undoStack.length)return;f.redoStack.push(JSON.stringify(f.elements));f.elements=JSON.parse(f.undoStack.pop());renderAll();showProps();toast('Cofnięto');}
+function redo(){const f=af();if(!f||!f.redoStack.length)return;f.undoStack.push(JSON.stringify(f.elements));f.elements=JSON.parse(f.redoStack.pop());renderAll();showProps();toast('Ponowiono');}
+function markMod(){const f=af();if(!f)return;if(!f.modified){f.modified=true;renderTabs();}}
+
+// =====================================================================
+// ELEMENT CREATION
+// =====================================================================
+function makeEl(type, overrides={}) {
+  const defs={
+    Button:{backColor:'146,174,214',fontSize:12,button3D:'True',level3D:'2',enabled:'True'},
+    Label:{backColor:'0,0,0',foreColor:'255,255,255',fontSize:12,borderStyle:'1'},
+    Panel:{backColor:'0,0,0',borderStyle:'0'},
+    Input:{backColor:'0,0,0',foreColor:'255,255,255',fontSize:10,borderStyle:'1'},
+    Inputline:{backColor:'0,0,255',foreColor:'255,255,255',fontSize:12},
+    Picture:{},Display:{backColor:'0,0,0',foreColor:'255,255,255',fontSize:10},
+    CoordBox:{backColor:'0,0,0',foreColor:'255,255,255',fontSize:10}
+  };
+  return {id:nextId++,type,name:'',left:10,top:10,width:100,height:40,caption:'',
+    backColor:'',foreColor:'',fontSize:0,borderStyle:'',borderColor:'',depth:0,
+    enabled:'',alignment:'',wrap:'',button3D:'',level3D:'',displaySource:'',
+    enableRule:'',inputFormat:'',inputStorage:'',enterEff:'',visibleRule:'',role:'',
+    picturePath:'',pictureFitType:'',_raw:{},
+    ...(defs[type]||{}), ...overrides};
+}
+
+function showAddDlg(){$('addDlg').classList.add('active');}
+function showAddPicDlg(){showImagePicker();$('picDlg').classList.add('active');_pickedImageName='';$('piPath').value='';$('picPreview').innerHTML='';}
+function closeDlg(id){$(id).classList.remove('active');}
+
+function confirmAdd(){
+  const f=af();if(!f){toast('Otwórz plik','error');return;}saveUndo();
+  const el=makeEl($('neType').value,{name:$('neName').value,left:+$('neL').value||10,top:+$('neT').value||10,width:+$('neW').value||100,height:+$('neH').value||40,caption:$('neC').value});
+  f.elements.push(el);selectedIds=new Set([el.id]);
+  markMod();closeDlg('addDlg');renderAll();showProps();toast('Dodano '+el.type,'success');
+}
+
+function confirmAddPic(){
+  const f=af();if(!f){toast('Otwórz plik','error');return;}
+  saveUndo();
+  const picPath = $('piPath').value;
+  const el=makeEl('Picture',{
+    name:$('piName').value||'Pic_'+(++nextId),
+    left:+$('piL').value||10,top:+$('piT').value||10,
+    width:+$('piW').value||200,height:+$('piH').value||150,
+    picturePath:picPath, pictureFitType:$('piFit').value
+  });
+
+  // If picking for existing element
+  if(_pickTargetElId){
+    const target=f.elements.find(x=>x.id===_pickTargetElId);
+    if(target){target.picturePath=picPath;target.pictureFitType=$('piFit').value;_pickTargetElId=null;markMod();closeDlg('picDlg');renderAll();showProps();return;}
+  }
+
+  f.elements.push(el);selectedIds=new Set([el.id]);
+  markMod();closeDlg('picDlg');renderAll();showProps();
+  toast('Dodano Picture','success');
+}
+
+function picFromDisk(files){
+  if(!files.length)return;
+  addImagesToStore([...files]);
+  showImagePicker();
+  // Auto select first added
+  const f=files[0];
+  $('piPath').value='CUSTOMImage\\'+f.name;
+  _pickedImageName=f.name;
+}
+
+function delSel(){const f=af();if(!f||!selectedIds.size)return;saveUndo();f.elements=f.elements.filter(x=>!selectedIds.has(x.id));selectedIds=new Set();markMod();renderAll();showProps();}
+function dupSel(){const f=af();if(!f||!selectedIds.size)return;saveUndo();const ni=new Set();for(const id of selectedIds){const o=f.elements.find(x=>x.id===id);if(!o)continue;const d={...o,id:nextId++,_raw:{...o._raw}};d.left+=15;d.top+=15;d.name+='_copy';f.elements.push(d);ni.add(d.id);}selectedIds=ni;markMod();renderAll();showProps();}
+function copySel(){const f=af();if(!f)return;clipboard=[];for(const id of selectedIds){const el=f.elements.find(x=>x.id===id);if(el)clipboard.push({...el,_raw:{...el._raw}});}toast(`Skopiowano ${clipboard.length}`);}
+function pasteSel(){const f=af();if(!f||!clipboard.length)return;saveUndo();const ni=new Set();for(const o of clipboard){const el={...o,id:nextId++,_raw:{...o._raw}};el.left+=20;el.top+=20;f.elements.push(el);ni.add(el.id);}selectedIds=ni;markMod();renderAll();showProps();}
+function zUp(){const f=af();if(!f||!selectedIds.size)return;saveUndo();const mx=Math.max(...f.elements.map(x=>x.depth||0));for(const id of selectedIds){const el=f.elements.find(x=>x.id===id);if(el)el.depth=mx+1;}markMod();renderAll();}
+function zDown(){const f=af();if(!f||!selectedIds.size)return;saveUndo();const mn=Math.min(...f.elements.map(x=>x.depth||0));for(const id of selectedIds){const el=f.elements.find(x=>x.id===id);if(el)el.depth=mn-1;}markMod();renderAll();}
+
+// =====================================================================
+// ALIGNMENT
+// =====================================================================
+function alignSel(dir){const f=af();if(!f||selectedIds.size<2)return;saveUndo();const els=f.elements.filter(x=>selectedIds.has(x.id));
+  if(dir==='left'){const v=Math.min(...els.map(e=>e.left));els.forEach(e=>e.left=v);}
+  else if(dir==='right'){const v=Math.max(...els.map(e=>e.left+e.width));els.forEach(e=>e.left=v-e.width);}
+  else if(dir==='top'){const v=Math.min(...els.map(e=>e.top));els.forEach(e=>e.top=v);}
+  else if(dir==='bottom'){const v=Math.max(...els.map(e=>e.top+e.height));els.forEach(e=>e.top=v-e.height);}
+  else if(dir==='ch'){const mn=Math.min(...els.map(e=>e.left)),mx=Math.max(...els.map(e=>e.left+e.width));const c=(mn+mx)/2;els.forEach(e=>e.left=Math.round(c-e.width/2));}
+  else if(dir==='cv'){const mn=Math.min(...els.map(e=>e.top)),mx=Math.max(...els.map(e=>e.top+e.height));const c=(mn+mx)/2;els.forEach(e=>e.top=Math.round(c-e.height/2));}
+  markMod();renderAll();showProps();}
+function distSel(dir){const f=af();if(!f||selectedIds.size<3)return;saveUndo();const els=f.elements.filter(x=>selectedIds.has(x.id));
+  if(dir==='h'){els.sort((a,b)=>a.left-b.left);const tw=els.reduce((s,e)=>s+e.width,0);const mn=els[0].left,mx=els[els.length-1].left+els[els.length-1].width;const g=(mx-mn-tw)/(els.length-1);let x=mn;for(const e of els){e.left=Math.round(x);x+=e.width+g;}}
+  else{els.sort((a,b)=>a.top-b.top);const th=els.reduce((s,e)=>s+e.height,0);const mn=els[0].top,mx=els[els.length-1].top+els[els.length-1].height;const g=(mx-mn-th)/(els.length-1);let y=mn;for(const e of els){e.top=Math.round(y);y+=e.height+g;}}
+  markMod();renderAll();showProps();}
+
+// =====================================================================
+// SIMULATOR
+// =====================================================================
+let simRotated = false;
+let simLogVisible = false;
+
+function openSimulator() {
+  const f = af();
+  if (!f) { toast('Otwórz plik aby uruchomić symulator', 'error'); return; }
+  const ov = $('simOverlay');
+  ov.classList.add('active');
+  simRotated = false;
+  simLogVisible = false;
+  $('simLog').style.display = 'none';
+  $('simLog').innerHTML = '';
+  $('simName').textContent = f.screenName || f.name;
+  $('simInfo').textContent = `${f.canvasW}×${f.canvasH} | ${f.elements.length} elementów`;
+
+  renderSimulator(f);
+  simLog('Symulator uruchomiony: ' + (f.screenName || f.name));
+  simLog(`Canvas: ${f.canvasW}×${f.canvasH}, Elementów: ${f.elements.length}`);
+}
+
+function renderSimulator(f) {
+  const sc = $('simCanvas');
+  sc.innerHTML = '';
+  const cw = f.canvasW, ch = f.canvasH;
+
+  // Calculate scale to fit screen (vertical/portrait orientation)
+  const vh = window.innerHeight - 40; // minus top bar
+  const vw = window.innerWidth;
+  let sw, sh;
+  if (simRotated) {
+    sw = ch; sh = cw;
+  } else {
+    sw = cw; sh = ch;
+  }
+  const scale = Math.min(vw / sw, vh / sh, 2);
+  sc.style.width = sw + 'px';
+  sc.style.height = sh + 'px';
+  sc.style.transform = simRotated
+    ? `scale(${scale}) rotate(90deg)`
+    : `scale(${scale})`;
+  sc.style.background = '#000';
+
+  // Render elements
+  const sorted = [...f.elements].sort((a, b) => (a.depth || 0) - (b.depth || 0));
+  for (const el of sorted) {
+    const d = document.createElement('div');
+    d.className = 'sim-el';
+    const bg = rgb(el.backColor) || simDefBg(el.type);
+    const fg = rgb(el.foreColor) || '#ddd';
+    const brd = el.borderStyle === '2' ? '2px solid ' + (rgb(el.borderColor) || '#888')
+      : el.borderStyle === '1' ? '1px solid ' + (rgb(el.borderColor) || '#888') : 'none';
+    let shd = 'none';
+    if (el.button3D === 'True') {
+      const lv = +el.level3D || 2;
+      shd = `${lv}px ${lv}px ${lv * 2}px rgba(0,0,0,.5),inset 1px 1px ${lv}px rgba(255,255,255,.15)`;
+    }
+    d.style.cssText = `left:${el.left}px;top:${el.top}px;width:${el.width}px;height:${el.height}px;background:${bg};color:${fg};font-size:${el.fontSize || 10}px;border:${brd};box-shadow:${shd};z-index:${el.depth || 0};`;
+
+    // Image
+    if (el.type === 'Picture' && el.picturePath) {
+      const url = resolveImageUrl(el.picturePath);
+      if (url) d.innerHTML = `<img src="${url}" draggable="false">`;
+    }
+
+    // Caption
+    if (el.caption && el.type !== 'Picture') {
+      const cap = shortCap(el.caption);
+      const sp = document.createElement('span');
+      sp.style.cssText = 'position:relative;z-index:1;padding:2px;pointer-events:none;line-height:1.2;';
+      sp.textContent = cap;
+      d.appendChild(sp);
+    }
+
+    // Display source placeholder
+    if (el.displaySource) {
+      const sp = document.createElement('span');
+      sp.style.cssText = 'position:relative;z-index:1;font-family:monospace;pointer-events:none;';
+      sp.textContent = el.displaySource.startsWith('R') ? '0.000' : '---';
+      d.appendChild(sp);
+    }
+
+    // Interaction
+    d.dataset.name = el.name;
+    d.dataset.type = el.type;
+    d.dataset.id = el.id;
+
+    // Raw data for simulation
+    const rawStr = Object.keys(el._raw).join(', ');
+
+    d.onmousedown = () => {
+      d.style.filter = 'brightness(0.7)';
+      simLog(`⬇ ${el.type} "${el.name}" naciśnięty [${el.left},${el.top}]` +
+        (rawStr ? ` | Raw: ${rawStr}` : ''));
+      if (el.type === 'Button') {
+        // Check for ButtonDown action in raw
+        for (const [k, v] of Object.entries(el._raw)) {
+          if (k === 'ButtonDown' || k === 'CUSTOMACT') {
+            simLog(`  ▸ Akcja: ${k} = ${v.replace(/<[^>]+>/g, '').trim()}`);
+          }
+        }
+      }
+    };
+    d.onmouseup = () => {
+      d.style.filter = '';
+      simLog(`⬆ ${el.type} "${el.name}" zwolniony`);
+    };
+    d.onclick = () => {
+      simLog(`✓ CLICK: ${el.type} "${el.name}"` +
+        (el.enableRule ? ` | EnableRule: ${el.enableRule}` : '') +
+        (el.displaySource ? ` | Display: ${el.displaySource}` : ''));
+    };
+
+    sc.appendChild(d);
+  }
+}
+
+function simDefBg(t) {
+  return { Panel: '#111', Button: 'rgb(146,174,214)', Label: 'transparent',
+    Input: '#001', Inputline: '#009', CoordBox: '#011', Display: '#010',
+    Picture: 'transparent', DynamicPicture: 'transparent', OCSimu: '#020', Marquee: '#201'
+  }[t] || '#222';
+}
+
+function closeSimulator() {
+  $('simOverlay').classList.remove('active');
+}
+
+function simRotate() {
+  simRotated = !simRotated;
+  const f = af(); if (!f) return;
+  renderSimulator(f);
+  simLog('Obrócono ekran: ' + (simRotated ? 'Pionowo (90°)' : 'Poziomo'));
+}
+
+function simToggleLog() {
+  simLogVisible = !simLogVisible;
+  $('simLog').style.display = simLogVisible ? '' : 'none';
+}
+
+function simLog(msg) {
+  const log = $('simLog');
+  const d = document.createElement('div');
+  const ts = new Date().toLocaleTimeString();
+  d.textContent = `[${ts}] ${msg}`;
+  log.appendChild(d);
+  log.scrollTop = log.scrollHeight;
+}
+
+// =====================================================================
+// RENDER ALL + STATUS
+// =====================================================================
+function renderAll() { renderElemList(); renderCanvas(); updateStatus(); }
+function updateStatus() {
+  const f = af();
+  $('stSel').textContent = selectedIds.size;
+  $('stTotal').textContent = f ? f.elements.length : 0;
+  $('stSize').textContent = f ? `${f.canvasW}×${f.canvasH}` : '—';
+  $('stFile').textContent = f ? f.name + (f.modified ? ' ●' : '') : 'Brak plików';
+  $('stImgs').textContent = imageStore.size;
+}
+
+// =====================================================================
+// TOAST
+// =====================================================================
+function toast(m, t) {
+  const el = $('toast'); el.textContent = m;
+  el.className = 'toast show' + (t ? ' ' + t : '');
+  clearTimeout(el._t); el._t = setTimeout(() => el.className = 'toast', 2000);
+}
+</script>
+</body>
+</html>

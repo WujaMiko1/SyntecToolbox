@@ -1,0 +1,2228 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Syntec CNC Workshop v1.0</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#0f0f1e;--sf:#1a1a30;--sf2:#14142a;--bd:#2d2d50;--bdl:#4a4a7a;
+  --tx:#d8d8ee;--td:#7878a0;--ac:#6c8cff;--ah:#8aa4ff;--a2:#ff6c8c;
+  --gn:#4caf50;--or:#ff9800;--rd:#f44336;--cy:#00bcd4;--yl:#ffeb3b;
+  --pb:#0d0d1e;--sel:rgba(108,140,255,0.18);
+}
+body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--tx);overflow:hidden;height:100vh;display:flex;font-size:12px}
+button{font-family:inherit}
+
+/* SIDEBAR */
+.sidebar{width:52px;background:linear-gradient(180deg,#1a1a35,#12122a);border-right:1px solid var(--bd);display:flex;flex-direction:column;align-items:center;padding:6px 0;gap:2px;z-index:100;flex-shrink:0}
+.side-btn{width:40px;height:40px;border:none;background:transparent;color:var(--td);cursor:pointer;border-radius:8px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;font-size:16px;transition:all .15s;position:relative}
+.side-btn .sl{font-size:7px;letter-spacing:.3px;opacity:.7;line-height:1}.side-btn:hover{background:rgba(108,140,255,.12);color:var(--tx)}
+.side-btn.active{background:rgba(108,140,255,.2);color:var(--ac);box-shadow:inset 3px 0 0 var(--ac)}
+.side-btn.active::before{content:'';position:absolute;left:0;top:8px;bottom:8px;width:3px;background:var(--ac);border-radius:0 3px 3px 0}
+.side-sep{width:30px;height:1px;background:var(--bd);margin:4px 0}
+
+/* MAIN */
+.main-area{flex:1;display:flex;flex-direction:column;overflow:hidden}
+.top-bar{display:flex;align-items:center;gap:10px;padding:6px 14px;background:var(--sf2);border-bottom:1px solid var(--bd);flex-shrink:0}
+.top-bar h1{font-size:14px;font-weight:700;color:var(--ac)}.top-bar h1 span{color:var(--td);font-weight:400;font-size:10px;margin-left:6px}
+.top-btn{background:var(--pb);border:1px solid var(--bd);color:var(--tx);padding:4px 10px;border-radius:4px;cursor:pointer;font-size:11px;transition:all .12s}
+.top-btn:hover{background:var(--ac);color:#fff;border-color:var(--ac)}.top-btn.green{border-color:var(--gn)}.top-btn.green:hover{background:var(--gn)}
+.top-btn.warn{border-color:var(--or)}.top-btn.warn:hover{background:var(--or)}
+input[type="file"]{display:none}
+
+/* MODULE CONTENT */
+.module{flex:1;overflow:hidden;display:none}.module.active{display:flex;flex-direction:column}
+
+/* STATUS */
+.statusbar{display:flex;align-items:center;gap:14px;padding:3px 12px;background:var(--ac);color:#fff;font-size:10px;flex-shrink:0;font-weight:500}
+
+/* SCROLLBAR */
+::-webkit-scrollbar{width:5px;height:5px}::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--bd);border-radius:3px}::-webkit-scrollbar-thumb:hover{background:var(--bdl)}
+
+/* TABLES */
+.tbl{width:100%;border-collapse:collapse;font-size:11px}
+.tbl th{background:var(--sf2);padding:5px 8px;text-align:left;border-bottom:2px solid var(--bd);color:var(--ac);font-size:10px;position:sticky;top:0;z-index:5;font-weight:700;text-transform:uppercase;letter-spacing:.3px}
+.tbl td{padding:4px 8px;border-bottom:1px solid rgba(45,45,80,.5);vertical-align:top}
+.tbl tr:hover td{background:var(--sel)}
+.tbl .mono{font-family:'Cascadia Code','Consolas',monospace;font-size:10px;color:var(--cy)}
+.tbl .tag{display:inline-block;padding:1px 5px;border-radius:3px;font-size:9px;font-weight:600;margin:1px}
+.tag-screen{background:#1a3a1a;color:#6f6}.tag-schema{background:#3a3a1a;color:#ff6}
+.tag-fenu{background:#1a2a4a;color:#6cf}.tag-string{background:#3a1a3a;color:#f6f}
+.tag-iomap{background:#1a3a3a;color:#6ff}.tag-config{background:#2a2a1a;color:#cf6}
+
+/* FILTER BAR */
+.filter-bar{display:flex;align-items:center;gap:8px;padding:6px 12px;background:var(--sf);border-bottom:1px solid var(--bd);flex-shrink:0}
+.filter-bar input,.filter-bar select{background:var(--pb);border:1px solid var(--bd);color:var(--tx);padding:4px 8px;border-radius:4px;font-size:11px}
+.filter-bar input{min-width:200px}.filter-bar input:focus,.filter-bar select:focus{border-color:var(--ac);outline:none}
+.filter-bar label{font-size:10px;color:var(--td)}
+.filter-bar .count{font-size:10px;color:var(--td);margin-left:auto}
+
+/* CARDS */
+.card-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px;padding:12px}
+.card{background:var(--sf);border:1px solid var(--bd);border-radius:8px;padding:12px;cursor:pointer;transition:all .15s}
+.card:hover{border-color:var(--ac);transform:translateY(-1px);box-shadow:0 4px 16px rgba(0,0,0,.3)}
+.card h3{font-size:12px;color:var(--ac);margin-bottom:6px;display:flex;align-items:center;gap:6px}
+.card p{font-size:10px;color:var(--td);line-height:1.5}
+.card .stat{display:flex;gap:8px;margin-top:8px;flex-wrap:wrap}
+.card .stat span{font-size:9px;padding:2px 6px;border-radius:4px;background:var(--pb);color:var(--tx)}
+
+/* FENU EDITOR */
+.fenu-area{display:flex;flex:1;overflow:hidden}
+.fenu-tree{width:260px;background:var(--sf);border-right:1px solid var(--bd);overflow-y:auto;padding:6px}
+.fenu-preview{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;background:var(--pb);overflow:auto;padding:20px}
+.fenu-props{width:280px;background:var(--sf);border-left:1px solid var(--bd);overflow-y:auto;padding:8px}
+
+.fenu-bar{display:flex;gap:4px;padding:8px;background:#111;border-radius:6px;border:1px solid var(--bd)}
+.fenu-btn{flex:1;min-width:80px;max-width:120px;height:44px;border:1px solid var(--bd);border-radius:4px;background:linear-gradient(180deg,#3a4a6a,#2a3a5a);color:#fff;font-size:10px;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;transition:all .12s;position:relative}
+.fenu-btn:hover{background:linear-gradient(180deg,#4a5a8a,#3a4a6a);border-color:var(--ac)}
+.fenu-btn.active{border-color:var(--ac);box-shadow:0 0 8px rgba(108,140,255,.3)}
+.fenu-btn .fk{font-size:8px;color:var(--yl);font-weight:700;position:absolute;top:2px;left:4px}
+.fenu-btn .fa{font-size:7px;color:var(--td);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%;padding:0 4px}
+.fenu-btn.empty{background:#151530;border-style:dashed;color:var(--td)}
+
+.fenu-nav-bar{display:flex;gap:4px;margin-bottom:12px;align-items:center}
+.fenu-nav-btn{padding:3px 8px;font-size:10px;background:var(--sf);border:1px solid var(--bd);color:var(--tx);border-radius:3px;cursor:pointer}
+.fenu-nav-btn:hover{background:var(--ac);color:#fff}
+.fenu-nav-btn.current{background:var(--ac);color:#fff}
+.fenu-nav-sep{color:var(--td);font-size:12px}
+.fenu-escape-bar{display:flex;justify-content:space-between;margin-top:12px;gap:8px}
+.fenu-esc-btn{padding:4px 12px;font-size:10px;background:#3a1a1a;border:1px solid #a44;color:#f88;border-radius:4px;cursor:pointer}
+.fenu-esc-btn:hover{background:#5a2a2a}
+.fenu-next-btn{padding:4px 12px;font-size:10px;background:#1a2a1a;border:1px solid #4a4;color:#8f8;border-radius:4px;cursor:pointer}
+.fenu-next-btn:hover{background:#2a3a2a}
+
+.fenu-tree-item{padding:4px 8px;font-size:11px;cursor:pointer;border-radius:4px;margin:1px 0;display:flex;align-items:center;gap:6px;border:1px solid transparent}
+.fenu-tree-item:hover{background:rgba(108,140,255,.08)}.fenu-tree-item.active{background:var(--sel);border-color:var(--ac)}
+.fenu-tree-item .ft-name{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.fenu-tree-item .ft-count{font-size:9px;padding:1px 5px;border-radius:8px;background:var(--pb);color:var(--td)}
+
+/* IO MAP */
+.io-grid{display:grid;gap:2px;padding:8px}
+.io-bit{width:28px;height:28px;border:1px solid var(--bd);border-radius:3px;display:flex;align-items:center;justify-content:center;font-size:8px;font-family:monospace;cursor:pointer;transition:all .1s}
+.io-bit.input{background:rgba(76,175,80,.1);color:var(--gn)}.io-bit.output{background:rgba(255,152,0,.1);color:var(--or)}
+.io-bit:hover{border-color:var(--ac);transform:scale(1.15)}
+.io-bit.active{background:var(--ac);color:#fff}
+.io-section{padding:10px 12px;border-bottom:1px solid var(--bd)}
+.io-section h4{font-size:11px;color:var(--ac);margin-bottom:6px;font-weight:700}
+.io-section .io-row{display:flex;align-items:center;gap:4px;margin:3px 0}
+.io-section .io-label{font-size:9px;color:var(--td);width:40px;text-align:right;font-family:monospace}
+
+/* PROP EDITOR (shared) */
+.prop-group{border-bottom:1px solid var(--bd);padding:8px}
+.prop-group h4{font-size:10px;color:var(--ac);margin-bottom:4px;font-weight:700;text-transform:uppercase;letter-spacing:.3px}
+.prop-row{display:flex;align-items:center;gap:4px;margin:3px 0}
+.prop-row label{font-size:10px;color:var(--td);width:60px;flex-shrink:0}
+.prop-row input,.prop-row select,.prop-row textarea{flex:1;background:var(--pb);border:1px solid var(--bd);color:var(--tx);padding:3px 6px;border-radius:3px;font-size:11px;font-family:inherit}
+.prop-row textarea{min-height:40px;resize:vertical}
+.prop-row input:focus,.prop-row select:focus,.prop-row textarea:focus{border-color:var(--ac);outline:none}
+
+/* WELCOME */
+.welcome{display:flex;flex-direction:column;align-items:center;justify-content:center;flex:1;text-align:center;padding:40px;color:var(--td)}
+.welcome h2{font-size:22px;color:var(--ac);margin-bottom:8px}.welcome p{font-size:12px;max-width:550px;line-height:1.7;margin:4px 0}
+.welcome .feat{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:20px;max-width:600px;text-align:left}
+.welcome .feat-item{background:var(--sf);border:1px solid var(--bd);border-radius:8px;padding:10px;font-size:11px}
+.welcome .feat-item b{color:var(--ac);display:block;margin-bottom:4px;font-size:12px}
+
+/* TOAST */
+.toast{position:fixed;bottom:36px;left:50%;transform:translateX(-50%);background:#333;color:#fff;padding:6px 18px;border-radius:6px;font-size:11px;z-index:25000;opacity:0;transition:opacity .3s;pointer-events:none}
+.toast.show{opacity:1}.toast.success{background:var(--gn)}.toast.error{background:var(--rd)}.toast.info{background:var(--ac)}
+
+/* SPLIT PANELS */
+.split-h{display:flex;flex:1;overflow:hidden}
+.split-panel{overflow-y:auto;flex-shrink:0}
+.split-fill{flex:1;overflow-y:auto}
+
+/* SCREEN EDITOR */
+.scr-layout{display:flex;flex:1;overflow:hidden}
+.scr-list{width:280px;background:var(--sf);border-right:1px solid var(--bd);display:flex;flex-direction:column;flex-shrink:0}
+.scr-list-header{padding:8px 10px;background:var(--sf2);border-bottom:1px solid var(--bd);display:flex;flex-direction:column;gap:4px}
+.scr-list-header input{width:100%;background:var(--pb);border:1px solid var(--bd);color:var(--tx);padding:4px 8px;border-radius:4px;font-size:11px}
+.scr-list-header input:focus{border-color:var(--ac);outline:none}
+.scr-list-header select{width:100%;background:var(--pb);border:1px solid var(--bd);color:var(--tx);padding:3px 6px;border-radius:4px;font-size:10px}
+.scr-list-body{flex:1;overflow-y:auto;padding:4px}
+.scr-item{padding:6px 8px;border-radius:5px;cursor:pointer;margin:2px 0;border:1px solid transparent;display:flex;align-items:center;gap:8px;transition:all .12s}
+.scr-item:hover{background:rgba(108,140,255,.08)}.scr-item.active{background:var(--sel);border-color:var(--ac)}
+.scr-item .scr-icon{font-size:14px;flex-shrink:0}
+.scr-item .scr-info{flex:1;min-width:0}
+.scr-item .scr-name{font-size:11px;font-weight:600;color:var(--tx);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.scr-item .scr-meta{font-size:9px;color:var(--td)}
+.scr-item .scr-badge{font-size:8px;padding:1px 5px;border-radius:4px;background:var(--pb);color:var(--td);flex-shrink:0}
+.scr-canvas-area{flex:1;overflow:auto;background:repeating-conic-gradient(#1a1a2e 0% 25%,#14142a 0% 50%) 0 0/20px 20px;display:flex;align-items:flex-start;justify-content:center;padding:20px;position:relative}
+.scr-canvas-wrap{position:relative;box-shadow:0 4px 32px rgba(0,0,0,.6);border:1px solid var(--bd);transform-origin:top center}
+.scr-canvas{position:relative;overflow:hidden;background:#000}
+.scr-el{position:absolute;overflow:hidden;display:flex;align-items:center;justify-content:center;text-align:center;cursor:pointer;transition:outline .1s;outline:1px solid rgba(80,80,120,.25)}
+.scr-el:hover{outline:1px dashed rgba(108,140,255,.5);z-index:9000!important}
+.scr-el.selected{outline:2px solid var(--ac)!important;z-index:9001!important;box-shadow:0 0 12px rgba(108,140,255,.3)}
+.scr-el img{position:absolute;top:0;left:0;width:100%;height:100%;object-fit:fill;pointer-events:none}
+.scr-el .scr-el-text{position:relative;z-index:1;pointer-events:none;line-height:1.2;padding:2px;overflow:hidden;width:100%;height:100%;display:flex;align-items:center;justify-content:center}
+.scr-props{width:300px;background:var(--sf);border-left:1px solid var(--bd);display:flex;flex-direction:column;flex-shrink:0}
+.scr-props-header{padding:8px 10px;background:var(--sf2);border-bottom:1px solid var(--bd);font-size:11px;font-weight:700;color:var(--ac);display:flex;align-items:center;justify-content:space-between}
+.scr-props-body{flex:1;overflow-y:auto}
+.scr-props-empty{padding:20px;text-align:center;color:var(--td);font-size:11px}
+.scr-toolbar{display:flex;align-items:center;gap:6px;padding:5px 10px;background:var(--sf2);border-bottom:1px solid var(--bd);flex-shrink:0;flex-wrap:wrap}
+.scr-toolbar button{background:var(--pb);border:1px solid var(--bd);color:var(--tx);padding:3px 8px;border-radius:3px;cursor:pointer;font-size:10px}
+.scr-toolbar button:hover{background:var(--ac);color:#fff;border-color:var(--ac)}
+.scr-toolbar .scr-info-bar{font-size:10px;color:var(--td);margin-left:auto}
+.scr-no-screen{display:flex;flex-direction:column;align-items:center;justify-content:center;flex:1;color:var(--td);text-align:center;padding:40px}
+.scr-no-screen h3{font-size:16px;color:var(--ac);margin-bottom:8px}
+.scr-no-screen p{font-size:11px;max-width:400px;line-height:1.6}
+</style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<div class="sidebar">
+  <div class="side-btn active" data-mod="dashboard" onclick="switchModule('dashboard')" title="Przegląd projektu">
+    <span>🏠</span><span class="sl">START</span>
+  </div>
+  <div class="side-btn" data-mod="fenu" onclick="switchModule('fenu')" title="Edytor menu (Fenu)">
+    <span>📋</span><span class="sl">MENU</span>
+  </div>
+  <div class="side-btn" data-mod="registers" onclick="switchModule('registers')" title="Skaner rejestrów PLC">
+    <span>🔍</span><span class="sl">REG</span>
+  </div>
+  <div class="side-btn" data-mod="strings" onclick="switchModule('strings')" title="Menedżer stringów i18n">
+    <span>🌐</span><span class="sl">i18n</span>
+  </div>
+  <div class="side-btn" data-mod="iomap" onclick="switchModule('iomap')" title="Mapa IO">
+    <span>⚡</span><span class="sl">IO</span>
+  </div>
+  <div class="side-sep"></div>
+  <div class="side-btn" data-mod="screens" onclick="switchModule('screens')" title="Edytor ekranów (Screen XML)">
+    <span>🖥️</span><span class="sl">EKRAN</span>
+  </div>
+  <div class="side-sep"></div>
+  <div class="side-btn" onclick="openLayoutEditor()" title="Otwórz pełny Layout Editor w nowej karcie">
+    <span>🎨</span><span class="sl">EDIT</span>
+  </div>
+  <div class="side-btn" onclick="openLadderViewer()" title="Otwórz Ladder Viewer w nowej karcie">
+    <span>⛓</span><span class="sl">LAD</span>
+  </div>
+</div>
+
+<!-- MAIN -->
+<div class="main-area">
+
+  <!-- TOP BAR -->
+  <div class="top-bar">
+    <h1>⚙ Syntec CNC Workshop <span>v1.0</span></h1>
+    <label for="folderInput" class="top-btn green">📁 Wczytaj Projekt (OCRes)</label>
+    <input type="file" id="folderInput" webkitdirectory directory multiple>
+    <label for="fileInput" class="top-btn">📄 Wczytaj plik</label>
+    <input type="file" id="fileInput" accept=".xml" multiple>
+    <span style="margin-left:auto;font-size:10px;color:var(--td)" id="projectName">Brak projektu</span>
+  </div>
+
+  <!-- MODULE: DASHBOARD -->
+  <div class="module active" id="mod-dashboard">
+    <div class="welcome" id="dashWelcome">
+      <h2>⚙ Syntec CNC Workshop</h2>
+      <p>Kompleksowe narzędzie do edycji i analizy projektów CNC Syntec.<br>
+      Wczytaj folder <b style="color:var(--gn)">OCRes</b> z projektu aby rozpocząć.</p>
+      <p style="font-size:11px;color:var(--bdl)">Ścieżka: <code>Project/DiskC/OpenCnc Shared/OCRes</code></p>
+      <div class="feat">
+        <div class="feat-item"><b>📋 Edytor Menu (Fenu)</b>Wizualna edycja przycisków F1-F8, nawigacja między menu, akcje.</div>
+        <div class="feat-item"><b>🔍 Skaner Rejestrów PLC</b>Automatyczna analiza rejestrów R we wszystkich plikach — gdzie używane.</div>
+        <div class="feat-item"><b>🌐 Menedżer Stringów</b>Wszystkie stringi lokalizacji w tabeli — szukaj, filtruj, porównuj.</div>
+        <div class="feat-item"><b>⚡ Mapa IO</b>Wizualna mapa wejść/wyjść z plików IoMap XML.</div>
+        <div class="feat-item"><b>🖥️ Przegląd Ekranów</b>Lista wszystkich ekranów z rozmiarem, elementami, zależnościami.</div>
+        <div class="feat-item"><b>🎨 Layout Editor</b>Wizualny drag-and-drop edytor ekranów z obrazami i symulatorem.</div>
+        <div class="feat-item"><b>⛓ Ladder Viewer</b>Przeglądarka binarnych programów PLC (.lad) — sekcje, rejestry, hex.</div>
+      </div>
+    </div>
+    <div id="dashContent" style="display:none;flex:1;overflow-y:auto">
+      <div class="card-grid" id="dashCards"></div>
+    </div>
+  </div>
+
+  <!-- MODULE: FENU EDITOR -->
+  <div class="module" id="mod-fenu">
+    <div class="filter-bar">
+      <label>📋 Edytor Menu:</label>
+      <select id="fenuFileSelect" onchange="selectFenuFile(this.value)">
+        <option value="">— Wybierz plik fenu —</option>
+      </select>
+      <button class="top-btn" onclick="exportFenu()">💾 Zapisz XML</button>
+      <button class="top-btn" onclick="addFenuBtn()">➕ Nowy przycisk</button>
+      <button class="top-btn warn" onclick="addFenuMenu()">📋 Nowe menu</button>
+      <span class="count" id="fenuStats"></span>
+    </div>
+    <div class="fenu-area">
+      <div class="fenu-tree" id="fenuTree">
+        <div style="padding:16px;color:var(--td);font-size:11px;text-align:center">Wczytaj projekt z menu Fenu</div>
+      </div>
+      <div class="fenu-preview" id="fenuPreview">
+        <div style="color:var(--td);font-size:12px">Wybierz menu z drzewka po lewej</div>
+      </div>
+      <div class="fenu-props" id="fenuProps">
+        <div style="padding:16px;color:var(--td);font-size:11px;text-align:center">Kliknij przycisk aby edytować</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODULE: REGISTERS -->
+  <div class="module" id="mod-registers">
+    <div class="filter-bar">
+      <label>🔍 Rejestr PLC:</label>
+      <input id="regSearch" placeholder="Szukaj rejestru... np. R3376, K480, D100" oninput="filterRegisters()">
+      <select id="regTypeFilter" onchange="filterRegisters()">
+        <option value="">Wszystkie typy</option>
+        <option value="R">R-registry</option>
+        <option value="K">K-registry</option>
+        <option value="D">D-registry</option>
+        <option value="C">C-registry</option>
+      </select>
+      <select id="regSourceFilter" onchange="filterRegisters()">
+        <option value="">Wszystkie źródła</option>
+        <option value="screen">Ekrany</option>
+        <option value="schema">Schematy</option>
+        <option value="fenu">Menu (Fenu)</option>
+        <option value="string">Stringi</option>
+      </select>
+      <button class="top-btn" onclick="exportRegisters()">📋 Eksport CSV</button>
+      <span class="count" id="regStats"></span>
+    </div>
+    <div style="flex:1;overflow-y:auto">
+      <table class="tbl" id="regTable">
+        <thead><tr><th style="width:90px">Rejestr</th><th style="width:100px">Właściwość</th><th>Wartość / Kontekst</th><th style="width:80px">Źródło</th><th>Plik</th></tr></thead>
+        <tbody id="regBody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- MODULE: STRINGS -->
+  <div class="module" id="mod-strings">
+    <div class="filter-bar">
+      <label>🌐 Stringi:</label>
+      <input id="strSearch" placeholder="Szukaj stringa... ID lub treść" oninput="filterStrings()">
+      <select id="strFileFilter" onchange="filterStrings()">
+        <option value="">Wszystkie pliki</option>
+      </select>
+      <button class="top-btn" onclick="exportStrings()">📋 Eksport CSV</button>
+      <span class="count" id="strStats"></span>
+    </div>
+    <div style="flex:1;overflow-y:auto">
+      <table class="tbl" id="strTable">
+        <thead><tr><th style="width:300px">ID</th><th>Treść (Content)</th><th style="width:140px">Plik</th></tr></thead>
+        <tbody id="strBody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- MODULE: IO MAP -->
+  <div class="module" id="mod-iomap">
+    <div class="filter-bar">
+      <label>⚡ Mapa IO:</label>
+      <select id="ioFileSelect" onchange="selectIOFile(this.value)">
+        <option value="">— Wybierz IoMap —</option>
+      </select>
+      <button class="top-btn" onclick="exportIOMap()">📋 Eksport</button>
+      <span class="count" id="ioStats"></span>
+    </div>
+    <div class="split-h">
+      <div class="split-panel" style="width:300px;border-right:1px solid var(--bd)" id="ioTree">
+        <div style="padding:16px;color:var(--td);font-size:11px;text-align:center">Wczytaj pliki IoMap z projektu</div>
+      </div>
+      <div class="split-fill" id="ioContent">
+        <div style="padding:16px;color:var(--td);font-size:11px;text-align:center">Wybierz plik IoMap</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODULE: SCREENS -->
+  <div class="module" id="mod-screens">
+    <div class="scr-layout">
+      <!-- LEFT: Screen list -->
+      <div class="scr-list">
+        <div class="scr-list-header">
+          <div style="display:flex;align-items:center;gap:6px">
+            <span style="font-size:14px">🖥️</span>
+            <b style="font-size:11px;color:var(--ac)">Ekrany</b>
+            <span id="scrStats" style="font-size:9px;color:var(--td);margin-left:auto"></span>
+          </div>
+          <input id="scrSearch" placeholder="🔍 Szukaj ekranu..." oninput="filterScreens()">
+          <select id="scrFolderFilter" onchange="filterScreens()">
+            <option value="">Wszystkie foldery</option>
+          </select>
+        </div>
+        <div class="scr-list-body" id="scrList"></div>
+      </div>
+      <!-- CENTER: Visual canvas -->
+      <div style="display:flex;flex-direction:column;flex:1;overflow:hidden">
+        <div class="scr-toolbar" id="scrToolbar" style="display:none">
+          <button onclick="scrExportXML()">💾 Zapisz XML</button>
+          <button onclick="scrToggleLabels()">🏷️ Etykiety</button>
+          <button onclick="scrToggleGrid()">⊞ Siatka</button>
+          <button onclick="scrSetZoom(0.5)">50%</button>
+          <button onclick="scrSetZoom(0.75)">75%</button>
+          <button onclick="scrSetZoom(1)">100%</button>
+          <button onclick="scrSetZoom(1.25)">125%</button>
+          <button onclick="scrSetZoom(1.5)">150%</button>
+          <span style="width:1px;height:18px;background:var(--bd)"></span>
+          <select id="scrAddType" style="background:var(--pb);border:1px solid var(--bd);color:var(--tx);padding:2px 4px;border-radius:3px;font-size:10px">
+            <option value="Label">Label</option><option value="Panel">Panel</option><option value="Button">Button</option>
+            <option value="Input">Input</option><option value="Display">Display</option><option value="Inputline">Inputline</option>
+            <option value="Picture">Picture</option><option value="CheckBox">CheckBox</option><option value="CoordBox">CoordBox</option>
+          </select>
+          <button onclick="scrAddElement()" style="border-color:var(--gn);color:var(--gn)">➕ Dodaj</button>
+          <button onclick="scrDeleteElement(scrSelectedEl)" style="border-color:var(--rd);color:var(--rd)">🗑️ Usuń</button>
+          <button onclick="scrDuplicateElement(scrSelectedEl)">📋 Kopij</button>
+          <span class="scr-info-bar" id="scrInfoBar"></span>
+        </div>
+        <div class="scr-canvas-area" id="scrCanvasArea">
+          <div class="scr-no-screen" id="scrWelcome">
+            <h3>🖥️ Edytor Ekranów</h3>
+            <p>Wczytaj projekt i wybierz ekran z listy po lewej stronie, aby zobaczyc wierną wizualizację 1:1 interfejsu maszyny CNC.</p>
+            <p style="margin-top:8px;font-size:10px">Wszystkie elementy, obrazki i układ będą wyświetlone dokładnie tak jak na maszynie.</p>
+          </div>
+          <div class="scr-canvas-wrap" id="scrCanvasWrap" style="display:none">
+            <div class="scr-canvas" id="scrCanvas"></div>
+          </div>
+        </div>
+      </div>
+      <!-- RIGHT: Properties -->
+      <div class="scr-props" id="scrPropsPanel" style="display:none">
+        <div class="scr-props-header">
+          <span id="scrPropsTitle">Właściwości</span>
+          <button style="background:transparent;border:none;color:var(--td);cursor:pointer;font-size:14px" onclick="scrDeselectAll()">✕</button>
+        </div>
+        <div class="scr-props-body" id="scrPropsBody">
+          <div class="scr-props-empty">Kliknij element na ekranie aby zobaczyć właściwości</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- STATUSBAR -->
+  <div class="statusbar">
+    <span>Pliki: <b id="stFiles">0</b></span>
+    <span>Ekrany: <b id="stScreens">0</b></span>
+    <span>Menu: <b id="stFenu">0</b></span>
+    <span>Stringi: <b id="stStrings">0</b></span>
+    <span>Rejestry: <b id="stRegs">0</b></span>
+    <span>IO Map: <b id="stIO">0</b></span>
+    <span style="margin-left:auto" id="stProject">—</span>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<script>
+// ===========================================================================
+// STATE
+// ===========================================================================
+const project = {
+  files: [],          // all File objects from folder
+  screens: [],        // {file, path, name, screenName, canvasW, canvasH, elements, folder, type}
+  fenus: [],          // {file, path, name, root, menus, globals}
+  strings: [],        // {file, path, name, messages:[{id,content}]}
+  ioMaps: [],         // {file, path, name, inputs:[], outputs:[], xml}
+  schemas: [],        // {file, path, name, cycles:[{name,fields:[]}]}
+  registers: [],      // {register, property, value, source, file}
+  allXmlTexts: new Map(),  // path -> xmlText
+  imageStore: new Map()    // filename.lower -> objectURL
+};
+
+let currentModule = 'dashboard';
+let activeFenuFile = null, activeFenuMenu = null, activeFenuBtn = null;
+let activeIOFile = null;
+
+const $ = id => document.getElementById(id);
+
+// ===========================================================================
+// INIT
+// ===========================================================================
+$('folderInput').onchange = handleFolder;
+$('fileInput').onchange = e => { for (const f of e.target.files) processFile(f, f.name); e.target.value=''; };
+
+// ===========================================================================
+// MODULE SWITCHING
+// ===========================================================================
+function switchModule(mod) {
+  currentModule = mod;
+  document.querySelectorAll('.side-btn').forEach(b => b.classList.toggle('active', b.dataset.mod === mod));
+  document.querySelectorAll('.module').forEach(m => m.classList.toggle('active', m.id === 'mod-' + mod));
+}
+
+function openLayoutEditor() {
+  window.open('SyntecLayoutEditor.html', '_blank');
+}
+function openLadderViewer() {
+  window.open('SyntecLadderViewer.html', '_blank');
+}
+
+// ===========================================================================
+// FOLDER LOADING
+// ===========================================================================
+async function handleFolder(e) {
+  const files = [...e.target.files];
+  if (!files.length) return;
+  project.files = files;
+  project.screens = [];
+  project.fenus = [];
+  project.strings = [];
+  project.ioMaps = [];
+  project.schemas = [];
+  project.registers = [];
+  project.allXmlTexts.clear();
+
+  // Determine project root name
+  const root = files[0].webkitRelativePath.split('/')[0];
+  $('projectName').textContent = '📂 ' + root;
+  $('stProject').textContent = root;
+
+  toast('Ładowanie projektu...', 'info');
+
+  // Read all XML files
+  const xmlFiles = files.filter(f => f.name.toLowerCase().endsWith('.xml'));
+  let loaded = 0;
+
+  for (const file of xmlFiles) {
+    const path = file.webkitRelativePath;
+    try {
+      const text = await readFileText(file);
+      project.allXmlTexts.set(path, text);
+      classifyAndParse(file, path, text);
+      loaded++;
+    } catch(e) { console.warn('Skip:', path, e); }
+  }
+
+  // Load images from project
+  loadProjectImages(files);
+
+  // Extract registers from all parsed data
+  extractAllRegisters();
+
+  // Render everything
+  renderDashboard();
+  renderFenuTree();
+  renderStringTable();
+  renderIOTree();
+  renderScreenTable();
+  renderRegisterTable();
+  updateGlobalStats();
+
+  $('dashWelcome').style.display = 'none';
+  $('dashContent').style.display = '';
+
+  toast(`Załadowano ${loaded} plików XML z projektu ${root}`, 'success');
+  e.target.value = '';
+}
+
+function readFileText(file) {
+  return new Promise((resolve, reject) => {
+    const r = new FileReader();
+    r.onload = () => resolve(r.result);
+    r.onerror = reject;
+    r.readAsText(file);
+  });
+}
+
+// ===========================================================================
+// FILE CLASSIFICATION
+// ===========================================================================
+function classifyAndParse(file, path, text) {
+  const pathLow = path.toLowerCase();
+  const name = file.name;
+
+  // String files
+  if (pathLow.includes('/string/') || pathLow.includes('\\string\\')) {
+    parseStringFile(file, path, text);
+    return;
+  }
+
+  // IO Map files
+  if (name.toLowerCase().startsWith('iomap') || pathLow.includes('/io/')) {
+    parseIOMapFile(file, path, text);
+    return;
+  }
+
+  // Fenu files (AttachFenu, ModifyFenu, CncFenu)
+  if (pathLow.includes('fenu') || pathLow.includes('attachfenu') || pathLow.includes('modifyfenu')) {
+    if (text.includes('<Root>') || text.includes('<Fenu') || text.includes('<Button')) {
+      parseFenuFile(file, path, text);
+      return;
+    }
+  }
+
+  // Schema files (XMLDB/SCHEMA)
+  if (pathLow.includes('schema') || pathLow.includes('xmldb')) {
+    parseSchemaFile(file, path, text);
+    return;
+  }
+
+  // Screen files
+  if (text.includes('<Screen')) {
+    parseScreenFile(file, path, text);
+    return;
+  }
+
+  // Config files
+  if (text.includes('<MMIConfig') || text.includes('<ResMap')) {
+    // Handle as needed
+    if (text.includes('<ResMap')) parseStringFile(file, path, text);
+  }
+}
+
+// ===========================================================================
+// SCREEN PARSER
+// ===========================================================================
+function parseScreenFile(file, path, text) {
+  const doc = new DOMParser().parseFromString(text, 'text/xml');
+  const root = doc.querySelector('Screen');
+  if (!root) return;
+
+  let cW = 800, cH = 470;
+  const sm = text.match(/BROWSER SIZE\|H:(\d+)\|W:(\d+)/);
+  if (sm) { cH = +sm[1]; cW = +sm[2]; }
+  const sw = root.querySelector(':scope > Width'), sh = root.querySelector(':scope > Height');
+  if (sw) cW = +sw.textContent.trim() || cW;
+  if (sh) cH = +sh.textContent.trim() || cH;
+
+  const ne = root.querySelector(':scope > Name');
+  const screenName = ne ? ne.textContent.trim() : '';
+  const screenType = root.getAttribute('Type') || 'Standard';
+
+  // Count elements
+  const elements = [];
+  for (const ch of root.children) {
+    if (['Name', 'Width', 'Height'].includes(ch.tagName)) continue;
+    elements.push(ch.tagName);
+  }
+
+  // Determine folder
+  const parts = path.split('/');
+  let folder = '';
+  for (let i = 0; i < parts.length; i++) {
+    if (parts[i].toLowerCase() === 'screen' && i + 1 < parts.length) {
+      folder = parts[i + 1]; break;
+    }
+    if (parts[i].toLowerCase() === 'appdata') { folder = 'APPDATA'; break; }
+  }
+
+  project.screens.push({
+    file, path, name: file.name, screenName, canvasW: cW, canvasH: cH,
+    elementCount: elements.length, elementTypes: elements, folder, type: screenType
+  });
+}
+
+// ===========================================================================
+// FENU (MENU) PARSER
+// ===========================================================================
+function parseFenuFile(file, path, text) {
+  const doc = new DOMParser().parseFromString(text, 'text/xml');
+  const root = doc.querySelector('Root');
+  if (!root) return;
+
+  const globals = {
+    noLR: getXmlText(root, 'NoLR') === 'True',
+    textOverPic: getXmlText(root, 'TextOverPic') === 'True',
+    lastOpenState: getXmlText(root, 'LastOpenState')
+  };
+
+  const menus = [];
+  for (const fenu of root.querySelectorAll(':scope > Fenu')) {
+    const menuName = fenu.getAttribute('name') || 'unnamed';
+    const buttons = [];
+    for (const btn of fenu.querySelectorAll(':scope > Button')) {
+      buttons.push({
+        name: btn.getAttribute('name') || '',
+        position: getXmlText(btn, 'Position') || '0',
+        title: getXmlText(btn, 'Title') || '',
+        action: getXmlText(btn, 'Action') || '',
+        alignment: getXmlText(btn, 'Alignment') || '',
+        pwd: btn.querySelector('Pwd') ? getXmlText(btn.querySelector('Pwd'), 'Value') : ''
+      });
+    }
+    const escape = fenu.querySelector(':scope > Escape');
+    const escData = escape ? {
+      state: getXmlText(escape, 'State'),
+      link: getXmlText(escape, 'Link'),
+      action: getXmlText(escape, 'Action')
+    } : null;
+    const next = fenu.querySelector(':scope > Next');
+    const nextData = next ? {
+      link: getXmlText(next, 'Link'),
+      action: getXmlText(next, 'Action')
+    } : null;
+
+    menus.push({ name: menuName, buttons, escape: escData, next: nextData });
+  }
+
+  project.fenus.push({ file, path, name: file.name, root: root, menus, globals, xmlText: text });
+}
+
+// ===========================================================================
+// STRING PARSER
+// ===========================================================================
+function parseStringFile(file, path, text) {
+  const doc = new DOMParser().parseFromString(text, 'text/xml');
+  const messages = [];
+
+  // ResMap format
+  for (const msg of doc.querySelectorAll('Message')) {
+    messages.push({
+      id: msg.getAttribute('ID') || '',
+      content: msg.getAttribute('Content') || msg.textContent.trim()
+    });
+  }
+
+  if (messages.length > 0) {
+    project.strings.push({ file, path, name: file.name, messages });
+  }
+}
+
+// ===========================================================================
+// IO MAP PARSER
+// ===========================================================================
+function parseIOMapFile(file, path, text) {
+  const doc = new DOMParser().parseFromString(text, 'text/xml');
+  const inputs = [], outputs = [];
+
+  // Parse IBitMap
+  for (const ibit of doc.querySelectorAll('IBitMap Bit, IBitMap bit')) {
+    inputs.push({
+      address: ibit.getAttribute('address') || ibit.getAttribute('Address') || '',
+      name: ibit.getAttribute('name') || ibit.getAttribute('Name') || ibit.textContent.trim()
+    });
+  }
+  // Parse OBitMap
+  for (const obit of doc.querySelectorAll('OBitMap Bit, OBitMap bit')) {
+    outputs.push({
+      address: obit.getAttribute('address') || obit.getAttribute('Address') || '',
+      name: obit.getAttribute('name') || obit.getAttribute('Name') || obit.textContent.trim()
+    });
+  }
+  // Also parse RIO sections
+  for (const section of doc.querySelectorAll('RIO1, RIO2, RIO3, M3IO')) {
+    const sectionName = section.tagName;
+    for (const bit of section.querySelectorAll('Bit, bit')) {
+      const isInput = bit.parentElement.tagName.includes('I') || bit.closest('IBitMap');
+      (isInput ? inputs : outputs).push({
+        address: bit.getAttribute('address') || bit.getAttribute('Address') || '',
+        name: `[${sectionName}] ` + (bit.getAttribute('name') || bit.getAttribute('Name') || bit.textContent.trim())
+      });
+    }
+  }
+
+  if (inputs.length > 0 || outputs.length > 0 || text.includes('IoMap') || text.includes('BitMap')) {
+    project.ioMaps.push({ file, path, name: file.name, inputs, outputs, xmlText: text });
+  }
+}
+
+// ===========================================================================
+// SCHEMA PARSER
+// ===========================================================================
+function parseSchemaFile(file, path, text) {
+  const doc = new DOMParser().parseFromString(text, 'text/xml');
+  const cycles = [];
+
+  for (const cycle of doc.querySelectorAll('Cycle')) {
+    const fields = [];
+    for (const field of cycle.querySelectorAll('Field')) {
+      fields.push({
+        name: getXmlText(field, 'Name'),
+        format: getXmlText(field, 'Format'),
+        storage: getXmlText(field, 'Storage'),
+        length: getXmlText(field, 'Length')
+      });
+    }
+    cycles.push({ name: cycle.getAttribute('Name') || '', fields });
+  }
+
+  if (cycles.length > 0) {
+    project.schemas.push({ file, path, name: file.name, cycles });
+  }
+}
+
+// ===========================================================================
+// REGISTER EXTRACTION (cross-reference)
+// ===========================================================================
+function extractAllRegisters() {
+  const regs = [];
+  const regPattern = /\b([RKDC]\d{1,5}(?:\.\d+)?)\b/g;
+
+  // From screens
+  for (const scr of project.screens) {
+    const text = project.allXmlTexts.get(scr.path);
+    if (!text) continue;
+    const doc = new DOMParser().parseFromString(text, 'text/xml');
+    for (const el of doc.querySelectorAll('*')) {
+      // DisplaySource
+      const ds = el.tagName === 'DisplaySource' ? el.textContent.trim() : '';
+      if (ds && /^[RKDC]\d/.test(ds)) {
+        regs.push({ register: ds, property: 'DisplaySource', value: el.parentElement ? el.parentElement.querySelector('Name')?.textContent || '' : '', source: 'screen', file: scr.name });
+      }
+      // EnableRule
+      if (el.tagName === 'EnableRule') {
+        const txt = el.textContent.trim();
+        const matches = txt.match(regPattern);
+        if (matches) for (const m of matches) {
+          regs.push({ register: m, property: 'EnableRule', value: txt, source: 'screen', file: scr.name });
+        }
+      }
+      // VisibleRule
+      if (el.tagName === 'VisibleRule') {
+        const txt = el.textContent.trim();
+        const matches = txt.match(regPattern);
+        if (matches) for (const m of matches) {
+          regs.push({ register: m, property: 'VisibleRule', value: txt, source: 'screen', file: scr.name });
+        }
+      }
+      // InputStorage
+      if (el.tagName === 'InputStorage') {
+        const txt = el.textContent.trim();
+        if (/^[RKDC]\d/.test(txt)) {
+          regs.push({ register: txt, property: 'InputStorage', value: el.parentElement?.querySelector('Name')?.textContent || '', source: 'screen', file: scr.name });
+        }
+      }
+      // ButtonDown / CUSTOMACT
+      if (el.tagName === 'ButtonDown' || el.tagName === 'CUSTOMACT') {
+        const txt = el.textContent.trim();
+        const matches = txt.match(regPattern);
+        if (matches) for (const m of matches) {
+          regs.push({ register: m, property: el.tagName, value: txt, source: 'screen', file: scr.name });
+        }
+      }
+    }
+  }
+
+  // From schemas
+  for (const schema of project.schemas) {
+    for (const cycle of schema.cycles) {
+      for (const field of cycle.fields) {
+        if (field.storage && /^[RKDC]\d/.test(field.storage)) {
+          regs.push({ register: field.storage, property: 'Schema.Storage', value: `${cycle.name} / ${field.name} (${field.format})`, source: 'schema', file: schema.name });
+        }
+        if (field.name && /^[RKDC]\d/.test(field.name)) {
+          regs.push({ register: field.name, property: 'Schema.Field', value: `${cycle.name} (${field.format})`, source: 'schema', file: schema.name });
+        }
+      }
+    }
+  }
+
+  // From fenus
+  for (const fenu of project.fenus) {
+    for (const menu of fenu.menus) {
+      for (const btn of menu.buttons) {
+        if (btn.action) {
+          const matches = btn.action.match(regPattern);
+          if (matches) for (const m of matches) {
+            regs.push({ register: m, property: 'Fenu.Action', value: `${menu.name} / ${btn.name}: ${btn.action}`, source: 'fenu', file: fenu.name });
+          }
+        }
+      }
+    }
+  }
+
+  // From raw XML texts - catch anything remaining
+  for (const [path, text] of project.allXmlTexts) {
+    const fname = path.split('/').pop();
+    // CUSTOMDEV_ actions
+    const devMatches = text.matchAll(/CUSTOMDEV_([RKDC]\d+)=(\d+)/g);
+    for (const m of devMatches) {
+      regs.push({ register: m[1], property: 'CUSTOMDEV', value: `${m[1]}=${m[2]}`, source: 'fenu', file: fname });
+    }
+  }
+
+  // Deduplicate
+  const seen = new Set();
+  project.registers = regs.filter(r => {
+    const key = `${r.register}|${r.property}|${r.file}|${r.value}`;
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+
+  // Sort by register
+  project.registers.sort((a, b) => {
+    const ra = a.register.replace(/\D/g, '').padStart(6, '0');
+    const rb = b.register.replace(/\D/g, '').padStart(6, '0');
+    return (a.register[0] + ra).localeCompare(b.register[0] + rb);
+  });
+}
+
+// ===========================================================================
+// DASHBOARD RENDERING
+// ===========================================================================
+function renderDashboard() {
+  const cards = $('dashCards');
+  cards.innerHTML = '';
+
+  // Screen card
+  addDashCard(cards, '🖥️', 'Ekrany', `${project.screens.length} plików ekranów`, [
+    `APPDATA: ${project.screens.filter(s => s.folder === 'APPDATA').length}`,
+    ...Object.entries(countBy(project.screens.filter(s => s.folder !== 'APPDATA'), 'folder'))
+      .slice(0, 4).map(([k, v]) => `${k}: ${v}`)
+  ], () => switchModule('screens'));
+
+  // Fenu card
+  const totalMenus = project.fenus.reduce((s, f) => s + f.menus.length, 0);
+  const totalBtns = project.fenus.reduce((s, f) => s + f.menus.reduce((s2, m) => s2 + m.buttons.length, 0), 0);
+  addDashCard(cards, '📋', 'Menu (Fenu)', `${project.fenus.length} plików`, [
+    `Menu: ${totalMenus}`, `Przyciski: ${totalBtns}`
+  ], () => switchModule('fenu'));
+
+  // String card
+  const totalStrings = project.strings.reduce((s, f) => s + f.messages.length, 0);
+  addDashCard(cards, '🌐', 'Stringi (i18n)', `${project.strings.length} plików`, [
+    `Stringi: ${totalStrings}`
+  ], () => switchModule('strings'));
+
+  // Register card
+  const uniqueRegs = new Set(project.registers.map(r => r.register));
+  addDashCard(cards, '🔍', 'Rejestry PLC', `${uniqueRegs.size} unikalnych`, [
+    `Użycia: ${project.registers.length}`,
+    `R: ${[...uniqueRegs].filter(r => r.startsWith('R')).length}`,
+    `K: ${[...uniqueRegs].filter(r => r.startsWith('K')).length}`
+  ], () => switchModule('registers'));
+
+  // IO card
+  const totalI = project.ioMaps.reduce((s, m) => s + m.inputs.length, 0);
+  const totalO = project.ioMaps.reduce((s, m) => s + m.outputs.length, 0);
+  addDashCard(cards, '⚡', 'Mapy IO', `${project.ioMaps.length} plików`, [
+    `Wejścia: ${totalI}`, `Wyjścia: ${totalO}`
+  ], () => switchModule('iomap'));
+
+  // Schema card
+  const totalCycles = project.schemas.reduce((s, f) => s + f.cycles.length, 0);
+  const totalFields = project.schemas.reduce((s, f) => s + f.cycles.reduce((s2, c) => s2 + c.fields.length, 0), 0);
+  addDashCard(cards, '📐', 'Schematy XMLDB', `${project.schemas.length} plików`, [
+    `Cykle: ${totalCycles}`, `Pola: ${totalFields}`
+  ], () => switchModule('registers'));
+
+  // Element types breakdown
+  const allTypes = {};
+  for (const scr of project.screens) {
+    for (const t of scr.elementTypes) allTypes[t] = (allTypes[t] || 0) + 1;
+  }
+  const typeList = Object.entries(allTypes).sort((a, b) => b[1] - a[1]).slice(0, 8);
+  addDashCard(cards, '🧩', 'Typy elementów', `${Object.values(allTypes).reduce((a, b) => a + b, 0)} total`, 
+    typeList.map(([t, n]) => `${t}: ${n}`));
+}
+
+function addDashCard(container, icon, title, desc, stats, onclick) {
+  const card = document.createElement('div');
+  card.className = 'card';
+  if (onclick) card.onclick = onclick;
+  card.innerHTML = `
+    <h3><span style="font-size:18px">${icon}</span> ${esc(title)}</h3>
+    <p>${esc(desc)}</p>
+    <div class="stat">${stats.map(s => `<span>${esc(s)}</span>`).join('')}</div>`;
+  container.appendChild(card);
+}
+
+// ===========================================================================
+// FENU EDITOR
+// ===========================================================================
+function renderFenuTree() {
+  const tree = $('fenuTree');
+  const sel = $('fenuFileSelect');
+  tree.innerHTML = '';
+  sel.innerHTML = '<option value="">— Wybierz plik fenu —</option>';
+
+  if (project.fenus.length === 0) {
+    tree.innerHTML = '<div style="padding:16px;color:var(--td);font-size:11px;text-align:center">Brak plików Fenu w projekcie</div>';
+    return;
+  }
+
+  for (let fi = 0; fi < project.fenus.length; fi++) {
+    const f = project.fenus[fi];
+    sel.innerHTML += `<option value="${fi}">${esc(f.name)} (${f.menus.length} menu)</option>`;
+
+    // File header
+    const fh = document.createElement('div');
+    fh.style.cssText = 'font-size:10px;color:var(--ac);padding:6px 8px 2px;font-weight:700;border-bottom:1px solid var(--bd);margin-bottom:2px';
+    fh.textContent = '📄 ' + f.name;
+    tree.appendChild(fh);
+
+    // Menu items
+    for (let mi = 0; mi < f.menus.length; mi++) {
+      const m = f.menus[mi];
+      const div = document.createElement('div');
+      div.className = 'fenu-tree-item';
+      div.innerHTML = `<span>📋</span><span class="ft-name">${esc(m.name)}</span><span class="ft-count">${m.buttons.length} btn</span>`;
+      div.onclick = () => selectFenuMenu(fi, mi);
+      tree.appendChild(div);
+    }
+  }
+
+  $('fenuStats').textContent = `${project.fenus.length} plików, ${project.fenus.reduce((s, f) => s + f.menus.length, 0)} menu`;
+}
+
+function selectFenuFile(val) {
+  if (val === '') return;
+  const fi = +val;
+  if (project.fenus[fi] && project.fenus[fi].menus.length > 0) {
+    selectFenuMenu(fi, 0);
+  }
+}
+
+function selectFenuMenu(fileIdx, menuIdx) {
+  activeFenuFile = fileIdx;
+  activeFenuMenu = menuIdx;
+  activeFenuBtn = null;
+
+  // Highlight in tree
+  document.querySelectorAll('.fenu-tree-item').forEach(x => x.classList.remove('active'));
+  const treeItems = document.querySelectorAll('.fenu-tree-item');
+  let idx = 0;
+  for (let fi = 0; fi < project.fenus.length; fi++) {
+    for (let mi = 0; mi < project.fenus[fi].menus.length; mi++) {
+      if (fi === fileIdx && mi === menuIdx && treeItems[idx]) {
+        treeItems[idx].classList.add('active');
+      }
+      idx++;
+    }
+  }
+
+  renderFenuPreview();
+  renderFenuProps();
+}
+
+function renderFenuPreview() {
+  const preview = $('fenuPreview');
+  if (activeFenuFile === null || activeFenuMenu === null) {
+    preview.innerHTML = '<div style="color:var(--td);font-size:12px">Wybierz menu z drzewka</div>';
+    return;
+  }
+
+  const fenu = project.fenus[activeFenuFile];
+  const menu = fenu.menus[activeFenuMenu];
+
+  // Build navigation breadcrumb
+  let navHtml = '<div class="fenu-nav-bar">';
+  for (let i = 0; i < fenu.menus.length; i++) {
+    const m = fenu.menus[i];
+    navHtml += `<div class="fenu-nav-btn ${i === activeFenuMenu ? 'current' : ''}" onclick="selectFenuMenu(${activeFenuFile},${i})">${esc(m.name)}</div>`;
+    if (i < fenu.menus.length - 1) navHtml += '<span class="fenu-nav-sep">→</span>';
+  }
+  navHtml += '</div>';
+
+  // Build F1-F8 button bar
+  let barHtml = '<div style="text-align:center;margin-bottom:8px;font-size:10px;color:var(--td)">Menu: <b style="color:var(--ac)">' + esc(menu.name) + '</b> | ' + fenu.name + '</div>';
+  barHtml += '<div class="fenu-bar">';
+
+  for (let pos = 1; pos <= 8; pos++) {
+    const btn = menu.buttons.find(b => +b.position === pos);
+    if (btn) {
+      const displayTitle = btn.title.includes('::') ? btn.title.split('::').pop() : btn.title;
+      const actionShort = btn.action.length > 20 ? btn.action.substring(0, 18) + '…' : btn.action;
+      const hasPwd = btn.pwd ? '🔒' : '';
+      barHtml += `<div class="fenu-btn ${activeFenuBtn === pos ? 'active' : ''}" onclick="selectFenuBtn(${pos})" title="${esc(btn.action)}">
+        <span class="fk">F${pos}</span>
+        ${hasPwd}<span style="font-size:10px;padding:0 2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%">${esc(displayTitle)}</span>
+        <span class="fa">${esc(actionShort)}</span>
+      </div>`;
+    } else {
+      barHtml += `<div class="fenu-btn empty" onclick="selectFenuBtn(${pos})"><span class="fk">F${pos}</span><span style="font-size:9px">—</span></div>`;
+    }
+  }
+
+  barHtml += '</div>';
+
+  // Escape and Next bar
+  let controlHtml = '<div class="fenu-escape-bar">';
+  if (menu.escape) {
+    controlHtml += `<div class="fenu-esc-btn" onclick="navigateToFenuLink('${esc(menu.escape.link)}')" title="ESC → ${esc(menu.escape.link)}">
+      ⎋ ESC → ${esc(menu.escape.link || '(brak)')} ${menu.escape.state ? '(' + menu.escape.state + ')' : ''}
+    </div>`;
+  } else {
+    controlHtml += '<div class="fenu-esc-btn" style="opacity:.3">⎋ ESC (brak)</div>';
+  }
+  if (menu.next) {
+    controlHtml += `<div class="fenu-next-btn" onclick="navigateToFenuLink('${esc(menu.next.link)}')" title="NEXT → ${esc(menu.next.link)}">
+      NEXT → ${esc(menu.next.link || '(brak)')} ▶
+    </div>`;
+  } else {
+    controlHtml += '<div class="fenu-next-btn" style="opacity:.3">NEXT (brak) ▶</div>';
+  }
+  controlHtml += '</div>';
+
+  // Action summary table
+  let actionTableHtml = '<div style="margin-top:16px;width:100%;max-width:700px"><table class="tbl"><thead><tr><th>F#</th><th>Nazwa</th><th>Tytuł</th><th>Akcja</th><th>Hasło</th></tr></thead><tbody>';
+  for (const btn of menu.buttons.sort((a, b) => +a.position - +b.position)) {
+    const displayTitle = btn.title.includes('::') ? btn.title.split('::').pop() : btn.title;
+    actionTableHtml += `<tr onclick="selectFenuBtn(${+btn.position})" style="cursor:pointer">
+      <td><b>F${btn.position}</b></td>
+      <td>${esc(btn.name)}</td>
+      <td>${esc(displayTitle)}</td>
+      <td class="mono">${esc(btn.action)}</td>
+      <td>${btn.pwd ? '🔒 ' + btn.pwd : '—'}</td>
+    </tr>`;
+  }
+  actionTableHtml += '</tbody></table></div>';
+
+  preview.innerHTML = navHtml + barHtml + controlHtml + actionTableHtml;
+}
+
+function selectFenuBtn(pos) {
+  activeFenuBtn = pos;
+  renderFenuPreview();
+  renderFenuProps();
+}
+
+function navigateToFenuLink(linkName) {
+  if (!linkName || activeFenuFile === null) return;
+  const fenu = project.fenus[activeFenuFile];
+  const idx = fenu.menus.findIndex(m => m.name === linkName);
+  if (idx >= 0) selectFenuMenu(activeFenuFile, idx);
+  else toast('Menu "' + linkName + '" nie znaleziono', 'error');
+}
+
+function renderFenuProps() {
+  const props = $('fenuProps');
+  if (activeFenuFile === null || activeFenuMenu === null) {
+    props.innerHTML = '<div style="padding:16px;color:var(--td);font-size:11px;text-align:center">Kliknij przycisk aby edytować</div>';
+    return;
+  }
+
+  const fenu = project.fenus[activeFenuFile];
+  const menu = fenu.menus[activeFenuMenu];
+
+  if (activeFenuBtn !== null) {
+    const btn = menu.buttons.find(b => +b.position === activeFenuBtn);
+    if (btn) {
+      props.innerHTML = `
+        <div class="prop-group"><h4>Przycisk F${activeFenuBtn}</h4>
+          <div class="prop-row"><label>Nazwa:</label><input value="${esc(btn.name)}" onchange="updateFenuBtn('name',this.value)"></div>
+          <div class="prop-row"><label>Pozycja:</label><input type="number" value="${btn.position}" min="1" max="8" onchange="updateFenuBtn('position',this.value)"></div>
+          <div class="prop-row"><label>Tytuł:</label><input value="${esc(btn.title)}" onchange="updateFenuBtn('title',this.value)"></div>
+          <div class="prop-row"><label>Align:</label><input value="${esc(btn.alignment)}" onchange="updateFenuBtn('alignment',this.value)"></div>
+        </div>
+        <div class="prop-group"><h4>Akcja</h4>
+          <div class="prop-row"><label>Action:</label><textarea onchange="updateFenuBtn('action',this.value)">${esc(btn.action)}</textarea></div>
+          <div style="font-size:9px;color:var(--td);padding:4px 0">
+            Typy: <b>CUSTOMXML_*.xml</b> | <b>CUSTOMDEV_Rxx=v</b> | <b>FenuLinkTo_name</b> | <b>ShowMenu*</b>
+          </div>
+        </div>
+        <div class="prop-group"><h4>Hasło</h4>
+          <div class="prop-row"><label>Hasło:</label><input value="${esc(btn.pwd)}" onchange="updateFenuBtn('pwd',this.value)" placeholder="np. 520"></div>
+        </div>`;
+    } else {
+      props.innerHTML = `
+        <div class="prop-group"><h4>F${activeFenuBtn} — pusty slot</h4>
+          <p style="font-size:10px;color:var(--td)">Ten slot jest pusty. Kliknij "➕ Nowy przycisk" aby dodać.</p>
+        </div>`;
+    }
+  } else {
+    // Menu properties
+    props.innerHTML = `
+      <div class="prop-group"><h4>Menu: ${esc(menu.name)}</h4>
+        <div class="prop-row"><label>Nazwa:</label><input value="${esc(menu.name)}" onchange="updateFenuMenu('name',this.value)"></div>
+        <div class="prop-row"><label>Buttons:</label><span style="font-size:11px">${menu.buttons.length}</span></div>
+      </div>
+      <div class="prop-group"><h4>Escape</h4>
+        ${menu.escape ? `
+          <div class="prop-row"><label>State:</label><input value="${esc(menu.escape.state)}" onchange="updateFenuEscape('state',this.value)"></div>
+          <div class="prop-row"><label>Link:</label><input value="${esc(menu.escape.link)}" onchange="updateFenuEscape('link',this.value)"></div>
+          <div class="prop-row"><label>Action:</label><input value="${esc(menu.escape.action)}" onchange="updateFenuEscape('action',this.value)"></div>
+        ` : '<div style="font-size:10px;color:var(--td)">Brak Escape handler</div>'}
+      </div>
+      <div class="prop-group"><h4>Next</h4>
+        ${menu.next ? `
+          <div class="prop-row"><label>Link:</label><input value="${esc(menu.next.link)}" onchange="updateFenuNext('link',this.value)"></div>
+          <div class="prop-row"><label>Action:</label><input value="${esc(menu.next.action || '')}" onchange="updateFenuNext('action',this.value)"></div>
+        ` : '<div style="font-size:10px;color:var(--td)">Brak Next handler</div>'}
+      </div>
+      <div class="prop-group"><h4>Globalne</h4>
+        <div class="prop-row"><label>NoLR:</label><span style="font-size:11px">${fenu.globals.noLR ? 'Tak' : 'Nie'}</span></div>
+        <div class="prop-row"><label>TxtPic:</label><span style="font-size:11px">${fenu.globals.textOverPic ? 'Tak' : 'Nie'}</span></div>
+      </div>`;
+  }
+}
+
+function updateFenuBtn(prop, val) {
+  if (activeFenuFile === null || activeFenuMenu === null || activeFenuBtn === null) return;
+  const btn = project.fenus[activeFenuFile].menus[activeFenuMenu].buttons.find(b => +b.position === activeFenuBtn);
+  if (btn) { btn[prop] = val; renderFenuPreview(); }
+}
+
+function updateFenuMenu(prop, val) {
+  if (activeFenuFile === null || activeFenuMenu === null) return;
+  project.fenus[activeFenuFile].menus[activeFenuMenu][prop] = val;
+  renderFenuTree(); renderFenuPreview();
+}
+
+function updateFenuEscape(prop, val) {
+  if (activeFenuFile === null || activeFenuMenu === null) return;
+  const esc = project.fenus[activeFenuFile].menus[activeFenuMenu].escape;
+  if (esc) esc[prop] = val;
+}
+
+function updateFenuNext(prop, val) {
+  if (activeFenuFile === null || activeFenuMenu === null) return;
+  const next = project.fenus[activeFenuFile].menus[activeFenuMenu].next;
+  if (next) next[prop] = val;
+}
+
+function addFenuBtn() {
+  if (activeFenuFile === null || activeFenuMenu === null) { toast('Wybierz menu', 'error'); return; }
+  const menu = project.fenus[activeFenuFile].menus[activeFenuMenu];
+  const usedPos = new Set(menu.buttons.map(b => +b.position));
+  let pos = 1;
+  for (let i = 1; i <= 8; i++) if (!usedPos.has(i)) { pos = i; break; }
+  menu.buttons.push({ name: 'NewButton', position: String(pos), title: 'Nowy', action: '', alignment: '', pwd: '' });
+  renderFenuPreview(); renderFenuProps();
+  toast('Dodano przycisk F' + pos, 'success');
+}
+
+function addFenuMenu() {
+  if (activeFenuFile === null) { toast('Wybierz plik Fenu', 'error'); return; }
+  const name = prompt('Nazwa nowego menu:');
+  if (!name) return;
+  project.fenus[activeFenuFile].menus.push({ name, buttons: [], escape: null, next: null });
+  renderFenuTree(); renderFenuPreview();
+  toast('Dodano menu: ' + name, 'success');
+}
+
+function exportFenu() {
+  if (activeFenuFile === null) { toast('Brak wybranego pliku Fenu', 'error'); return; }
+  const fenu = project.fenus[activeFenuFile];
+  let xml = '<?xml version="1.0" encoding="utf-8"?>\n<Root>\n';
+  if (fenu.globals.noLR) xml += '\t<NoLR>True</NoLR>\n';
+  if (fenu.globals.textOverPic) xml += '\t<TextOverPic>True</TextOverPic>\n';
+
+  for (const menu of fenu.menus) {
+    xml += `\t<Fenu name="${esc(menu.name)}">\n`;
+    if (menu.escape) {
+      xml += '\t\t<Escape>\n';
+      if (menu.escape.state) xml += `\t\t\t<State>${esc(menu.escape.state)}</State>\n`;
+      if (menu.escape.link) xml += `\t\t\t<Link>${esc(menu.escape.link)}</Link>\n`;
+      if (menu.escape.action) xml += `\t\t\t<Action>${esc(menu.escape.action)}</Action>\n`;
+      xml += '\t\t</Escape>\n';
+    }
+    for (const btn of menu.buttons.sort((a, b) => +a.position - +b.position)) {
+      xml += `\t\t<Button name="${esc(btn.name)}">\n`;
+      xml += `\t\t\t<Position>${btn.position}</Position>\n`;
+      if (btn.title) xml += `\t\t\t<Title>${esc(btn.title)}</Title>\n`;
+      if (btn.action) xml += `\t\t\t<Action>${esc(btn.action)}</Action>\n`;
+      if (btn.alignment) xml += `\t\t\t<Alignment>${esc(btn.alignment)}</Alignment>\n`;
+      if (btn.pwd) {
+        xml += `\t\t\t<Pwd><Value>${esc(btn.pwd)}</Value></Pwd>\n`;
+      }
+      xml += `\t\t</Button>\n`;
+    }
+    if (menu.next) {
+      xml += '\t\t<Next>\n';
+      if (menu.next.link) xml += `\t\t\t<Link>${esc(menu.next.link)}</Link>\n`;
+      if (menu.next.action) xml += `\t\t\t<Action>${esc(menu.next.action)}</Action>\n`;
+      xml += '\t\t</Next>\n';
+    }
+    xml += `\t</Fenu>\n`;
+  }
+  xml += '</Root>\n';
+
+  downloadFile(fenu.name, xml, 'text/xml');
+  toast('Zapisano: ' + fenu.name, 'success');
+}
+
+// ===========================================================================
+// REGISTER TABLE
+// ===========================================================================
+function renderRegisterTable() {
+  const body = $('regBody');
+  body.innerHTML = '';
+
+  for (const r of project.registers) {
+    const tr = document.createElement('tr');
+    tr.dataset.reg = r.register;
+    tr.dataset.source = r.source;
+    const tagClass = { screen: 'tag-screen', schema: 'tag-schema', fenu: 'tag-fenu', string: 'tag-string' }[r.source] || '';
+    tr.innerHTML = `
+      <td class="mono" style="font-weight:700">${esc(r.register)}</td>
+      <td>${esc(r.property)}</td>
+      <td style="max-width:300px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${esc(r.value)}">${esc(r.value)}</td>
+      <td><span class="tag ${tagClass}">${esc(r.source)}</span></td>
+      <td style="font-size:10px;color:var(--td)">${esc(r.file)}</td>`;
+    body.appendChild(tr);
+  }
+
+  $('regStats').textContent = `${project.registers.length} wyników, ${new Set(project.registers.map(r => r.register)).size} unikalnych rejestrów`;
+}
+
+function filterRegisters() {
+  const search = ($('regSearch').value || '').toLowerCase();
+  const typeFilter = $('regTypeFilter').value;
+  const sourceFilter = $('regSourceFilter').value;
+  const rows = $('regBody').querySelectorAll('tr');
+  let visible = 0;
+
+  for (const row of rows) {
+    const reg = row.dataset.reg || '';
+    const source = row.dataset.source || '';
+    const text = row.textContent.toLowerCase();
+    let show = true;
+    if (search && !text.includes(search)) show = false;
+    if (typeFilter && !reg.startsWith(typeFilter)) show = false;
+    if (sourceFilter && source !== sourceFilter) show = false;
+    row.style.display = show ? '' : 'none';
+    if (show) visible++;
+  }
+
+  $('regStats').textContent = `${visible} / ${project.registers.length} wyników`;
+}
+
+function exportRegisters() {
+  let csv = 'Rejestr,Właściwość,Wartość,Źródło,Plik\n';
+  for (const r of project.registers) {
+    csv += `"${r.register}","${r.property}","${r.value.replace(/"/g, '""')}","${r.source}","${r.file}"\n`;
+  }
+  downloadFile('registers.csv', csv, 'text/csv');
+  toast('Eksportowano rejestry do CSV', 'success');
+}
+
+// ===========================================================================
+// STRING TABLE
+// ===========================================================================
+function renderStringTable() {
+  const body = $('strBody');
+  const sel = $('strFileFilter');
+  body.innerHTML = '';
+  sel.innerHTML = '<option value="">Wszystkie pliki</option>';
+
+  const files = new Set();
+  let total = 0;
+
+  for (const sf of project.strings) {
+    files.add(sf.name);
+    for (const msg of sf.messages) {
+      total++;
+      const tr = document.createElement('tr');
+      tr.dataset.file = sf.name;
+      tr.innerHTML = `
+        <td class="mono" style="font-size:10px;word-break:break-all">${esc(msg.id)}</td>
+        <td>${esc(msg.content)}</td>
+        <td style="font-size:10px;color:var(--td)">${esc(sf.name)}</td>`;
+      body.appendChild(tr);
+    }
+  }
+
+  for (const f of files) {
+    sel.innerHTML += `<option value="${esc(f)}">${esc(f)}</option>`;
+  }
+
+  $('strStats').textContent = `${total} stringów w ${project.strings.length} plikach`;
+}
+
+function filterStrings() {
+  const search = ($('strSearch').value || '').toLowerCase();
+  const fileFilter = $('strFileFilter').value;
+  const rows = $('strBody').querySelectorAll('tr');
+  let visible = 0;
+
+  for (const row of rows) {
+    const file = row.dataset.file || '';
+    const text = row.textContent.toLowerCase();
+    let show = true;
+    if (search && !text.includes(search)) show = false;
+    if (fileFilter && file !== fileFilter) show = false;
+    row.style.display = show ? '' : 'none';
+    if (show) visible++;
+  }
+
+  $('strStats').textContent = `${visible} wyników`;
+}
+
+function exportStrings() {
+  let csv = 'ID,Content,File\n';
+  for (const sf of project.strings) {
+    for (const msg of sf.messages) {
+      csv += `"${msg.id.replace(/"/g, '""')}","${msg.content.replace(/"/g, '""')}","${sf.name}"\n`;
+    }
+  }
+  downloadFile('strings.csv', csv, 'text/csv');
+  toast('Eksportowano stringi do CSV', 'success');
+}
+
+// ===========================================================================
+// IO MAP
+// ===========================================================================
+function renderIOTree() {
+  const tree = $('ioTree');
+  const sel = $('ioFileSelect');
+  tree.innerHTML = '';
+  sel.innerHTML = '<option value="">— Wybierz IoMap —</option>';
+
+  if (project.ioMaps.length === 0) {
+    tree.innerHTML = '<div style="padding:16px;color:var(--td);font-size:11px;text-align:center">Brak plików IoMap</div>';
+    return;
+  }
+
+  for (let i = 0; i < project.ioMaps.length; i++) {
+    const m = project.ioMaps[i];
+    sel.innerHTML += `<option value="${i}">${esc(m.name)}</option>`;
+
+    const div = document.createElement('div');
+    div.className = 'fenu-tree-item';
+    div.innerHTML = `<span>⚡</span><span class="ft-name">${esc(m.name)}</span><span class="ft-count">I:${m.inputs.length} O:${m.outputs.length}</span>`;
+    div.onclick = () => selectIOFile(i);
+    tree.appendChild(div);
+  }
+
+  $('ioStats').textContent = `${project.ioMaps.length} plików IO`;
+}
+
+function selectIOFile(val) {
+  const idx = +val;
+  activeIOFile = idx;
+  const content = $('ioContent');
+  const m = project.ioMaps[idx];
+  if (!m) { content.innerHTML = '<div style="padding:16px;color:var(--td)">Wybierz plik</div>'; return; }
+
+  // Render
+  let html = `<div style="padding:12px"><h3 style="color:var(--ac);margin-bottom:12px">⚡ ${esc(m.name)}</h3>`;
+
+  // Inputs
+  if (m.inputs.length > 0) {
+    html += '<div class="io-section"><h4 style="color:var(--gn)">📥 Wejścia (Inputs) — ' + m.inputs.length + '</h4>';
+    html += '<table class="tbl"><thead><tr><th style="width:100px">Adres</th><th>Nazwa / Opis</th></tr></thead><tbody>';
+    for (const inp of m.inputs) {
+      html += `<tr><td class="mono">${esc(inp.address)}</td><td>${esc(inp.name)}</td></tr>`;
+    }
+    html += '</tbody></table></div>';
+  }
+
+  // Outputs
+  if (m.outputs.length > 0) {
+    html += '<div class="io-section"><h4 style="color:var(--or)">📤 Wyjścia (Outputs) — ' + m.outputs.length + '</h4>';
+    html += '<table class="tbl"><thead><tr><th style="width:100px">Adres</th><th>Nazwa / Opis</th></tr></thead><tbody>';
+    for (const out of m.outputs) {
+      html += `<tr><td class="mono">${esc(out.address)}</td><td>${esc(out.name)}</td></tr>`;
+    }
+    html += '</tbody></table></div>';
+  }
+
+  // Raw XML preview
+  html += '<div class="io-section"><h4>📜 Raw XML</h4>';
+  html += `<pre style="background:var(--pb);padding:8px;border-radius:4px;overflow-x:auto;font-size:10px;color:var(--td);max-height:300px;overflow-y:auto;">${esc(m.xmlText.substring(0, 3000))}${m.xmlText.length > 3000 ? '\n...' : ''}</pre>`;
+  html += '</div></div>';
+
+  content.innerHTML = html;
+}
+
+function exportIOMap() {
+  if (activeIOFile === null) { toast('Wybierz plik IO', 'error'); return; }
+  const m = project.ioMaps[activeIOFile];
+  let csv = 'Type,Address,Name\n';
+  for (const inp of m.inputs) csv += `"Input","${inp.address}","${inp.name.replace(/"/g, '""')}"\n`;
+  for (const out of m.outputs) csv += `"Output","${out.address}","${out.name.replace(/"/g, '""')}"\n`;
+  downloadFile(m.name.replace('.xml', '') + '_iomap.csv', csv, 'text/csv');
+  toast('Eksportowano IO Map do CSV', 'success');
+}
+
+// ===========================================================================
+// SCREEN EDITOR STATE
+// ===========================================================================
+let activeScreen = null;
+let scrZoom = 1;
+let scrShowLabels = true;
+let scrShowGrid = false;
+let scrSelectedEl = null;
+let scrParsedElements = [];
+
+// ===========================================================================
+// SCREEN LIST (replaces renderScreenTable)
+// ===========================================================================
+function renderScreenTable() {
+  const list = $('scrList');
+  const sel = $('scrFolderFilter');
+  list.innerHTML = '';
+  sel.innerHTML = '<option value="">Wszystkie foldery</option>';
+
+  const folders = new Set();
+  for (let i = 0; i < project.screens.length; i++) {
+    const scr = project.screens[i];
+    folders.add(scr.folder || '—');
+    const div = document.createElement('div');
+    div.className = 'scr-item' + (activeScreen === i ? ' active' : '');
+    div.dataset.idx = i;
+    div.dataset.folder = scr.folder || '';
+    const typeIcon = scr.type === 'DotNetExtension' ? '🔌' : '📺';
+    div.innerHTML = `<span class="scr-icon">${typeIcon}</span>
+      <div class="scr-info"><div class="scr-name">${esc(scr.name)}</div>
+      <div class="scr-meta">${esc(scr.screenName)} · ${scr.canvasW}×${scr.canvasH} · ${scr.elementCount} elem.</div></div>
+      <span class="scr-badge">${esc(scr.folder)}</span>`;
+    div.onclick = () => openScreenInline(i);
+    list.appendChild(div);
+  }
+
+  for (const f of folders) {
+    sel.innerHTML += `<option value="${esc(f)}">${esc(f)}</option>`;
+  }
+  $('scrStats').textContent = project.screens.length + ' ekranów';
+}
+
+function filterScreens() {
+  const search = ($('scrSearch').value || '').toLowerCase();
+  const folderFilter = $('scrFolderFilter').value;
+  const items = $('scrList').querySelectorAll('.scr-item');
+  let visible = 0;
+  for (const item of items) {
+    const folder = item.dataset.folder || '';
+    const text = item.textContent.toLowerCase();
+    let show = true;
+    if (search && !text.includes(search)) show = false;
+    if (folderFilter && folder !== folderFilter) show = false;
+    item.style.display = show ? '' : 'none';
+    if (show) visible++;
+  }
+  $('scrStats').textContent = `${visible} / ${project.screens.length} ekranów`;
+}
+
+// ===========================================================================
+// OPEN SCREEN INLINE (replaces openInLayoutEditor)
+// ===========================================================================
+function openInLayoutEditor(path) {
+  const idx = project.screens.findIndex(s => s.path === path);
+  if (idx >= 0) openScreenInline(idx);
+  else window.open('SyntecLayoutEditor.html', '_blank');
+}
+
+function openScreenInline(idx) {
+  activeScreen = idx;
+  scrSelectedEl = null;
+
+  $('scrList').querySelectorAll('.scr-item').forEach(item => {
+    item.classList.toggle('active', +item.dataset.idx === idx);
+  });
+
+  const scr = project.screens[idx];
+  const xmlText = project.allXmlTexts.get(scr.path);
+  if (!xmlText) { toast('Brak danych XML dla tego ekranu', 'error'); return; }
+
+  scrParsedElements = scrParseElements(xmlText);
+
+  $('scrToolbar').style.display = '';
+  $('scrWelcome').style.display = 'none';
+  $('scrCanvasWrap').style.display = '';
+  $('scrPropsPanel').style.display = '';
+
+  $('scrCanvas').style.width = scr.canvasW + 'px';
+  $('scrCanvas').style.height = scr.canvasH + 'px';
+  $('scrCanvasWrap').style.transform = `scale(${scrZoom})`;
+
+  $('scrInfoBar').textContent = `${scr.name} · ${scr.screenName} · ${scr.canvasW}×${scr.canvasH} · ${scrParsedElements.length} elementów`;
+
+  scrRenderCanvas();
+  scrRenderProps();
+}
+
+// ===========================================================================
+// PARSE SCREEN ELEMENTS (full parse for visual rendering)
+// ===========================================================================
+function scrParseElements(xmlText) {
+  const doc = new DOMParser().parseFromString(xmlText, 'text/xml');
+  const root = doc.querySelector('Screen');
+  if (!root) return [];
+
+  const gT = (n, t) => { const c = n.querySelector(':scope > ' + t); return c ? c.textContent.trim() : ''; };
+  const elements = [];
+  let idx = 0;
+
+  for (const ch of root.children) {
+    if (['Name', 'Width', 'Height'].includes(ch.tagName)) continue;
+    const el = {
+      idx: idx++, type: ch.tagName, name: gT(ch, 'Name'),
+      left: +gT(ch, 'Left') || 0, top: +gT(ch, 'Top') || 0,
+      width: +gT(ch, 'Width') || 80, height: +gT(ch, 'Height') || 30,
+      caption: gT(ch, 'Caption'), backColor: gT(ch, 'BackColor'), foreColor: gT(ch, 'ForeColor'),
+      fontSize: +gT(ch, 'FontSize') || 0, borderStyle: gT(ch, 'BorderStyle'), borderColor: gT(ch, 'BorderColor'),
+      depth: +gT(ch, 'Depth') || 0, enabled: gT(ch, 'Enabled'), alignment: gT(ch, 'Alignment'),
+      wrap: gT(ch, 'Wrap'), button3D: gT(ch, 'Button3D'), level3D: gT(ch, 'Level3D'),
+      displaySource: gT(ch, 'DisplaySource'), enableRule: gT(ch, 'EnableRule'), visibleRule: gT(ch, 'VisibleRule'),
+      inputFormat: gT(ch, 'InputFormat'), inputStorage: gT(ch, 'InputStorage'),
+      enterEff: gT(ch, 'EnterEff'), visible: gT(ch, 'Visible'), role: ch.getAttribute('Role') || '',
+      picturePath: '', pictureFitType: '',
+      buttonDownAction: '', buttonUpActions: [], listItems: [], dynPictures: [],
+      allProps: {}
+    };
+    // Collect simple (leaf) properties into allProps
+    for (const prop of ch.children) {
+      if (prop.children.length === 0) {
+        if (!el.allProps[prop.tagName]) el.allProps[prop.tagName] = prop.textContent.trim();
+      }
+    }
+    // ButtonDown
+    const btnDown = ch.querySelector(':scope > ButtonDown');
+    if (btnDown) {
+      const action = btnDown.querySelector('Action');
+      el.buttonDownAction = action ? action.textContent.trim() : btnDown.textContent.trim();
+    }
+    // ButtonUp
+    const btnUp = ch.querySelector(':scope > ButtonUp');
+    if (btnUp) {
+      for (const a of btnUp.querySelectorAll('Action')) el.buttonUpActions.push(a.textContent.trim());
+    }
+    // ListItems
+    const listItems = ch.querySelector(':scope > ListItems');
+    if (listItems) {
+      for (const item of listItems.querySelectorAll(':scope > Item')) {
+        const li = { id: item.getAttribute('Id') || '' };
+        const bc = item.querySelector('BackColor'), fc = item.querySelector('ForeColor'), cap = item.querySelector('Caption');
+        if (bc) li.backColor = bc.textContent.trim();
+        if (fc) li.foreColor = fc.textContent.trim();
+        if (cap) li.caption = cap.textContent.trim();
+        el.listItems.push(li);
+      }
+    }
+    // Picture-type element
+    if (ch.tagName === 'Picture') {
+      const picEl = ch.querySelector(':scope > Picture');
+      if (picEl) { el.picturePath = picEl.textContent.trim(); el.pictureFitType = picEl.getAttribute('FitType') || ''; }
+    }
+    // DynamicPicture
+    if (ch.tagName === 'DynamicPicture') {
+      for (const pic of ch.querySelectorAll(':scope > Picture')) el.dynPictures.push(pic.textContent.trim());
+      if (el.dynPictures.length > 0) el.picturePath = el.dynPictures[0];
+    }
+    elements.push(el);
+  }
+  elements.sort((a, b) => (b.depth || 0) - (a.depth || 0));
+  return elements;
+}
+
+// ===========================================================================
+// RENDER SCREEN CANVAS (1:1 machine interface)
+// ===========================================================================
+function scrRenderCanvas() {
+  const canvas = $('scrCanvas');
+  canvas.innerHTML = '';
+
+  if (scrShowGrid && activeScreen !== null) {
+    const scr = project.screens[activeScreen];
+    const gc = document.createElement('canvas');
+    gc.width = scr.canvasW; gc.height = scr.canvasH;
+    gc.style.cssText = 'position:absolute;top:0;left:0;pointer-events:none;z-index:9999;opacity:.3';
+    const ctx = gc.getContext('2d');
+    for (let x = 0; x <= scr.canvasW; x += 10) {
+      ctx.beginPath(); ctx.strokeStyle = x % 100 === 0 ? 'rgba(100,100,200,.4)' : 'rgba(100,100,200,.15)';
+      ctx.lineWidth = x % 100 === 0 ? 1 : 0.5; ctx.moveTo(x, 0); ctx.lineTo(x, scr.canvasH); ctx.stroke();
+    }
+    for (let y = 0; y <= scr.canvasH; y += 10) {
+      ctx.beginPath(); ctx.strokeStyle = y % 100 === 0 ? 'rgba(100,100,200,.4)' : 'rgba(100,100,200,.15)';
+      ctx.lineWidth = y % 100 === 0 ? 1 : 0.5; ctx.moveTo(0, y); ctx.lineTo(scr.canvasW, y); ctx.stroke();
+    }
+    canvas.appendChild(gc);
+  }
+
+  for (const el of [...scrParsedElements].reverse()) {
+    const div = document.createElement('div');
+    div.className = 'scr-el' + (scrSelectedEl === el.idx ? ' selected' : '');
+    div.dataset.idx = el.idx;
+
+    const bg = scrRgb(el.backColor);
+    const fg = scrRgb(el.foreColor) || '#ddd';
+    const fs = el.fontSize || 10;
+
+    let border = 'none';
+    if (el.borderStyle === '2') border = '2px solid ' + (scrRgb(el.borderColor) || '#888');
+    else if (el.borderStyle === '1') border = '1px solid ' + (scrRgb(el.borderColor) || '#888');
+
+    let shadow = 'none';
+    if (el.button3D === 'True') {
+      const lv = +el.level3D || 2;
+      shadow = `${lv}px ${lv}px ${lv*2}px rgba(0,0,0,.5),inset 1px 1px ${lv}px rgba(255,255,255,.15)`;
+    }
+
+    const bgStyle = bg || scrDefBg(el.type);
+    let textAlign = 'center', justifyContent = 'center';
+    if (el.alignment === '0') { textAlign = 'left'; justifyContent = 'flex-start'; }
+    else if (el.alignment === '2') { textAlign = 'right'; justifyContent = 'flex-end'; }
+
+    div.style.cssText = `left:${el.left}px;top:${el.top}px;width:${el.width}px;height:${el.height}px;background:${bgStyle};color:${fg};font-size:${fs}px;border:${border};box-shadow:${shadow};z-index:${el.depth||0};text-align:${textAlign};`;
+
+    let content = '';
+
+    // Image for Picture/DynamicPicture
+    if ((el.type === 'Picture' || el.type === 'DynamicPicture') && el.picturePath) {
+      const url = scrResolveImage(el.picturePath);
+      if (url) content += `<img src="${url}" draggable="false">`;
+      else content += `<span style="font-size:8px;color:#888;padding:4px;position:relative;z-index:1">🖼️ ${esc(el.picturePath.split(/[\\\/]/).pop())}</span>`;
+    }
+
+    // Caption text
+    const capText = scrParseCaption(el.caption);
+    if (capText && el.type !== 'Picture') {
+      const wrap = el.wrap === 'True' ? 'normal' : 'nowrap';
+      content += `<span class="scr-el-text" style="white-space:${wrap};justify-content:${justifyContent}">${esc(capText)}</span>`;
+    }
+
+    // Input placeholder
+    if ((el.type === 'Input' || el.type === 'Inputline') && !el.caption) {
+      const stor = el.inputStorage || el.displaySource || '';
+      content += `<span class="scr-el-text" style="font-size:9px;color:rgba(255,255,255,.4);font-style:italic">${stor ? esc(stor) : '____'}</span>`;
+    }
+
+    // Display source
+    if (el.type === 'Display' && !el.caption) {
+      const ds = el.displaySource || '';
+      content += `<span class="scr-el-text" style="font-size:9px;color:rgba(255,255,0,.5);font-family:monospace">${ds ? esc(ds) : '---'}</span>`;
+    }
+
+    // CoordBox placeholder
+    if (el.type === 'CoordBox' && !el.caption) {
+      content += `<span class="scr-el-text" style="font-size:9px;color:rgba(0,255,255,.5);font-family:monospace">X: 0.000</span>`;
+    }
+
+    // Type label overlay
+    if (scrShowLabels) {
+      const tn = el.name || el.type;
+      const icon = scrTypeIcon(el.type);
+      const typeClr = scrTypeColor(el.type);
+      content += `<span style="position:absolute;top:0;left:0;font-size:7px;background:rgba(0,0,0,.7);color:${typeClr};padding:0 3px;border-radius:0 0 3px 0;z-index:2;pointer-events:none;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${icon} ${esc(tn)}</span>`;
+    }
+
+    div.innerHTML = content;
+    div.onclick = (e) => { e.stopPropagation(); scrSelectElement(el.idx); };
+    canvas.appendChild(div);
+  }
+
+  canvas.onclick = (e) => { if (e.target === canvas) scrDeselectAll(); };
+}
+
+function scrRgb(s) {
+  if (!s) return null;
+  const p = s.replace(/,\s*$/, '').split(',').map(x => +x.trim());
+  return p.length >= 3 && p.every(x => !isNaN(x)) ? `rgb(${p[0]},${p[1]},${p[2]})` : null;
+}
+
+function scrDefBg(type) {
+  return {Panel:'rgba(40,40,80,.4)',Button:'rgba(60,60,100,.5)',Label:'transparent',Input:'rgba(0,0,30,.6)',
+    Inputline:'rgba(0,0,100,.5)',CoordBox:'rgba(0,60,60,.4)',Display:'rgba(40,60,40,.4)',
+    Picture:'transparent',DynamicPicture:'transparent',OCSimu:'rgba(30,50,30,.4)',
+    Marquee:'rgba(50,30,50,.4)',OCText:'transparent'}[type] || 'rgba(40,40,40,.3)';
+}
+
+function scrParseCaption(caption) {
+  if (!caption) return '';
+  if (caption.startsWith('STR::')) {
+    const parts = caption.split('::');
+    return parts.length >= 3 ? parts.slice(2).join('::') : caption;
+  }
+  return caption;
+}
+
+function scrResolveImage(imagePath) {
+  if (!imagePath) return null;
+  const fname = imagePath.replace(/\\/g, '/').split('/').pop().toLowerCase();
+  return project.imageStore.get(fname) || null;
+}
+
+// ===========================================================================
+// SCREEN ELEMENT SELECTION & PROPERTIES
+// ===========================================================================
+function scrSelectElement(idx) {
+  scrSelectedEl = idx;
+  $('scrCanvas').querySelectorAll('.scr-el').forEach(el => {
+    el.classList.toggle('selected', +el.dataset.idx === idx);
+  });
+  scrRenderProps();
+}
+
+function scrDeselectAll() {
+  scrSelectedEl = null;
+  $('scrCanvas').querySelectorAll('.scr-el.selected').forEach(el => el.classList.remove('selected'));
+  scrRenderProps();
+}
+
+function scrRenderProps() {
+  const body = $('scrPropsBody');
+
+  if (scrSelectedEl === null) {
+    if (activeScreen !== null) {
+      const scr = project.screens[activeScreen];
+      const tc = {};
+      for (const el of scrParsedElements) tc[el.type] = (tc[el.type] || 0) + 1;
+      const summary = Object.entries(tc).sort((a, b) => b[1] - a[1])
+        .map(([t, n]) => `<div style="display:flex;justify-content:space-between;font-size:10px;padding:2px 0"><span style="color:${scrTypeColor(t)}">${scrTypeIcon(t)} ${esc(t)}</span><span style="color:var(--ac)">${n}</span></div>`).join('');
+
+      // Element tree for selection
+      let elTree = '<div class="prop-group"><h4>🧩 Elementy (' + scrParsedElements.length + ')</h4>';
+      elTree += '<div style="max-height:300px;overflow-y:auto">';
+      const sorted = [...scrParsedElements].sort((a,b) => a.type.localeCompare(b.type) || a.name.localeCompare(b.name));
+      for (const el of sorted) {
+        const tc2 = scrTypeColor(el.type);
+        elTree += `<div style="display:flex;gap:4px;align-items:center;padding:2px 4px;cursor:pointer;border-radius:3px;font-size:10px;border:1px solid transparent" onclick="scrSelectElement(${el.idx})" onmouseover="this.style.background='rgba(108,140,255,.08)'" onmouseout="this.style.background=''">
+          <span style="width:6px;height:6px;border-radius:50%;background:${tc2};flex-shrink:0"></span>
+          <span style="color:${tc2};font-weight:600;width:52px;flex-shrink:0;font-size:9px">${esc(el.type)}</span>
+          <span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(el.name)}</span>
+        </div>`;
+      }
+      elTree += '</div></div>';
+
+      body.innerHTML = `
+        <div class="prop-group"><h4>📺 Informacje o ekranie</h4>
+          <div class="prop-row"><label>Plik:</label><span style="font-size:11px;color:var(--ac)">${esc(scr.name)}</span></div>
+          <div class="prop-row"><label>Nazwa:</label><span style="font-size:11px">${esc(scr.screenName)}</span></div>
+          <div class="prop-row"><label>Rozmiar:</label><span style="font-size:11px">${scr.canvasW} × ${scr.canvasH}</span></div>
+          <div class="prop-row"><label>Elementy:</label><span style="font-size:11px">${scrParsedElements.length}</span></div>
+          <div class="prop-row"><label>Typ:</label><span style="font-size:11px">${esc(scr.type)}</span></div>
+          <div class="prop-row"><label>Folder:</label><span style="font-size:11px">${esc(scr.folder)}</span></div>
+          <div class="prop-row"><label>Ścieżka:</label><span style="font-size:9px;color:var(--td);word-break:break-all">${esc(scr.path)}</span></div>
+        </div>
+        <div class="prop-group"><h4>📊 Podsumowanie elementów</h4>${summary}</div>
+        ${elTree}`;
+    } else {
+      body.innerHTML = '<div class="scr-props-empty">Kliknij element na ekranie aby zobaczyć właściwości</div>';
+    }
+    $('scrPropsTitle').textContent = 'Właściwości ekranu';
+    return;
+  }
+
+  const el = scrParsedElements.find(e => e.idx === scrSelectedEl);
+  if (!el) return;
+
+  // Helper functions for property rows
+  const I = (lbl, val, chg) => `<div class="prop-row"><label>${lbl}:</label><input value="${esc(val||'')}" onchange="${chg}"></div>`;
+  const N = (lbl, val, chg) => `<div class="prop-row"><label>${lbl}:</label><input type="number" value="${val||0}" onchange="${chg}"></div>`;
+  const C = (lbl, val, chg) => `<div class="prop-row"><label>${lbl}:</label><input value="${esc(val||'')}" onchange="${chg}">${val ? `<span style="display:inline-block;width:14px;height:14px;border:1px solid #555;border-radius:2px;flex-shrink:0;background:${scrRgb(val)||'#000'}"></span>` : ''}</div>`;
+  const S = (lbl, val, opts, chg) => {
+    let oh = '';
+    for (const [k, v] of Object.entries(opts)) oh += `<option value="${esc(k)}"${String(val)===String(k)?' selected':''}>${esc(v)}</option>`;
+    return `<div class="prop-row"><label>${lbl}:</label><select onchange="${chg}">${oh}</select></div>`;
+  };
+  const T = (lbl, val, chg) => `<div class="prop-row"><label>${lbl}:</label><textarea onchange="${chg}" style="min-height:36px;resize:vertical">${esc(val||'')}</textarea></div>`;
+  const u = (p) => `scrUpdProp(${el.idx},'${p}',this.value)`;
+  const un = (p) => `scrUpdProp(${el.idx},'${p}',+this.value)`;
+  const ua = (k) => `scrUpdAllProp(${el.idx},'${k}',this.value)`;
+
+  $('scrPropsTitle').textContent = el.type + (el.name ? ': ' + el.name : '');
+
+  let html = '';
+
+  // TYPE BADGE
+  const typeClr = scrTypeColor(el.type);
+  html += `<div style="padding:6px 8px;background:${typeClr}22;border-bottom:1px solid ${typeClr}44;display:flex;align-items:center;gap:6px">
+    <span style="font-size:16px">${scrTypeIcon(el.type)}</span>
+    <span style="font-size:12px;font-weight:700;color:${typeClr}">${esc(el.type)}</span>
+    <span style="font-size:10px;color:var(--td)">${esc(el.name)}</span>
+  </div>`;
+
+  // IDENTIFICATION
+  html += `<div class="prop-group"><h4>🏷️ Identyfikacja</h4>
+    ${I('Nazwa', el.name, u('name'))}
+  </div>`;
+
+  // POSITION & SIZE
+  html += `<div class="prop-group"><h4>📐 Pozycja i rozmiar</h4>
+    ${N('Left', el.left, un('left'))}
+    ${N('Top', el.top, un('top'))}
+    ${N('Width', el.width, un('width'))}
+    ${N('Height', el.height, un('height'))}
+    ${N('Depth', el.depth, un('depth'))}
+  </div>`;
+
+  // APPEARANCE (all editable)
+  html += `<div class="prop-group"><h4>🎨 Wygląd</h4>
+    ${C('BackClr', el.backColor, u('backColor'))}
+    ${C('ForeClr', el.foreColor, u('foreColor'))}
+    ${N('FontSize', el.fontSize, un('fontSize'))}
+    ${S('Border', el.borderStyle, {'0':'Brak (0)','1':'Cienki (1)','2':'Gruby (2)'}, u('borderStyle'))}
+    ${C('BrdClr', el.borderColor, u('borderColor'))}
+    ${S('Wyrówn.', el.alignment, {'':'Centrum','0':'Lewo','2':'Prawo'}, u('alignment'))}
+    ${S('Zawijanie', el.wrap, {'':'Nie','True':'Tak','False':'Nie'}, u('wrap'))}
+  </div>`;
+
+  // CAPTION (for elements that have text)
+  if (el.caption || ['Label','Button','Display','CheckBox','ListInput','Marquee'].includes(el.type)) {
+    html += `<div class="prop-group"><h4>📝 Treść</h4>
+      ${I('Caption', el.caption, u('caption'))}
+      ${el.caption && el.caption.startsWith('STR::') ? `<div style="font-size:9px;color:var(--td);padding:2px 0">🔗 String: <b>${esc(el.caption.split('::').slice(1,3).join('::'))}</b></div>` : ''}
+    </div>`;
+  }
+
+  // PLC LOGIC (all editable!)
+  const hasLogic = el.displaySource || el.inputStorage || el.inputFormat || el.enableRule || el.visibleRule || el.enabled;
+  if (hasLogic || ['Button','Input','Inputline','Display','CheckBox','ListInput','CoordBox','DynamicPicture'].includes(el.type)) {
+    html += `<div class="prop-group"><h4>⚙ Logika PLC</h4>
+      ${I('DisplaySrc', el.displaySource, u('displaySource'))}
+      ${I('InputStore', el.inputStorage, u('inputStorage'))}
+      ${S('InputFmt', el.inputFormat, {'':'---','String':'String','Integer':'Integer','Float':'Float','Hex':'Hex'}, u('inputFormat'))}
+      ${I('DispFormat', el.allProps.DisplayFormat || '', ua('DisplayFormat'))}
+      ${I('EnableRule', el.enableRule, u('enableRule'))}
+      ${I('VisibleRule', el.visibleRule, u('visibleRule'))}
+      ${S('Enabled', el.enabled, {'':'---','True':'Tak','False':'Nie'}, u('enabled'))}
+    </div>`;
+  }
+
+  // BUTTON-SPECIFIC
+  if (el.type === 'Button') {
+    html += `<div class="prop-group"><h4>🔘 Przycisk</h4>
+      ${S('Button3D', el.button3D, {'':'Nie','True':'Tak'}, u('button3D'))}
+      ${N('Level3D', +el.level3D||0, `scrUpdProp(${el.idx},'level3D',String(+this.value))`)}
+      ${S('EnterEff', el.enterEff, {'':'Nie','True':'Tak'}, u('enterEff'))}
+      ${T('BtnDown', el.buttonDownAction, `scrUpdProp(${el.idx},'buttonDownAction',this.value)`)}
+      ${el.buttonUpActions.length ? T('BtnUp', el.buttonUpActions.join('\n'), `scrUpdProp(${el.idx},'buttonUpActions',this.value.split('\\n'))`) : ''}
+    </div>`;
+  }
+
+  // INPUT-SPECIFIC
+  if (el.type === 'Input' || el.type === 'Inputline') {
+    html += `<div class="prop-group"><h4>📥 Pole wejścia</h4>
+      ${I('InputRange', el.allProps.InputRange||'', ua('InputRange'))}
+      ${I('InRangeInch', el.allProps.InputRangeInch||'', ua('InputRangeInch'))}
+      ${I('EmptyVal', el.allProps.EmptyVal||'', ua('EmptyVal'))}
+      ${I('HintLabel', el.allProps.HintLabel||'', ua('HintLabel'))}
+    </div>`;
+  }
+
+  // COORDBOX-SPECIFIC
+  if (el.type === 'CoordBox') {
+    html += `<div class="prop-group"><h4>📐 CoordBox</h4>
+      ${I('CoordType', el.allProps.CoordType||'', ua('CoordType'))}
+    </div>`;
+  }
+
+  // PICTURE-SPECIFIC
+  if (el.type === 'Picture' || el.type === 'DynamicPicture') {
+    const url = scrResolveImage(el.picturePath);
+    html += `<div class="prop-group"><h4>🖼️ Obraz</h4>
+      ${I('Ścieżka', el.picturePath, u('picturePath'))}
+      ${I('FitType', el.pictureFitType, u('pictureFitType'))}
+      ${url ? `<img src="${url}" style="width:100%;max-height:80px;object-fit:contain;border:1px solid var(--bd);border-radius:3px;margin-top:4px;background:#111">` : '<div style="font-size:9px;color:var(--or);padding:4px">⚠ Obraz nie znaleziony</div>'}
+    </div>`;
+    if (el.dynPictures && el.dynPictures.length > 1) {
+      html += `<div class="prop-group"><h4>🎞️ Dynamiczne (${el.dynPictures.length})</h4>`;
+      for (let i = 0; i < el.dynPictures.length; i++) html += `<div style="font-size:9px;color:var(--td);padding:1px 0">[${i}] ${esc(el.dynPictures[i])}</div>`;
+      html += '</div>';
+    }
+  }
+
+  // LISTITEMS (for Button, Display, ListInput)
+  if (el.listItems && el.listItems.length > 0) {
+    html += `<div class="prop-group"><h4>📋 ListItems (${el.listItems.length})</h4>`;
+    for (let i = 0; i < el.listItems.length; i++) {
+      const item = el.listItems[i];
+      html += `<div style="display:flex;gap:3px;align-items:center;margin:2px 0;padding:3px 4px;background:var(--pb);border-radius:3px;font-size:9px">
+        <b style="color:var(--ac);width:18px">${esc(item.id)}</b>
+        <input value="${esc(item.backColor||'')}" style="width:65px;background:var(--sf2);border:1px solid var(--bd);color:var(--tx);padding:1px 3px;border-radius:2px;font-size:9px" placeholder="BgClr" onchange="scrUpdListItem(${el.idx},${i},'backColor',this.value)" title="BackColor">
+        ${item.backColor ? `<span style="width:10px;height:10px;border:1px solid #555;border-radius:1px;background:${scrRgb(item.backColor)||'#000'};flex-shrink:0"></span>` : ''}
+        <input value="${esc(item.foreColor||'')}" style="width:55px;background:var(--sf2);border:1px solid var(--bd);color:var(--tx);padding:1px 3px;border-radius:2px;font-size:9px" placeholder="FgClr" onchange="scrUpdListItem(${el.idx},${i},'foreColor',this.value)" title="ForeColor">
+        <input value="${esc(item.caption||'')}" style="flex:1;background:var(--sf2);border:1px solid var(--bd);color:var(--tx);padding:1px 3px;border-radius:2px;font-size:9px" placeholder="Caption" onchange="scrUpdListItem(${el.idx},${i},'caption',this.value)" title="Caption">
+      </div>`;
+    }
+    html += `<button style="margin-top:3px;font-size:9px;padding:2px 8px;background:var(--pb);border:1px solid var(--gn);color:var(--gn);border-radius:3px;cursor:pointer" onclick="scrAddListItem(${el.idx})">+ Item</button>`;
+    html += '</div>';
+  }
+
+  // ALL RAW PROPERTIES (editable!)
+  const propKeys = Object.keys(el.allProps).filter(k => !['Name','Left','Top','Width','Height','Depth'].includes(k));
+  if (propKeys.length > 0) {
+    html += `<div class="prop-group"><h4>📋 Surowe właściwości (${propKeys.length})</h4>`;
+    for (const key of propKeys) {
+      html += `<div style="display:flex;gap:4px;margin:2px 0;font-size:10px">
+        <span style="color:var(--td);width:80px;flex-shrink:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${esc(key)}">${esc(key)}:</span>
+        <input value="${esc(el.allProps[key])}" style="flex:1;background:var(--pb);border:1px solid var(--bd);color:var(--tx);padding:2px 4px;border-radius:2px;font-size:10px" onchange="scrUpdAllProp(${el.idx},'${esc(key)}',this.value)">
+      </div>`;
+    }
+    html += '</div>';
+  }
+
+  // ACTIONS: Duplicate / Delete
+  html += `<div class="prop-group" style="display:flex;gap:6px;padding:8px;justify-content:center">
+    <button onclick="scrDuplicateElement(${el.idx})" style="padding:4px 12px;background:var(--pb);border:1px solid var(--ac);color:var(--ac);border-radius:4px;cursor:pointer;font-size:10px">📋 Duplikuj</button>
+    <button onclick="scrDeleteElement(${el.idx})" style="padding:4px 12px;background:var(--pb);border:1px solid var(--rd);color:var(--rd);border-radius:4px;cursor:pointer;font-size:10px">🗑️ Usuń</button>
+  </div>`;
+
+  body.innerHTML = html;
+}
+
+// ===========================================================================
+// PROPERTY UPDATE FUNCTIONS
+// ===========================================================================
+const scrPropMap = {name:'Name',left:'Left',top:'Top',width:'Width',height:'Height',depth:'Depth',
+  backColor:'BackColor',foreColor:'ForeColor',fontSize:'FontSize',borderStyle:'BorderStyle',
+  borderColor:'BorderColor',caption:'Caption',alignment:'Alignment',wrap:'Wrap',
+  displaySource:'DisplaySource',inputStorage:'InputStorage',inputFormat:'InputFormat',
+  enableRule:'EnableRule',visibleRule:'VisibleRule',enabled:'Enabled',button3D:'Button3D',
+  level3D:'Level3D',enterEff:'EnterEff',visible:'Visible'};
+
+function scrUpdProp(idx, prop, val) {
+  const el = scrParsedElements.find(e => e.idx === idx);
+  if (!el) return;
+  el[prop] = val;
+  if (scrPropMap[prop]) el.allProps[scrPropMap[prop]] = String(val);
+  scrRenderCanvas();
+  scrRenderProps();
+}
+
+function scrUpdAllProp(idx, key, val) {
+  const el = scrParsedElements.find(e => e.idx === idx);
+  if (!el) return;
+  el.allProps[key] = val;
+  const revMap = {};
+  for (const [k,v] of Object.entries(scrPropMap)) revMap[v] = k;
+  if (revMap[key]) {
+    const p = revMap[key];
+    el[p] = ['left','top','width','height','depth','fontSize'].includes(p) ? +val : val;
+  }
+  scrRenderCanvas();
+}
+
+function scrUpdListItem(elIdx, itemIdx, prop, val) {
+  const el = scrParsedElements.find(e => e.idx === elIdx);
+  if (el && el.listItems[itemIdx]) {
+    el.listItems[itemIdx][prop] = val;
+    scrRenderCanvas();
+  }
+}
+
+function scrAddListItem(elIdx) {
+  const el = scrParsedElements.find(e => e.idx === elIdx);
+  if (!el) return;
+  const nextId = el.listItems.length > 0 ? String(Math.max(...el.listItems.map(i => +i.id || 0)) + 1) : '0';
+  el.listItems.push({id: nextId, backColor: '', foreColor: '', caption: ''});
+  scrRenderProps();
+}
+
+// ===========================================================================
+// ELEMENT CRUD
+// ===========================================================================
+function scrAddElement() {
+  if (activeScreen === null) return;
+  const type = $('scrAddType').value;
+  const idx = scrParsedElements.length > 0 ? Math.max(...scrParsedElements.map(e => e.idx)) + 1 : 0;
+  const depth = scrParsedElements.length > 0 ? Math.max(...scrParsedElements.map(e => e.depth)) + 1 : 1;
+  const el = {
+    idx, type, name: type + idx,
+    left: 10, top: 10, width: 100, height: 30,
+    caption: '', backColor: '192,192,192', foreColor: '0,0,0',
+    fontSize: 10, borderStyle: '1', borderColor: '128,128,128',
+    depth, enabled: 'True', alignment: '', wrap: '',
+    button3D: '', level3D: '', displaySource: '', enableRule: '', visibleRule: '',
+    inputFormat: '', inputStorage: '', enterEff: '', visible: 'True', role: '',
+    picturePath: '', pictureFitType: '', dynPictures: [],
+    buttonDownAction: '', buttonUpActions: [], listItems: [],
+    allProps: {
+      Left:'10', Top:'10', Width:'100', Height:'30',
+      Name: type + idx, BackColor:'192,192,192', ForeColor:'0,0,0',
+      FontSize:'10', BorderStyle:'1', BorderColor:'128,128,128',
+      Depth: String(depth), Enabled:'True', Visible:'True'
+    }
+  };
+  scrParsedElements.push(el);
+  scrSelectedEl = idx;
+  scrRenderCanvas();
+  scrRenderProps();
+  toast('Dodano ' + type + ': ' + el.name, 'success');
+}
+
+function scrDeleteElement(idx) {
+  if (idx === null || idx === undefined) { toast('Zaznacz element', 'error'); return; }
+  const i = scrParsedElements.findIndex(e => e.idx === idx);
+  if (i < 0) return;
+  const el = scrParsedElements[i];
+  scrParsedElements.splice(i, 1);
+  scrSelectedEl = null;
+  scrRenderCanvas();
+  scrRenderProps();
+  toast('Usunięto ' + el.type + ': ' + el.name, 'success');
+}
+
+function scrDuplicateElement(idx) {
+  if (idx === null || idx === undefined) { toast('Zaznacz element', 'error'); return; }
+  const src = scrParsedElements.find(e => e.idx === idx);
+  if (!src) return;
+  const newIdx = Math.max(...scrParsedElements.map(e => e.idx)) + 1;
+  const el = JSON.parse(JSON.stringify(src));
+  el.idx = newIdx;
+  el.name = src.name + '_copy';
+  el.left += 10;
+  el.top += 10;
+  el.allProps.Name = el.name;
+  el.allProps.Left = String(el.left);
+  el.allProps.Top = String(el.top);
+  scrParsedElements.push(el);
+  scrSelectedEl = newIdx;
+  scrRenderCanvas();
+  scrRenderProps();
+  toast('Zduplikowano ' + el.type + ': ' + el.name, 'success');
+}
+
+// ===========================================================================
+// TYPE HELPERS
+// ===========================================================================
+function scrTypeColor(type) {
+  return {Panel:'#6c8cff',Label:'#4caf50',Button:'#ff9800',Input:'#f44336',Inputline:'#f44336',
+    Display:'#00bcd4',CoordBox:'#9c27b0',Picture:'#ffeb3b',DynamicPicture:'#ffeb3b',
+    CheckBox:'#ff6c8c',ListInput:'#8bc34a',Marquee:'#e91e63',NcEditor:'#607d8b',
+    OCSimu:'#795548',Grid:'#3f51b5',Group:'#009688',ListBox:'#ff5722'}[type] || '#888';
+}
+
+function scrTypeIcon(type) {
+  return {Panel:'▢',Label:'A',Button:'⬡',Input:'▤',Inputline:'▤',Display:'◈',
+    CoordBox:'⊞',Picture:'🖼',DynamicPicture:'🎞',CheckBox:'☑',ListInput:'☰',
+    Marquee:'↔',NcEditor:'📝',OCSimu:'🔧',Grid:'⊞',Group:'▣',ListBox:'☰'}[type] || '◻';
+}
+
+// ===========================================================================
+// SCREEN TOOLBAR ACTIONS
+// ===========================================================================
+function scrSetZoom(z) {
+  scrZoom = z;
+  $('scrCanvasWrap').style.transform = `scale(${z})`;
+}
+
+function scrToggleLabels() {
+  scrShowLabels = !scrShowLabels;
+  scrRenderCanvas();
+}
+
+function scrToggleGrid() {
+  scrShowGrid = !scrShowGrid;
+  scrRenderCanvas();
+}
+
+function scrExportXML() {
+  if (activeScreen === null) return;
+  const scr = project.screens[activeScreen];
+  const sorted = [...scrParsedElements].sort((a,b) => (b.depth||0) - (a.depth||0));
+  const X = s => String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+
+  let xml = '<?xml version="1.0" encoding="UTF-8"?>\n';
+  xml += '<!--Created by SyntecWorkshop-->\n';
+  xml += `<!--BROWSER SIZE|H:${scr.canvasH}|W:${scr.canvasW}-->\n`;
+  xml += '<Screen>\n';
+  xml += `  <Name>${X(scr.screenName)}</Name>\n`;
+
+  for (const el of sorted) {
+    xml += `  <${el.type}>\n`;
+    const skip = new Set(['ButtonDown','ButtonUp','ListItems','Actions','Action','Item']);
+    if (el.type === 'Picture') skip.add('Picture');
+    for (const [key, val] of Object.entries(el.allProps)) {
+      if (skip.has(key)) continue;
+      xml += `    <${key}>${X(val)}</${key}>\n`;
+    }
+    if (el.type === 'Picture' && el.picturePath) {
+      xml += el.pictureFitType
+        ? `    <Picture FitType="${X(el.pictureFitType)}">${X(el.picturePath)}</Picture>\n`
+        : `    <Picture>${X(el.picturePath)}</Picture>\n`;
+    }
+    if (el.type === 'DynamicPicture' && el.dynPictures) {
+      for (const pic of el.dynPictures) xml += `    <Picture>${X(pic)}</Picture>\n`;
+    }
+    if (el.buttonDownAction) {
+      xml += `    <ButtonDown>\n      <Action>${X(el.buttonDownAction)}</Action>\n    </ButtonDown>\n`;
+    }
+    if (el.buttonUpActions && el.buttonUpActions.length > 0) {
+      xml += '    <ButtonUp>\n      <Actions>\n';
+      for (const a of el.buttonUpActions) xml += `        <Action>${X(a)}</Action>\n`;
+      xml += '      </Actions>\n    </ButtonUp>\n';
+    }
+    if (el.listItems && el.listItems.length > 0) {
+      xml += '    <ListItems>\n';
+      for (const item of el.listItems) {
+        xml += `      <Item Id="${X(item.id)}">\n`;
+        if (item.backColor) xml += `        <BackColor>${X(item.backColor)}</BackColor>\n`;
+        if (item.foreColor) xml += `        <ForeColor>${X(item.foreColor)}</ForeColor>\n`;
+        if (item.caption) xml += `        <Caption>${X(item.caption)}</Caption>\n`;
+        xml += '      </Item>\n';
+      }
+      xml += '    </ListItems>\n';
+    }
+    xml += `  </${el.type}>\n`;
+  }
+
+  xml += '</Screen>\n';
+  downloadFile(scr.name, xml, 'text/xml');
+  toast('Zapisano zmodyfikowany: ' + scr.name, 'success');
+}
+
+// ===========================================================================
+// LOAD PROJECT IMAGES
+// ===========================================================================
+function loadProjectImages(files) {
+  project.imageStore.clear();
+  let count = 0;
+  for (const file of files) {
+    const name = file.name.toLowerCase();
+    const ext = name.split('.').pop();
+    if (!['bmp','jpg','jpeg','gif','png'].includes(ext)) continue;
+    const path = file.webkitRelativePath.toLowerCase();
+    if (path.includes('customimage') || path.includes('/image/') || path.includes('\\image\\') || path.includes('/img/')) {
+      if (!project.imageStore.has(name)) {
+        project.imageStore.set(name, URL.createObjectURL(file));
+        count++;
+      }
+    }
+  }
+  if (count > 0) toast(`Załadowano ${count} obrazów z projektu`, 'info');
+}
+
+// ===========================================================================
+// GLOBAL STATS
+// ===========================================================================
+function updateGlobalStats() {
+  $('stFiles').textContent = project.allXmlTexts.size;
+  $('stScreens').textContent = project.screens.length;
+  $('stFenu').textContent = project.fenus.length;
+  $('stStrings').textContent = project.strings.reduce((s, f) => s + f.messages.length, 0);
+  $('stRegs').textContent = project.registers.length;
+  $('stIO').textContent = project.ioMaps.length;
+}
+
+// ===========================================================================
+// UTILITIES
+// ===========================================================================
+function getXmlText(parent, tagName) {
+  const el = parent.querySelector(':scope > ' + tagName);
+  return el ? el.textContent.trim() : '';
+}
+
+function esc(s) {
+  if (!s) return '';
+  const d = document.createElement('div');
+  d.textContent = String(s);
+  return d.innerHTML;
+}
+
+function countBy(arr, prop) {
+  const m = {};
+  for (const x of arr) { const k = x[prop] || '—'; m[k] = (m[k] || 0) + 1; }
+  return m;
+}
+
+function downloadFile(name, content, type) {
+  const b = new Blob([content], { type });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(b);
+  a.download = name;
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+
+function processFile(file, path) {
+  const reader = new FileReader();
+  reader.onload = () => {
+    const text = reader.result;
+    project.allXmlTexts.set(path, text);
+    classifyAndParse(file, path, text);
+    extractAllRegisters();
+    renderDashboard();
+    renderFenuTree();
+    renderStringTable();
+    renderIOTree();
+    renderScreenTable();
+    renderRegisterTable();
+    updateGlobalStats();
+    $('dashWelcome').style.display = 'none';
+    $('dashContent').style.display = '';
+    toast('Załadowano: ' + file.name, 'success');
+  };
+  reader.readAsText(file);
+}
+
+function toast(m, t) {
+  const el = $('toast');
+  el.textContent = m;
+  el.className = 'toast show' + (t ? ' ' + t : '');
+  clearTimeout(el._t); el._t = setTimeout(() => el.className = 'toast', 2500);
+}
+</script>
+</body>
+</html>
