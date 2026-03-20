@@ -830,8 +830,7 @@ function renderSections() {
         '</div>'+
         (note ? '<div style="font-size:9px;color:var(--yl);margin-top:2px;opacity:.8" title="Notatka">&#x1F4DD; '+esc(note.substring(0,40))+(note.length>40?'...':'')+'</div>' : '')+
         (state.selectedSection===i?'<div class="note-area" style="margin-top:4px" onclick="event.stopPropagation()"><textarea placeholder="Dodaj notatke do tej sekcji..." onblur="saveNote('+i+',this.value)" onkeydown="if(event.ctrlKey&&event.key===\'Enter\'){saveNote('+i+',this.value);event.preventDefault()}">'+(note?esc(note):'')+'</textarea></div>':'')+
-      'n style="color:var(--or);font-size:8px">'+s.size+'B</span>'+
-        '</div></div></div>';
+      '</div></div></div>';
   }).join('');
 }
 function filterSections() {
