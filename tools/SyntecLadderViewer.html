@@ -668,8 +668,10 @@ dz.addEventListener('drop', e => {
 });
 
 async function loadFiles(fileList) {
+  try {
   for (const f of fileList) {
     if (!f.name.toLowerCase().endsWith('.lad')) continue;
+    setStatus('Parsowanie: ' + f.name + '...');
     const buf = await f.arrayBuffer();
     const bytes = new Uint8Array(buf);
     const parsed = parseLadder(bytes, f.name);
@@ -690,10 +692,13 @@ async function loadFiles(fileList) {
   selectFile(largest);
   setStatus('Wczytano ' + names.length + ' plik(ow): ' + names.join(', '));
   document.getElementById('fileInfo').textContent = names.map(n => n+' ('+fmtSize(state.files[n].bytes.length)+')').join(' | ');
+  } catch(err) { setStatus('BLAD LADOWANIA: ' + err.message); console.error('loadFiles error:', err); }
 }
 function selectFile(name) {
   state.currentFile = name; state.selectedSection = -1;
-  populateCatFilter(); renderSections(); renderAllTabs();
+  try { populateCatFilter(); } catch(e) { console.error('populateCatFilter:', e); }
+  try { renderSections(); } catch(e) { console.error('renderSections:', e); setStatus('Blad renderSections: '+e.message); }
+  try { renderAllTabs(); } catch(e) { console.error('renderAllTabs:', e); setStatus('Blad renderAllTabs: '+e.message); }
 }
 function populateCatFilter() {
   const file = state.files[state.currentFile]; if (!file) return;
@@ -815,6 +820,8 @@ function renderSections() {
   document.getElementById('secCount').textContent = p.sections.length;
   const list = document.getElementById('secList');
   list.innerHTML = p.sections.map((s, i) => {
+    const cat = s.category;
+    const pl = s.translation;
     const note = getNote(p.filename, i);
     const regs = p.sectionRegisters[i] ? [...p.sectionRegisters[i]].slice(0, 6) : [];
     return '<div class="sec-item'+(state.selectedSection===i?' active':'')+'" style="border-left-color:'+cat.color+'" onclick="selectSection('+i+')" data-cat="'+cat.id+'">'+
@@ -850,11 +857,16 @@ function selectSection(idx) {
   if (sec) { switchTab('hex'); renderHex(file.bytes, sec.start, Math.min(sec.end, sec.start + 1024)); }
 }
 function renderAllTabs() {
-  renderVisualMap(); renderOverview(); renderSectionsTab(); renderFlow();
-  renderLadder(); renderRegistersTab();
-  renderHex(state.files[state.currentFile]?.bytes, 0, 512);
-  renderCompare(); renderIOTab(); renderSystemTab();
-  renderXrefTab(); renderHelpTab();
+  var fns = [
+    ['renderVisualMap', renderVisualMap], ['renderOverview', renderOverview],
+    ['renderSectionsTab', renderSectionsTab], ['renderFlow', renderFlow],
+    ['renderLadder', renderLadder], ['renderRegistersTab', renderRegistersTab],
+    ['renderCompare', renderCompare], ['renderIOTab', renderIOTab],
+    ['renderSystemTab', renderSystemTab], ['renderXrefTab', renderXrefTab],
+    ['renderHelpTab', renderHelpTab]
+  ];
+  for (var fn of fns) { try { fn[1](); } catch(e) { console.error(fn[0]+':', e); } }
+  try { renderHex(state.files[state.currentFile]?.bytes, 0, 512); } catch(e) { console.error('renderHex:', e); }
 }
 
 // VISUAL MAP TAB
