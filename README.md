@@ -3,9 +3,6 @@
 **Wizualny analizator programów PLC (.lad) dla sterowników Syntec CNC.**
 
 Standalone HTML — zero zależności — działa offline w przeglądarce.
-
-🌐 **Live:** [https://wujamiko1.github.io/SyntecToolbox/](https://wujamiko1.github.io/SyntecToolbox/)
-
 ---
 
 ## 🛠 Funkcje
