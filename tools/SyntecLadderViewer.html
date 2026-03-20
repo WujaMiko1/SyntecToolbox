@@ -1409,8 +1409,6 @@ function buildSectionRegisters(bytes, sections) {
   }
   return map;
 }
-function renderXrefTab() {
-
 // KEYBOARD SHORTCUTS
 document.addEventListener('keydown', function(e) {
   if (e.ctrlKey && e.key === 'k') { e.preventDefault(); openGlobalSearch(); }
@@ -1423,6 +1421,8 @@ document.addEventListener('keydown', function(e) {
 state.gsResults = [];
 state.gsSelected = 0;
 state.ioMap = null;
+
+function renderXrefTab() {
   const file = state.files[state.currentFile]; if (!file) return;
   const p = file.parsed;
   const xref = {};
@@ -1680,7 +1680,22 @@ function doGlobalSearch(q) {
 function gsKeyNav(e) {
   if (e.key === 'Escape') { closeGlobalSearch(); return; }
   if (!state.gsResults || !state.gsResults.length) return;
-  if (e.key === 'Ar & RENDER
+  if (e.key === 'ArrowDown') { e.preventDefault(); state.gsSelected = Math.min(state.gsSelected + 1, state.gsResults.length - 1); gsHighlight(); }
+  else if (e.key === 'ArrowUp') { e.preventDefault(); state.gsSelected = Math.max(state.gsSelected - 1, 0); gsHighlight(); }
+  else if (e.key === 'Enter') {
+    e.preventDefault();
+    var items = document.querySelectorAll('.gsearch-item');
+    if (items[state.gsSelected]) items[state.gsSelected].click();
+  }
+}
+function gsHighlight() {
+  document.querySelectorAll('.gsearch-item').forEach(function(el, i) {
+    el.classList.toggle('sel', i === state.gsSelected);
+    if (i === state.gsSelected) el.scrollIntoView({block:'nearest'});
+  });
+}
+
+// IOMAP RENDER
 function renderIoMapSection() {
   var m = state.ioMap; if (!m) return '';
   return '<h4 style="color:var(--cy);margin:24px 0 6px;font-size:12px">&#x1F50C; Mapowanie sprzetowe I/O z pliku: '+esc(m.filename)+'</h4>'+
@@ -1707,19 +1722,6 @@ function renderIoMapSection() {
         '<td style="font-family:monospace;color:var(--or)">'+io.length+'</td>'+
         '<td style="color:var(--td)">'+esc(io.station)+'</td></tr>';
     }).join('')+'</tbody></table>' : '');
-}rowDown') { e.preventDefault(); state.gsSelected = Math.min(state.gsSelected + 1, state.gsResults.length - 1); gsHighlight(); }
-  else if (e.key === 'ArrowUp') { e.preventDefault(); state.gsSelected = Math.max(state.gsSelected - 1, 0); gsHighlight(); }
-  else if (e.key === 'Enter') {
-    e.preventDefault();
-    var items = document.querySelectorAll('.gsearch-item');
-    if (items[state.gsSelected]) items[state.gsSelected].click();
-  }
-}
-function gsHighlight() {
-  document.querySelectorAll('.gsearch-item').forEach(function(el, i) {
-    el.classList.toggle('sel', i === state.gsSelected);
-    if (i === state.gsSelected) el.scrollIntoView({block:'nearest'});
-  });
 }
 
 // IOMAP XML IMPORT
