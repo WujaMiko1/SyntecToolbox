@@ -149,6 +149,28 @@ input[type="file"]{display:none}
 .path-tree .pt-desc{color:var(--td);font-style:italic;font-size:10px}
 .path-tree .pt-hl{background:rgba(108,140,255,.15);padding:2px 6px;border-radius:3px}
 .kbd{display:inline-block;padding:1px 6px;background:var(--sf2);border:1px solid var(--bd);border-radius:3px;font-size:10px;font-family:monospace;color:var(--ac)}
+.cab-modules{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:10px;margin:12px 0}
+.cab-mod{border:1px solid var(--bd);border-radius:8px;overflow:hidden;background:var(--sf);transition:all .15s}
+.cab-mod:hover{border-color:var(--ac);box-shadow:0 2px 12px rgba(108,140,255,.15)}
+.cab-mod-hdr{padding:8px 12px;background:var(--sf2);border-bottom:1px solid var(--bd);display:flex;align-items:center;gap:8px}
+.cab-mod-name{font-weight:700;font-size:12px;color:var(--ac)}
+.cab-mod-type{font-size:9px;color:var(--td);margin-left:auto;font-family:monospace}
+.cab-port{display:flex;align-items:center;gap:6px;padding:4px 0;border-bottom:1px solid rgba(45,45,80,.15);font-size:10px;cursor:pointer;transition:background .1s}
+.cab-port:last-child{border-bottom:none}.cab-port:hover{background:var(--sel);border-radius:4px}
+.cab-port-name{font-family:monospace;font-weight:600;min-width:36px;color:var(--cy)}
+.cab-port-dir{font-size:8px;font-weight:700;padding:1px 5px;border-radius:3px;min-width:28px;text-align:center}
+.cab-port-dir.in{background:#4caf5022;color:var(--gn)}.cab-port-dir.out{background:#ff980022;color:var(--or)}
+.cab-port-range{font-family:monospace;color:var(--yl);font-size:10px;flex:1}
+.cab-port-bits{font-size:9px;color:var(--td)}
+.cab-port-disabled{opacity:.35;font-style:italic;cursor:default}.cab-port-disabled:hover{background:transparent}
+.cab-result{padding:10px 14px;border:1px solid var(--ac);border-radius:8px;background:rgba(108,140,255,.06);margin:6px 0}
+.cab-result .cr-addr{font-size:15px;font-weight:800;color:var(--ac);font-family:'Cascadia Code',monospace}
+.cab-result .cr-loc{color:var(--yl);font-weight:600;font-size:12px}
+.cab-bit-table{width:100%;border-collapse:collapse;font-size:10px}
+.cab-bit-table th{padding:4px 6px;text-align:left;background:var(--sf2);color:var(--ac);font-size:9px;border-bottom:1px solid var(--bd);position:sticky;top:0}
+.cab-bit-table td{padding:3px 6px;border-bottom:1px solid rgba(45,45,80,.15);font-family:'Cascadia Code',monospace;font-size:10px}
+.cab-bit-table tr:hover{background:var(--sel)}
+.cab-bit-table tr.cab-in td:first-child{color:var(--gn);font-weight:700}.cab-bit-table tr.cab-out td:first-child{color:var(--or);font-weight:700}
 </style>
 </head>
 <body>
@@ -1706,33 +1728,245 @@ function gsHighlight() {
   });
 }
 
-// IOMAP RENDER
+// IOMAP RENDER - Cabinet Tracer
+function buildIoBitMap(m) {
+  var bitMap = [];
+  function expand(entries, dir) {
+    entries.forEach(function(io) {
+      if (io.logicStart < 0) return;
+      var isAnalog = io.ioType === 'Analog' || io.bitType === 'R';
+      for (var b = 0; b < io.length; b++) {
+        var logicBit = io.logicStart + b;
+        var addr;
+        if (isAnalog) addr = 'R' + logicBit;
+        else if (dir === 'IN') addr = 'X' + Math.floor(logicBit / 8) + '.' + (logicBit % 8);
+        else addr = 'Y' + Math.floor(logicBit / 8) + '.' + (logicBit % 8);
+        bitMap.push({ dir: dir, logicBit: logicBit, pin: b, addr: addr,
+          module: io.module, name: io.name, port: io.port,
+          station: io.station, isAnalog: isAnalog });
+      }
+    });
+  }
+  expand(m.inputs, 'IN');
+  expand(m.outputs, 'OUT');
+  return bitMap;
+}
+
 function renderIoMapSection() {
   var m = state.ioMap; if (!m) return '';
-  return '<h4 style="color:var(--cy);margin:24px 0 6px;font-size:12px">&#x1F50C; Mapowanie sprzetowe I/O z pliku: '+esc(m.filename)+'</h4>'+
-    '<p style="font-size:9px;color:var(--td);margin-bottom:6px">Dane z IoMap XML - mapowanie fizycznych modulow I/O na adresy logiczne sterownika</p>'+
-    (m.inputs.length ? '<h5 style="color:var(--gn);margin:12px 0 4px;font-size:11px">&#x2B05; Moduly wejsc ('+m.inputs.length+')</h5>'+
-    '<table class="io-table"><thead><tr><th>Modul</th><th>Nazwa</th><th>Port</th><th>Logic Start</th><th>Physic Start</th><th>Bity</th><th>Stacja</th></tr></thead><tbody>'+
-    m.inputs.map(function(io) {
-      return '<tr class="io-row"><td style="font-weight:600;color:var(--ac)">'+esc(io.module)+'</td>'+
-        '<td style="font-family:monospace;color:var(--gn)">'+esc(io.name)+'</td>'+
-        '<td style="font-family:monospace;color:var(--cy)">'+esc(io.port)+'</td>'+
-        '<td style="font-family:monospace;color:'+(io.logicStart<0?'var(--rd)':'var(--yl)')+'">'+io.logicStart+'</td>'+
-        '<td style="font-family:monospace">'+io.physicStart+'</td>'+
-        '<td style="font-family:monospace;color:var(--or)">'+io.length+'</td>'+
-        '<td style="color:var(--td)">'+esc(io.station)+'</td></tr>';
-    }).join('')+'</tbody></table>' : '')+
-    (m.outputs.length ? '<h5 style="color:var(--or);margin:12px 0 4px;font-size:11px">&#x27A1; Moduly wyjsc ('+m.outputs.length+')</h5>'+
-    '<table class="io-table"><thead><tr><th>Modul</th><th>Nazwa</th><th>Port</th><th>Logic Start</th><th>Physic Start</th><th>Bity</th><th>Stacja</th></tr></thead><tbody>'+
-    m.outputs.map(function(io) {
-      return '<tr class="io-row"><td style="font-weight:600;color:var(--ac)">'+esc(io.module)+'</td>'+
-        '<td style="font-family:monospace;color:var(--or)">'+esc(io.name)+'</td>'+
-        '<td style="font-family:monospace;color:var(--cy)">'+esc(io.port)+'</td>'+
-        '<td style="font-family:monospace;color:'+(io.logicStart<0?'var(--rd)':'var(--yl)')+'">'+io.logicStart+'</td>'+
-        '<td style="font-family:monospace">'+io.physicStart+'</td>'+
-        '<td style="font-family:monospace;color:var(--or)">'+io.length+'</td>'+
-        '<td style="color:var(--td)">'+esc(io.station)+'</td></tr>';
-    }).join('')+'</tbody></table>' : '');
+  var bitMap = buildIoBitMap(m);
+  m.bitMap = bitMap;
+
+  // Group modules by unique name+station
+  var moduleMap = {};
+  var allEntries = [];
+  m.inputs.forEach(function(io) { allEntries.push({dir:'IN',m:io.module,name:io.name,port:io.port,
+    logicStart:io.logicStart,physicStart:io.physicStart,length:io.length,
+    station:io.station,ioType:io.ioType||'Digital',bitType:io.bitType||''}); });
+  m.outputs.forEach(function(io) { allEntries.push({dir:'OUT',m:io.module,name:io.name,port:io.port,
+    logicStart:io.logicStart,physicStart:io.physicStart,length:io.length,
+    station:io.station,ioType:io.ioType||'Digital',bitType:io.bitType||''}); });
+  allEntries.forEach(function(e) {
+    var key = e.name + (e.station ? '_St' + e.station : '');
+    if (!moduleMap[key]) moduleMap[key] = {module:e.m, name:e.name, station:e.station, ports:[]};
+    moduleMap[key].ports.push(e);
+  });
+
+  var modIcons = {RIO1:'\uD83D\uDD0C',RIO2:'\uD83D\uDD0C',RIO3:'\uD83D\uDD0C',HK:'\u2328\uFE0F',HK2:'\u2328\uFE0F',
+    M3IO:'\uD83D\uDD27',RFHHB:'\uD83D\uDCDF',LIO:'\uD83D\uDCA1'};
+  var modDesc = {RIO1:'Remote I/O modul (seria 1)',RIO2:'Remote I/O modul (seria 2)',RIO3:'Remote I/O modul (seria 3)',
+    HK:'Panel klawiszy operatorskich',HK2:'Panel klawiszy rozszerzony',
+    M3IO:'Modul M3 I/O (komunikacja szeregowa)',RFHHB:'Bezprzewodowy panel reczny (RF HHB)',
+    LIO:'Lokalne I/O na plytce glownej'};
+
+  var modKeys = Object.keys(moduleMap);
+  var activeIn = m.inputs.filter(function(e){return e.logicStart>=0}).length;
+  var activeOut = m.outputs.filter(function(e){return e.logicStart>=0}).length;
+
+  // Build module cards
+  var cardsHtml = modKeys.map(function(key) {
+    var mod = moduleMap[key];
+    var icon = modIcons[mod.module] || '\uD83D\uDCE6';
+    var desc = modDesc[mod.module] || mod.module;
+    var stLbl = mod.station ? ' Stacja ' + mod.station : '';
+
+    var portsHtml = mod.ports.map(function(p) {
+      var disabled = p.logicStart < 0;
+      var dc = p.dir === 'IN' ? 'in' : 'out';
+      var dl = p.dir === 'IN' ? 'WEJ' : 'WYJ';
+      var isA = p.ioType === 'Analog' || p.bitType === 'R';
+
+      if (disabled) {
+        return '<div class="cab-port cab-port-disabled">' +
+          '<span class="cab-port-dir ' + dc + '">' + dl + '</span>' +
+          '<span class="cab-port-name">' + (p.port || '\u2014') + '</span>' +
+          '<span style="color:var(--rd);font-size:9px">WYLACZONY</span></div>';
+      }
+      var endBit = p.logicStart + p.length - 1;
+      var aS, aE;
+      if (isA) { aS = 'R' + p.logicStart; aE = 'R' + endBit; }
+      else if (p.dir === 'IN') { aS = 'X'+Math.floor(p.logicStart/8)+'.'+(p.logicStart%8); aE = 'X'+Math.floor(endBit/8)+'.'+(endBit%8); }
+      else { aS = 'Y'+Math.floor(p.logicStart/8)+'.'+(p.logicStart%8); aE = 'Y'+Math.floor(endBit/8)+'.'+(endBit%8); }
+
+      return '<div class="cab-port" onclick="cabFillSearch(\'' + esc(p.name) + (p.port && p.port !== 'NONE' ? ' ' + p.port : '') + '\')">' +
+        '<span class="cab-port-dir ' + dc + '">' + dl + '</span>' +
+        '<span class="cab-port-name">' + (p.port && p.port !== 'NONE' ? p.port : '\u2014') + '</span>' +
+        '<span class="cab-port-range">' + aS + ' \u2025 ' + aE + '</span>' +
+        '<span class="cab-port-bits">' + p.length + ' bit' + (p.length !== 1 ? 'ow' : '') + '</span>' +
+        (isA ? '<span style="color:var(--or);font-size:8px;margin-left:2px">ANALOG</span>' : '') +
+        '</div>';
+    }).join('');
+
+    return '<div class="cab-mod">' +
+      '<div class="cab-mod-hdr">' +
+        '<span style="font-size:16px">' + icon + '</span>' +
+        '<span class="cab-mod-name">' + esc(mod.name) + stLbl + '</span>' +
+        '<span class="cab-mod-type">' + mod.module + '</span>' +
+      '</div>' +
+      '<div class="cab-mod-body">' +
+        '<div style="font-size:9px;color:var(--td);margin-bottom:4px">' + desc + '</div>' +
+        portsHtml +
+      '</div></div>';
+  }).join('');
+
+  // Bit-level table rows
+  var bitRows = bitMap.map(function(b) {
+    var dc = b.dir === 'IN' ? 'cab-in' : 'cab-out';
+    var portLbl = b.port && b.port !== 'NONE' ? b.port : '\u2014';
+    var locStr = b.name + (b.port && b.port !== 'NONE' ? ' \u2192 ' + b.port + ' pin ' + b.pin : ' bit ' + b.pin);
+    return '<tr class="' + dc + '">' +
+      '<td>' + b.addr + '</td>' +
+      '<td style="font-size:9px">' + (b.dir === 'IN' ? 'WEJ' : 'WYJ') + '</td>' +
+      '<td style="color:var(--ac)">' + esc(b.module) + '</td>' +
+      '<td>' + esc(b.name) + (b.station ? ' St.' + b.station : '') + '</td>' +
+      '<td style="color:var(--cy)">' + portLbl + '</td>' +
+      '<td style="color:var(--or)">pin ' + b.pin + '</td>' +
+      '<td style="color:var(--td)">' + locStr + '</td></tr>';
+  }).join('');
+
+  return '<h4 style="color:var(--cy);margin:24px 0 8px;font-size:13px">' +
+    '\uD83C\uDFED Mapa szafy I/O \u2014 tracer kabli z pliku: ' + esc(m.filename) + '</h4>' +
+    '<p style="font-size:10px;color:var(--td);margin-bottom:4px">' +
+      'Mapowanie fizycznych modulow I/O na adresy logiczne PLC. ' +
+      'Uzyj wyszukiwarki ponizej aby znalezc w ktorym module i na ktorym pinie szafy sterowniczej znajduje sie dany sygnal.</p>' +
+    '<div style="display:flex;gap:10px;margin:8px 0;flex-wrap:wrap">' +
+      '<div class="io-stat" style="background:var(--cy)22;border:1px solid var(--cy)44;color:var(--cy)">\uD83D\uDCE6 ' + modKeys.length + ' modulow</div>' +
+      '<div class="io-stat" style="background:var(--gn)22;border:1px solid var(--gn)44;color:var(--gn)">\u2B05 ' + activeIn + ' portow wejsc</div>' +
+      '<div class="io-stat" style="background:var(--or)22;border:1px solid var(--or)44;color:var(--or)">\u27A1 ' + activeOut + ' portow wyjsc</div>' +
+      '<div class="io-stat" style="background:var(--yl)22;border:1px solid var(--yl)44;color:var(--yl)">\uD83D\uDD17 ' + bitMap.length + ' bitow</div>' +
+    '</div>' +
+    // ADDRESS RESOLVER
+    '<div style="border:1px solid var(--ac);border-radius:8px;padding:12px;margin:14px 0;background:rgba(108,140,255,.04)">' +
+      '<h5 style="color:var(--ac);margin-bottom:4px;font-size:11px">\uD83D\uDD0D Wyszukiwarka adresow \u2014 gdzie fizycznie jest ten sygnal?</h5>' +
+      '<p style="font-size:9px;color:var(--td);margin-bottom:8px">Wpisz adres PLC (np. X0.3, Y1.5, R320) lub nazwe modulu (RIO, M3, HK) albo port (X1, Y2) aby znalezc lokalizacje w szafie.</p>' +
+      '<div style="display:flex;gap:6px;align-items:center">' +
+        '<input id="cabSearch" placeholder="np. X0.3, Y1.5, R320, RIO, HK, M3-1, X1..." oninput="cabinetSearch()" style="flex:1;max-width:340px;background:var(--pb);border:1px solid var(--bd);color:var(--tx);padding:6px 10px;border-radius:6px;font-size:12px;font-family:inherit">' +
+        '<button class="top-btn" onclick="cabinetSearch()">Szukaj</button>' +
+        '<button class="top-btn" onclick="document.getElementById(\'cabSearch\').value=\'\';document.getElementById(\'cabSearchResult\').innerHTML=\'\'" style="font-size:10px">Wyczysc</button>' +
+      '</div>' +
+      '<div id="cabSearchResult"></div>' +
+    '</div>' +
+    // MODULE DIAGRAM
+    '<h5 style="color:var(--cy);margin:16px 0 6px;font-size:11px">\uD83D\uDCE6 Moduly I/O w szafie sterowniczej</h5>' +
+    '<p style="font-size:9px;color:var(--td);margin-bottom:6px">Kazdy blok = fizyczny modul. Kliknij port aby wyszukac jego piny w tabeli.</p>' +
+    '<div class="cab-modules">' + cardsHtml + '</div>' +
+    // BIT-LEVEL TABLE
+    '<details style="margin:16px 0">' +
+      '<summary style="cursor:pointer;color:var(--ac);font-size:11px;font-weight:700;padding:6px 0">' +
+        '\uD83D\uDCCB Pelna tabela mapowania bit-po-bicie (' + bitMap.length + ' adresow) \u2014 kliknij aby rozwinac</summary>' +
+      '<div style="max-height:500px;overflow:auto;margin-top:6px">' +
+        '<table class="cab-bit-table"><thead><tr>' +
+          '<th>Adres PLC</th><th>Kier.</th><th>Typ modulu</th><th>Nazwa modulu</th><th>Port</th><th>Pin</th><th>Lokalizacja w szafie</th>' +
+        '</tr></thead><tbody>' + bitRows + '</tbody></table>' +
+      '</div>' +
+    '</details>';
+}
+
+// CABINET SEARCH
+function cabinetSearch() {
+  var q = (document.getElementById('cabSearch') || {}).value;
+  if (!q) q = '';
+  q = q.trim().toUpperCase();
+  var el = document.getElementById('cabSearchResult');
+  if (!el) return;
+  if (!q || !state.ioMap || !state.ioMap.bitMap) { el.innerHTML = ''; return; }
+
+  var bm = state.ioMap.bitMap;
+  var results = bm.filter(function(b) {
+    var a = b.addr.toUpperCase();
+    if (a === q) return true;
+    if (a.indexOf(q) >= 0) return true;
+    if (b.name.toUpperCase().indexOf(q) >= 0) return true;
+    if (b.module.toUpperCase().indexOf(q) >= 0) return true;
+    if (b.port && b.port.toUpperCase() === q) return true;
+    if (b.station && ('ST' + b.station) === q) return true;
+    return false;
+  });
+
+  if (!results.length) {
+    el.innerHTML = '<div style="color:var(--td);font-size:10px;padding:6px 0">Nie znaleziono adresu "' + esc(q) + '". Sprobuj: X0.3, Y1.5, R320, RIO, HK, M3...</div>';
+    return;
+  }
+
+  // Get xref data for cross-referencing
+  var file = state.files[state.currentFile];
+  var secRegs = file ? file.parsed.sectionRegisters : {};
+  var sections = file ? file.parsed.sections : [];
+
+  var html = '<div style="margin-top:8px;max-height:400px;overflow-y:auto">';
+  var exact = results.filter(function(b) { return b.addr.toUpperCase() === q; });
+  var show = exact.length ? exact : results.slice(0, 40);
+
+  show.forEach(function(b) {
+    var dc = b.dir === 'IN' ? 'var(--gn)' : 'var(--or)';
+    var di = b.dir === 'IN' ? '\u2B05 WEJSCIE' : '\u27A1 WYJSCIE';
+    var portStr = b.port && b.port !== 'NONE' ? b.port : '(wbudowany)';
+    var locStr = '\uD83D\uDCCD Szafa \u2192 modul ' + b.name + (b.station ? ' (St.' + b.station + ')' : '') +
+      (b.port && b.port !== 'NONE' ? ' \u2192 zlacze ' + b.port : '') + ' \u2192 pin ' + b.pin;
+
+    // Find PLC sections using this address (try R+logicBit)
+    var usedIn = [];
+    var rReg = 'R' + b.logicBit;
+    for (var si in secRegs) {
+      if (secRegs[si].has && secRegs[si].has(rReg)) {
+        var idx = parseInt(si);
+        if (sections[idx]) usedIn.push({idx: idx, label: sections[idx].label, pl: sections[idx].translation || ''});
+      }
+    }
+
+    html += '<div class="cab-result">' +
+      '<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">' +
+        '<span class="cr-addr">' + b.addr + '</span>' +
+        '<span style="color:' + dc + ';font-weight:700;font-size:10px">' + di + '</span>' +
+        '<span style="font-size:10px;color:var(--td)">bit logiczny: ' + b.logicBit + '</span>' +
+      '</div>' +
+      '<div style="margin-top:6px;display:grid;grid-template-columns:120px 1fr;gap:2px 10px;font-size:11px">' +
+        '<span style="color:var(--td)">Modul fizyczny:</span><span style="color:var(--cy);font-weight:600">' + esc(b.module) + ' \u2014 ' + esc(b.name) + (b.station ? ' (Stacja ' + b.station + ')' : '') + '</span>' +
+        '<span style="color:var(--td)">Zlacze / port:</span><span style="color:var(--yl);font-weight:600">' + portStr + '</span>' +
+        '<span style="color:var(--td)">Pin na zlaczu:</span><span style="color:var(--or);font-weight:800;font-size:13px">Pin ' + b.pin + '</span>' +
+        '<span style="color:var(--td)">Lokalizacja:</span><span style="color:var(--tx)">' + locStr + '</span>' +
+      '</div>' +
+      (usedIn.length ? '<div style="margin-top:6px;padding-top:4px;border-top:1px solid var(--bd);font-size:10px">' +
+        '<span style="color:var(--td)">\u26D3 Uzyty w ' + usedIn.length + ' sekcjach PLC: </span>' +
+        usedIn.slice(0, 6).map(function(s) {
+          return '<span style="cursor:pointer;color:var(--ac);text-decoration:underline;margin-right:6px" onclick="selectSection(' + s.idx + ');switchTab(\'hex\')">' +
+            esc(s.label) + (s.pl ? ' (' + esc(s.pl) + ')' : '') + '</span>';
+        }).join('') +
+        (usedIn.length > 6 ? '<span style="color:var(--td)"> ...+' + (usedIn.length - 6) + ' wiecej</span>' : '') +
+      '</div>' : '') +
+    '</div>';
+  });
+
+  if (!exact.length && results.length > 40) {
+    html += '<div style="color:var(--td);font-size:10px;padding:4px">...i ' + (results.length - 40) + ' wiecej wynikow. Wpisz dokladniejszy adres.</div>';
+  }
+  html += '</div>';
+  el.innerHTML = html;
+}
+
+function cabFillSearch(text) {
+  var inp = document.getElementById('cabSearch');
+  if (inp) { inp.value = text; cabinetSearch(); inp.scrollIntoView({behavior:'smooth', block:'nearest'}); }
 }
 
 // IOMAP XML IMPORT
@@ -1754,6 +1988,9 @@ function loadIoMapXML(input) {
           var physicStart = node.querySelector('PhysicStart');
           var length = node.querySelector('Length');
           if (name && logicStart && length) {
+            var bt = node.querySelector('BitType');
+            var iot = node.querySelector('IOType');
+            var sl = node.querySelector('ScanLevel');
             ioMap.inputs.push({
               module: node.tagName,
               name: name.textContent,
@@ -1761,7 +1998,10 @@ function loadIoMapXML(input) {
               logicStart: parseInt(logicStart.textContent),
               physicStart: parseInt(physicStart.textContent),
               length: parseInt(length.textContent),
-              station: node.getAttribute('Station') || ''
+              station: node.getAttribute('Station') || '',
+              bitType: bt ? bt.textContent : '',
+              ioType: iot ? iot.textContent : 'Digital',
+              scanLevel: sl ? sl.textContent : ''
             });
           }
         });
@@ -1776,6 +2016,9 @@ function loadIoMapXML(input) {
           var physicStart = node.querySelector('PhysicStart');
           var length = node.querySelector('Length');
           if (name && logicStart && length) {
+            var bt = node.querySelector('BitType');
+            var iot = node.querySelector('IOType');
+            var sl = node.querySelector('ScanLevel');
             ioMap.outputs.push({
               module: node.tagName,
               name: name.textContent,
@@ -1783,7 +2026,10 @@ function loadIoMapXML(input) {
               logicStart: parseInt(logicStart.textContent),
               physicStart: parseInt(physicStart.textContent),
               length: parseInt(length.textContent),
-              station: node.getAttribute('Station') || ''
+              station: node.getAttribute('Station') || '',
+              bitType: bt ? bt.textContent : '',
+              ioType: iot ? iot.textContent : 'Digital',
+              scanLevel: sl ? sl.textContent : ''
             });
           }
         });
