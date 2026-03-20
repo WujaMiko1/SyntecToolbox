@@ -1311,6 +1311,8 @@ function renderIOTab() {
         '</div>';
       }).join('')+
     '</div>'+
+    // SECTION → PHYSICAL I/O MAPPING (when IoMap loaded)
+    (state.ioMap && state.ioMap.bitMap ? renderSectionPhysicalMap(p) : '')+
     // IOMAP XML DATA
     (state.ioMap ? renderIoMapSection() : '<div style="margin-top:24px;padding:12px;border:1px dashed var(--bd);border-radius:8px;text-align:center;color:var(--td);font-size:11px">&#x1F50C; Wczytaj plik IoMap_*.xml (przycisk w gornym pasku) aby zobaczyc mapowanie sprzetowe I/O z konfiguracji maszyny.<br><span style="font-size:10px">Sciezka: Project/DiskC/OpenCNC/Data/IO/IoMap_*.xml</span></div>');
 }
@@ -1880,6 +1882,101 @@ function renderIoMapSection() {
         '</tr></thead><tbody>' + bitRows + '</tbody></table>' +
       '</div>' +
     '</details>';
+}
+
+// RESOLVE REGISTER TO PHYSICAL I/O via IoMap addr matching
+function resolveRegToPhysical(regName) {
+  if (!state.ioMap || !state.ioMap.bitMap) return null;
+  var bm = state.ioMap.bitMap;
+  // Exact match (for R registers: R0, R1, ... R511 etc.)
+  var found = bm.filter(function(b) { return b.addr === regName; });
+  if (found.length) return found;
+  // Prefix match (for X/Y: sectionRegisters has "X0", bitMap has "X0.0".."X0.7")
+  var prefix = regName + '.';
+  found = bm.filter(function(b) { return b.addr.indexOf(prefix) === 0; });
+  if (found.length) return found;
+  return null;
+}
+
+// SECTION → PHYSICAL I/O MAPPING
+function renderSectionPhysicalMap(parsed) {
+  var bm = state.ioMap.bitMap;
+  if (!bm || !bm.length) return '';
+
+  // Build addr→physical lookup and prefix→physical for X/Y
+  var addrLookup = {};
+  bm.forEach(function(b) {
+    addrLookup[b.addr] = b;
+    // For X0.3 → store under prefix "X0" as well
+    var dot = b.addr.indexOf('.');
+    if (dot > 0) {
+      var prefix = b.addr.substring(0, dot);
+      if (!addrLookup['_prefix_' + prefix]) addrLookup['_prefix_' + prefix] = [];
+      addrLookup['_prefix_' + prefix].push(b);
+    }
+  });
+
+  // For each PLC section, find which registers map to physical I/O
+  var secPhysical = [];
+  for (var si in parsed.sectionRegisters) {
+    var idx = parseInt(si);
+    var sec = parsed.sections[idx];
+    if (!sec) continue;
+    var regs = parsed.sectionRegisters[si];
+    var physIOs = [];
+    var seen = {};
+    regs.forEach(function(reg) {
+      if (!/^[RXY]\d+$/.test(reg)) return;
+      // Exact addr match (R0, R1, R320 etc for analog)
+      if (addrLookup[reg] && !seen[reg]) {
+        seen[reg] = true;
+        physIOs.push({ reg: reg, phys: addrLookup[reg] });
+      }
+      // Prefix match for X/Y digital (X0 → X0.0..X0.7)
+      var prefixKey = '_prefix_' + reg;
+      if (addrLookup[prefixKey] && !seen[prefixKey]) {
+        seen[prefixKey] = true;
+        addrLookup[prefixKey].forEach(function(b) {
+          physIOs.push({ reg: reg, phys: b });
+        });
+      }
+    });
+    if (physIOs.length > 0) {
+      secPhysical.push({ idx: idx, sec: sec, physIOs: physIOs });
+    }
+  }
+
+  if (!secPhysical.length) return '';
+
+  // Sort by number of I/O references
+  secPhysical.sort(function(a, b) { return b.physIOs.length - a.physIOs.length; });
+
+  var rows = secPhysical.slice(0, 50).map(function(sp) {
+    var ioChips = sp.physIOs.slice(0, 8).map(function(pio) {
+      var dc = pio.phys.dir === 'IN' ? 'var(--gn)' : 'var(--or)';
+      var portLbl = pio.phys.port && pio.phys.port !== 'NONE' ? pio.phys.port : '';
+      return '<span style="display:inline-block;padding:1px 5px;border-radius:3px;font-size:9px;margin:1px;' +
+        'background:' + dc + '15;border:1px solid ' + dc + '33;color:' + dc + ';font-family:monospace;cursor:pointer" ' +
+        'onclick="cabFillSearch(\'' + esc(pio.phys.addr) + '\')" title="' +
+        esc(pio.phys.name) + (portLbl ? ' ' + portLbl : '') + ' pin ' + pio.phys.pin + '">' +
+        pio.phys.addr + '</span>';
+    }).join('');
+    var more = sp.physIOs.length > 8 ? '<span style="color:var(--td);font-size:9px"> +' + (sp.physIOs.length - 8) + '</span>' : '';
+
+    return '<tr class="io-row" style="cursor:pointer" onclick="selectSection(' + sp.idx + ');switchTab(\'hex\')">' +
+      '<td style="color:var(--ac);font-weight:600;font-size:10px;max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + esc(sp.sec.label) + '</td>' +
+      '<td style="color:var(--yl);font-size:9px;font-style:italic;max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + esc(sp.sec.translation || '') + '</td>' +
+      '<td style="font-size:9px;color:var(--cy)">' + sp.physIOs.length + '</td>' +
+      '<td>' + ioChips + more + '</td></tr>';
+  }).join('');
+
+  return '<h4 style="color:var(--cy);margin:24px 0 6px;font-size:12px">\u26D3 Sekcje PLC \u2192 fizyczne I/O w szafie (' + secPhysical.length + ' sekcji)</h4>' +
+    '<p style="font-size:9px;color:var(--td);margin-bottom:6px">Automatyczne mapowanie: ktore sekcje programu PLC steruja ktorymi fizycznymi portami w szafie sterowniczej. Wymaga wczytanego IoMap XML.</p>' +
+    '<div style="max-height:400px;overflow:auto">' +
+    '<table class="io-table"><thead><tr>' +
+    '<th>Sekcja PLC</th><th>Tlumaczenie</th><th>I/O</th><th>Adresy fizyczne (kliknij aby szukac)</th>' +
+    '</tr></thead><tbody>' + rows + '</tbody></table></div>' +
+    (secPhysical.length > 50 ? '<div style="color:var(--td);font-size:9px;margin-top:4px">Pokazano 50 z ' + secPhysical.length + ' sekcji</div>' : '');
 }
 
 // CABINET SEARCH
