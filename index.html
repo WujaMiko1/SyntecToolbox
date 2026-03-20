@@ -65,7 +65,7 @@ a{color:var(--ac);text-decoration:none;transition:color .15s}a:hover{color:#8aa4
 <div class="hero">
   <div class="version">v1.0 &mdash; Public Release</div>
   <h1><span class="icon">&#x2699;</span><span class="brand">Syntec Toolbox</span></h1>
-  <p class="sub">Zestaw narz&#x119;dzi webowych do analizy, edycji i wizualizacji projekt&oacute;w CNC Syntec.<br>
+  <p class="sub">Wizualny analizator program&oacute;w PLC (.lad) dla sterownik&oacute;w Syntec CNC.<br>
   Standalone HTML &mdash; zero zale&#x17C;no&#x15B;ci &mdash; dzia&#x142;a offline w przegl&#x105;darce.</p>
 </div>
 
@@ -106,53 +106,7 @@ a{color:var(--ac);text-decoration:none;transition:color .15s}a:hover{color:#8aa4
     </div>
   </div>
 
-  <!-- WORKSHOP -->
-  <div class="card">
-    <div class="card-header">
-      <div class="card-icon" style="background:rgba(255,152,0,.15)">&#x1F3ED;</div>
-      <div>
-        <div class="card-title">Workshop</div>
-        <div class="card-ver">v2.0 &bull; Multi-modu&#x142;owy hub</div>
-      </div>
-    </div>
-    <div class="card-body">
-      <p class="card-desc">Zintegrowane &#x15B;rodowisko z 7 modu&#x142;ami: Screen Editor, Parametry CDB, Ladder Explorer, Alarmy, NcFiles, I/O Viewer i wbudowany edytor ekran&oacute;w.</p>
-      <ul class="card-features">
-        <li>Screen Editor &mdash; edycja .scr XML z pe&#x142;nym CRUD element&oacute;w</li>
-        <li>Parametry CDB &mdash; przegl&#x105;darka baz parametr&oacute;w</li>
-        <li>Ladder Explorer &mdash; szybki podgl&#x105;d sekcji PLC</li>
-        <li>Alarm Viewer &mdash; analiza plik&oacute;w .mir/.lkn</li>
-        <li>NC Files &mdash; podgl&#x105;d program&oacute;w G-code</li>
-        <li>I/O Viewer &mdash; mapowanie wej&#x15B;&#x107;/wyj&#x15B;&#x107;</li>
-      </ul>
-      <div class="card-actions">
-        <a href="tools/SyntecWorkshop.html" class="btn btn-primary">&#x1F680; Otw&oacute;rz</a>
-      </div>
-    </div>
-  </div>
 
-  <!-- LAYOUT EDITOR -->
-  <div class="card">
-    <div class="card-header">
-      <div class="card-icon" style="background:rgba(76,175,80,.15)">&#x1F3A8;</div>
-      <div>
-        <div class="card-title">Layout Editor</div>
-        <div class="card-ver">v3.0 &bull; Drag &amp; Drop Screen Designer</div>
-      </div>
-    </div>
-    <div class="card-body">
-      <p class="card-desc">Wizualny edytor uk&#x142;ad&oacute;w ekran&oacute;w CNC (.scr). Drag &amp; drop, siatka, wiele element&oacute;w GUI Syntec, eksport do XML.</p>
-      <ul class="card-features">
-        <li>Drag &amp; drop element&oacute;w na kanwie</li>
-        <li>9 typ&oacute;w element&oacute;w Syntec GUI</li>
-        <li>Edycja w&#x142;a&#x15B;ciwo&#x15B;ci, kolorowanie</li>
-        <li>Import/eksport XML zgodny z formatem .scr</li>
-      </ul>
-      <div class="card-actions">
-        <a href="tools/SyntecLayoutEditor.html" class="btn btn-primary">&#x1F680; Otw&oacute;rz</a>
-      </div>
-    </div>
-  </div>
 </div>
 
 <div class="section-hdr"><span>&#x2139; Informacje</span></div>
@@ -173,12 +127,7 @@ a{color:var(--ac);text-decoration:none;transition:color .15s}a:hover{color:#8aa4
       <code>OpenCNC/Data/IO/IoMap_*.xml</code><br>
       Mo&#x17C;na je wczyta&#x107; w Ladder Viewer aby zobaczy&#x107; mapowanie modu&#x142;&oacute;w sprz&#x119;towych.</p>
     </div>
-    <div class="info-card">
-      <h4>&#x1F3A8; Ekrany CNC</h4>
-      <p>Pliki ekran&oacute;w <code>.scr</code> (XML):<br>
-      <code>OpenCNC/Res/</code> i <code>StdRes/</code><br>
-      Edytuj w Layout Editor lub Workshop Screen Editor.</p>
-    </div>
+
     <div class="info-card">
       <h4>&#x1F4BB; Jak u&#x17C;ywa&#x107;</h4>
       <p>Ka&#x17C;de narz&#x119;dzie to samodzielny plik HTML. Wystarczy otworzy&#x107; w przegl&#x105;darce &mdash; Chrome, Edge, Firefox. Brak potrzeby serwera, instalacji ani internetu.</p>
