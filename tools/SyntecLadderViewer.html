@@ -189,7 +189,7 @@ input[type="file"]{display:none}
 </div>
 <div class="main" id="mainArea">
   <div class="welcome" id="welcomeScreen">
-    <h2>&#x26D3; Syntec PLC Ladder Viewer v3.0</h2>
+    <h2>&#x26D3; Syntec PLC Ladder Viewer v4.0</h2>
     <p>Wizualna przegladarka skompilowanych programow PLC (.lad) dla sterownikow Syntec CNC.<br>
     Pelne tlumaczenie chinskich etykiet na polski, opisy wejsc/wyjsc I/O, mapa zaleznosci systemowych, kategoryzacja sekcji i diagram.</p>
     <div class="drop" id="dropZone">
@@ -484,6 +484,40 @@ const CN_PL = {
   '\u8D77\u52D5':'Uruchomienie',
   '\u52A0\u5DE5':'Obrobka',
   '\u5C0B\u539F\u9EDE':'Bazowanie (homing)',
+  // === v4.0 - nowe tlumaczenia ===
+  '\u5B89\u5168\u9580':'Drzwi bezpieczenstwa',
+  '\u9580\u9396':'Blokada drzwi',
+  '\u9580\u958B':'Drzwi otwarte',
+  '\u9580\u95DC':'Drzwi zamkniete',
+  '\u5200\u9577':'Dlugosc narzedzia',
+  '\u5200\u5F91':'Srednica narzedzia',
+  '\u5200\u865F':'Numer narzedzia (T)',
+  '\u5200\u5177':'Narzedzie',
+  '\u4E3B\u8EF8\u5B9A\u5411':'Orientacja wrzeciona (SO)',
+  '\u5404\u8EF8\u5C0B\u539F\u9EDE':'Bazowanie wszystkich osi',
+  '\u5F52\u539F':'Powrot do punktu bazowego',
+  '\u5F52\u96F6':'Powrot do zera',
+  '\u5207\u524A\u6DB2':'Ciecz chlodzaca',
+  '\u51B7\u537B\u6CF5':'Pompa chlodzaca',
+  '\u4F3C\u670D\u8B66\u5831':'Alarm serwomotoru',
+  '\u8F38\u5165':'Wejscie (input)',
+  '\u8F38\u51FA':'Wyjscie (output)',
+  '\u6B63\u8F49':'Obroty CW (do przodu)',
+  '\u53CD\u8F49':'Obroty CCW (wsteczne)',
+  '\u9032\u7D66\u7387':'Wartosc posuwu (%)',
+  '\u555F\u52D5\u4E2D':'W trakcie uruchamiania',
+  '\u5207\u6362':'Przelaczanie',
+  '\u76E3\u6E2C':'Monitorowanie',
+  '\u5B8C\u6210':'Zakonczone',
+  '\u9AD8\u901F':'Wysoka predkosc',
+  '\u4F4E\u901F':'Niska predkosc',
+  '\u8B66\u544A':'Ostrzezenie',
+  '\u6545\u969C':'Usterka/Awaria',
+  '\u958B\u6A5F':'Wlaczenie zasilania',
+  '\u95DC\u6A5F':'Wylaczenie zasilania',
+  '\u81EA\u52D5':'Tryb automatyczny',
+  '\u624B\u52D5':'Tryb reczny',
+  '\u5FA9\u4F4D':'Reset do stanu poczatkowego',
 };
 
 // CATEGORY SYSTEM
@@ -1093,8 +1127,11 @@ function decodeLadderRung(bytes, section) {
     if (bytes[i] === 0x0D || bytes[i] === 0) continue;
     const b=bytes[i], b1=bytes[i+1]||0, b2=bytes[i+2]||0;
     if (b===0x70&&b1<0x80){rung.instructions.push({op:'LD',addr:fmtAddr(b1,b2),off:i});i+=2;}
+    else if(b===0x71&&b1<0x80){rung.instructions.push({op:'LDI',addr:fmtAddr(b1,b2),off:i});i+=2;}
     else if(b===0x6E&&b1<0x80){rung.instructions.push({op:'OUT',addr:fmtAddr(b1,b2),off:i});i+=2;}
     else if(b===0x0E){rung.instructions.push({op:'OR',addr:fmtAddr(b1,b2),off:i});i+=2;}
+    else if(b===0x10&&b1<0x80){rung.instructions.push({op:'AND',addr:fmtAddr(b1,b2),off:i});i+=2;}
+    else if(b===0x11&&b1<0x80){rung.instructions.push({op:'ANI',addr:fmtAddr(b1,b2),off:i});i+=2;}
     else if(b===0xC8){rung.instructions.push({op:'CALL',addr:fmtAddr(b1,b2),off:i});i+=1;}
     else if(b===0xC6){rung.instructions.push({op:'MOV',addr:fmtAddr(b1,b2),off:i});i+=2;}
     else if(b===0xC5){rung.instructions.push({op:'END',addr:'',off:i});}
@@ -1113,9 +1150,14 @@ function renderLadderRung(rung, index, section) {
   if (isEmpty) {
     body = '<div class="ladder-unresolved">Brak rozpoznanych instrukcji w tym bloku</div>';
   } else {
-    const ops = {LD:{cls:'ladder-contact',fmt:function(s){return '\u2014[ '+s+' ]\u2014'}}, OUT:{cls:'ladder-coil',fmt:function(s){return '\u2014( '+s+' )\u2014'}},
+    const ops = {LD:{cls:'ladder-contact',fmt:function(s){return '\u2014[ '+s+' ]\u2014'}},
+      LDI:{cls:'ladder-contact',fmt:function(s){return '\u2014[/'+s+']\u2014'}},
+      OUT:{cls:'ladder-coil',fmt:function(s){return '\u2014( '+s+' )\u2014'}},
       SET:{cls:'ladder-coil',fmt:function(s){return '\u2014(S '+s+')\u2014'}}, RST:{cls:'ladder-coil',fmt:function(s){return '\u2014(R '+s+')\u2014'}},
-      OR:{cls:'ladder-func',fmt:function(s){return '[OR '+s+']'}}, CALL:{cls:'ladder-func',fmt:function(s){return '[CALL '+s+']'}},
+      OR:{cls:'ladder-func',fmt:function(s){return '[OR '+s+']'}},
+      AND:{cls:'ladder-func',fmt:function(s){return '[AND '+s+']'}},
+      ANI:{cls:'ladder-func',fmt:function(s){return '[ANI '+s+']'}},
+      CALL:{cls:'ladder-func',fmt:function(s){return '[CALL '+s+']'}},
       MOV:{cls:'ladder-func',fmt:function(s){return '[MOV '+s+']'}}, END:{cls:'ladder-func',fmt:function(s){return '[END]'}},
       SEC:{cls:'ladder-func',fmt:function(s){return '[SEC '+s+']'}}};
     body = '<div class="ladder-rail"><span class="lw">|\u2014</span>';
@@ -1271,7 +1313,7 @@ function renderIOTab() {
     IO_DB.inputs.map(io=>{
       const cc = catColors[io.cat]||'var(--td)';
       const catObj = CATEGORIES.find(c=>c.id===io.cat);
-      return '<tr class="io-row"><td class="io-addr">'+esc(io.addr)+'</td><td class="io-dir-in">WEJ</td>'+
+      return '<tr class="io-row" data-cat="'+io.cat+'"><td class="io-addr">'+esc(io.addr)+'</td><td class="io-dir-in">WEJ</td>'+
         '<td style="font-weight:600">'+esc(io.name)+'</td>'+
         '<td style="font-size:10px;color:var(--td)">'+esc(io.desc)+'</td>'+
         '<td><span class="cat-badge" style="background:'+cc+';font-size:8px">'+(catObj?catObj.icon:'')+' '+(catObj?catObj.name:io.cat)+'</span></td></tr>';
@@ -1285,7 +1327,7 @@ function renderIOTab() {
     IO_DB.outputs.map(io=>{
       const cc = catColors[io.cat]||'var(--td)';
       const catObj = CATEGORIES.find(c=>c.id===io.cat);
-      return '<tr class="io-row"><td class="io-addr">'+esc(io.addr)+'</td><td class="io-dir-out">WYJ</td>'+
+      return '<tr class="io-row" data-cat="'+io.cat+'"><td class="io-addr">'+esc(io.addr)+'</td><td class="io-dir-out">WYJ</td>'+
         '<td style="font-weight:600">'+esc(io.name)+'</td>'+
         '<td style="font-size:10px;color:var(--td)">'+esc(io.desc)+'</td>'+
         '<td><span class="cat-badge" style="background:'+cc+';font-size:8px">'+(catObj?catObj.icon:'')+' '+(catObj?catObj.name:io.cat)+'</span></td></tr>';
@@ -1318,7 +1360,21 @@ function renderIOTab() {
 }
 function filterIO(){
   const q=(document.getElementById('ioSearch')?.value||'').toLowerCase();
-  document.querySelectorAll('.io-row').forEach(r=>{r.style.display=r.textContent.toLowerCase().includes(q)?'':'none'});
+  const showUsed=!!(document.getElementById('ioShowUsed')?.checked);
+  const file=state.files[state.currentFile];
+  const usedCats=new Set();
+  if(showUsed&&file){for(const s of file.parsed.sections)usedCats.add(s.category.id);}
+  document.querySelectorAll('.io-row').forEach(r=>{
+    const text=r.textContent.toLowerCase();
+    const visible=!q||text.includes(q);
+    r.style.display=visible?'':'none';
+    if(showUsed){
+      const cat=r.getAttribute('data-cat');
+      const used=cat&&usedCats.has(cat);
+      r.style.background=visible&&used?'rgba(76,175,80,.09)':'';
+      r.style.outline=visible&&used?'1px solid rgba(76,175,80,.3)':'';
+    }else{r.style.background='';r.style.outline='';}
+  });
 }
 
 // SYSTEM DEPENDENCIES TAB
@@ -1448,9 +1504,27 @@ function buildSectionRegisters(bytes, sections) {
 document.addEventListener('keydown', function(e) {
   if (e.ctrlKey && e.key === 'k') { e.preventDefault(); openGlobalSearch(); }
   if (e.ctrlKey && e.key === 'e') { e.preventDefault(); exportJSON(); }
+  if (e.ctrlKey && e.key === 'o') { e.preventDefault(); document.getElementById('ladFile').click(); }
   if (e.key === 'Escape' && document.getElementById('gsOverlay').classList.contains('open')) { closeGlobalSearch(); }
   var tabKeys = {'1':'visual','2':'overview','3':'sections','4':'flow','5':'ladder','6':'registers','7':'hex','8':'compare','9':'io','0':'system'};
   if (e.ctrlKey && tabKeys[e.key]) { e.preventDefault(); switchTab(tabKeys[e.key]); }
+});
+// GLOBAL DRAG-AND-DROP (works even after welcome screen is hidden)
+document.body.addEventListener('dragover', function(e) {
+  if (e.target.closest('#dropZone')) return; // handled by dropZone
+  e.preventDefault(); e.dataTransfer.dropEffect = 'copy';
+});
+document.body.addEventListener('drop', function(e) {
+  if (e.target.closest('#dropZone')) return;
+  e.preventDefault();
+  var ladFiles = Array.from(e.dataTransfer.files).filter(function(f){return f.name.toLowerCase().endsWith('.lad');});
+  var xmlFile = Array.from(e.dataTransfer.files).find(function(f){return f.name.toLowerCase().endsWith('.xml');});
+  if (ladFiles.length) loadFiles(ladFiles);
+  else if (xmlFile) {
+    var dt = new DataTransfer(); dt.items.add(xmlFile);
+    var inp = document.getElementById('ioMapFile'); inp.files = dt.files;
+    loadIoMapXML(inp);
+  }
 });
 // Init global search state
 state.gsResults = [];
@@ -1559,6 +1633,7 @@ function renderHelpTab() {
       '<h4>&#x2328; Skroty klawiszowe</h4>'+
       '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:8px;font-size:11px">'+
         '<div><span class="kbd">Ctrl+K</span> Globalne wyszukiwanie</div>'+
+        '<div><span class="kbd">Ctrl+O</span> Otworz plik .lad</div>'+
         '<div><span class="kbd">Ctrl+E</span> Eksport JSON</div>'+
         '<div><span class="kbd">Esc</span> Zamknij wyszukiwanie</div>'+
         '<div><span class="kbd">&#x2191;&#x2193;</span> Nawigacja wynikow</div>'+
