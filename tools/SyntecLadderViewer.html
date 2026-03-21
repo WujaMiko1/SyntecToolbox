@@ -484,23 +484,146 @@ const CN_PL = {
   '\u8D77\u52D5':'Uruchomienie',
   '\u52A0\u5DE5':'Obrobka',
   '\u5C0B\u539F\u9EDE':'Bazowanie (homing)',
+  // === v4.1 - rozszerzone tlumaczenia ===
+  '\u4E0B\u6599\u5438\u5875':'Odciag pylu przy rozladunku',
+  '\u5438\u5875\u5668':'Odciag pylu (odkurzacz)',
+  '\u524D\u58D3\u8F25':'Walek dociskowy przedni',
+  '\u540E\u58D3\u8F25':'Walek dociskowy tylni',
+  '\u524D\u5B9A\u4F4D':'Pozycjonowanie przednie',
+  '\u53F3\u5C0E\u5411':'Prowadnica prawa',
+  '\u63A8\u6599\u687F\u5439\u6C23':'Nadmuch draga podparcia',
+  '\u8CBC\u6A19\u6C23\u7F38':'Cylinder etykieciarki',
+  '\u63A7\u5236\u5668\u9019\u500B':'Ten kontroler',
+  '\u61C9\u8A72\u5728\u9019\u500B':'Powinno byc w tym',
+'\u6C92\u6709\u88AB':'Nie jest',
+  '\u8981\u57F7\u884C':'Do wykonania',
+  '\u865F\u5230':'Numer osiagniety',
+  '\u7684\u4EBA':'osoba',
+  '\u7684\u60C5\u6CC1\u4E0B':'w warunkach',
+  '\u7684\u9375':'klawisz',
+  '\u6B64':'ten/ta',
+  '\u540C\u6642\u544A\u8A34':'Jednoczesne powiadomienie',
+  '\u4E0A\u4F4D':'Pozycja gorna',
+  '\u4E0A\u6599\u5B9A\u4F4D\u7F38\u4E00\u584A\u52D5\u4F5C':'Wspolne dzialanie cylindra pozycjonowania zaladunku',
+  '\u5C0D\u5200\u5439\u6C23':'Nadmuch ustawiania narzedzia',
+  '\u677E\u5200\u5439\u6C23':'Nadmuch zwolnienia narzedzia',
+  '\u53F3\u5C0E\u5411':'Prowadnica prawa',
+  '\u5200\u5EAB\u7F69\u958B':'Otwarcie oslony magazynu narzedzi',
+  '\u5200\u5EAB\u7F69\u95DC':'Zamkniecie oslony magazynu narzedzi',
+  '\u5200\u5EAB\u51FA':'Wysuw magazynu narzedzi',
+  '\u63A8\u6599\u6C23\u7F38\u52D5\u4F5C':'Dzialanie cylindra podparcia materialu',
+  '\u5B9A\u4F4D\u6C23\u7F38\u52D5\u4F5C':'Dzialanie cylindra pozycjonowania',
+  '\u5C0E\u5411\u6C23\u7F38\u52D5\u4F5C':'Dzialanie cylindra prowadzacego',
+  '\u689D\u78BC\u5438\u9644':'Przyssanie kodu kreskowego',
+  '\u689D\u78BC\u6C23\u7F38\u4E0A':'Cylinder kodu kreskowego (gora)',
+  '\u8EDF\u9AD4\u884C\u7A0B\u6975\u9650\u4FDD\u8B77\u5728\u5C0B\u904E':'Ochrona limitu programowego po bazowaniu',
+  '\u7B2C\u4E8C\u7D44\u8EF8\u7FA4\u547D\u4EE4\u66AB\u5B58\u5668':'Rejestr polecen 2. grupy osi',
+  '\u7B2C\u4E8C\u8EDF\u9AD4\u884C\u7A0B\u6975\u9650\u958B\u95DC':'Drugi limit programowy zakresu',
+  '\u8EF8\u6A5F\u81FA\u6B63\u5411\u786C\u9AD4\u6975\u9650':'Limit sprzetowy (+) osi maszyny',
+  '\u6307\u4EE4\u6216\u624B\u8F2A\u6307\u4EE4':'Polecenie lub polecenie kolka recznego',
+  '\u53EA\u80FD\u4EE5\u53CD\u65B9\u5411\u5E36\u51FA':'Wycofanie tylko w przeciwnym kierunku',
+  '\u63A7\u5236\u5668\u5C31\u6703\u7522\u751F\u9019\u500B\u65B9\u5411\u7684\u904B\u52D5':'Kontroler wygeneruje ruch w tym kierunku',
+  '\u81FA\u9762\u91CB\u653E':'Zwolnienie stolu',
+  '\u52A0\u5DE5\u5439\u6C23':'Nadmuch obrobki',
+  '\u5FEB\u901F\u9032\u7D66':'Szybki posuw (rapid feed)',
+  '\u975E\u6A19\u88AB\u9650\u5236':'Niestandardowe zablokowane',
+  '\u8A2D\u5B9A\u70BA\u5404\u8EF8\u5411\u8A2D\u5B9A\u6578\u503C\u76F8\u52A0':'Ustawienie: suma wartosci osi',
+  '\u624D\u6703\u88AB\u8D77\u52D5':'Dopiero wtedy uruchomione',
+  '\u4E3B\u8EF8\u65CB\u8F49\u4E2D':'Wrzeciono w ruchu obrotowym',
+  '\u505C\u6B62\u4FE1\u865F':'Sygnal stopu',
+  '\u4E0D\u5141\u8A31\u8D77\u52D5\u52A0\u5DE5':'Zakaz uruchomienia obrobki',
+  '\u6B63\u5728\u52A0\u5DE5\u4E2D':'W trakcie obrobki',
+  '\u521D\u59CB\u5316\u72C0\u614B\u5716\u8B8A\u6578':'Inicjalizacja zmiennych diagramu stanow',
+  '\u8A2D\u5B9A\u57FA\u672C\u6E2C\u8A66\u74B0\u5883':'Ustawienie podstawowego srodowiska testowego',
+  '\u7B49\u5F85\u904B\u52D5\u6307\u4EE4\u5B8C\u6210':'Oczekiwanie na zakonczenie ruchu',
+  '\u63A7\u5236\u5668\u57F7\u884C\u5230':'Kontroler wykonal dotychczas',
+  '\u5167\u5BB9\u653E\u5728\u9019\u7406':'Tresc umieszczona tutaj',
+  '\u4FDD\u8B77\u3002\u8ACB\u53C3\u8003\u53C3\u6578':'Ochrona. Sprawdz parametr',
+  '\u5C0D\u61C9\u5230\u5DE8\u96C6\u7CFB\u7D71\u8B8A\u6578':'Odpowiada zmiennej makro systemowej',
+  '\u4E0D\u4FDD\u8B77':'Bez ochrony',
+  '\u4FDD\u8B77':'Ochrona aktywna',
+  '\u8ACB\u53C3\u8003\u53C3\u6578':'Sprawdz parametr',
+  '\u7531\u4F7F\u7528\u8005\u81EA\u884C\u5B9A\u7FA9':'Definiowane przez uzytkownika',
+  '\u7531\u7CFB\u7D71\u53C3\u6578':'Z parametrow systemowych',
+  '\u8B8A\u983B\u5668\u8B66\u5831':'Alarm falownika',
+  '\u8B8A\u983B\u5668\u6700\u9AD8\u983B\u7387':'Najwyzsza czestotliwosc falownika',
+  '\u5BCC\u51CC\u8B8A\u983B\u5668':'Falownik Fuling',
+  '\u8A2D\u7F6E\u8F49\u901F':'Ustawienie predkosci obrotowej',
+  '\u6700\u9AD8\u8F49\u901F':'Najwyzsza predkosc obrotowa',
+  '\u51B7\u6C34\u6A5F':'Chlodziarka wody',
+  '\u51B7\u6C34\u6A5F\u5831\u8B66':'Alarm chlodziarki',
+  '\u6F64\u6ED1\u4E0D\u8DB3\u8B66\u5831':'Alarm niedostatecznego smarowania',
+  '\u672A\u5C0B\u539F\u9EDE\u8B66\u5831':'Alarm - nie wykonano bazowania',
+  '\u6C23\u58D3\u4E0D\u8DB3':'Zbyt niskie cisnienie powietrza',
+  '\u5439\u6C23':'Nadmuch powietrza',
+  '\u5C0E\u8ECC\u5439\u6C23':'Nadmuch prowadnic',
+  '\u6253\u5370\u5439\u6C23':'Nadmuch drukowania',
+  '\u6253\u5370\u6C23\u958B':'Nadmuch drukowania wlaczony',
+  '\u6253\u5370\u6C23\u95DC':'Nadmuch drukowania wylaczony',
+  '\u5438\u76E4\u5438\u653E':'Przyssanie/zwolnienie przyssawki',
+  '\u53C3\u6578':'Parametry',
+  '\u8B80\u53D6':'Odczyt',
+  '\u63D0\u793A':'Informacja',
+  '\u662F\u5426\u958B\u555F':'Czy wlaczyc',
+  '\u5438\u9644':'Przyssanie',
+  '\u6A21\u5F0F':'Tryb',
+  '\u7CFB\u5217\u4E0A\u4E0B\u6599\u6392\u9246':'Seria: ladowanie/wiertarka rzedowa',
+  '\u6392\u9246\u555F\u52D5':'Start wiertarki rzedowej',
+  '\u96D9\u6A6B\u6881\u9632\u649E\u4FDD\u8B77':'Ochrona antykolizyjna podwojnej belki',
+  '\u589E\u52A0\u806F\u6A5F\u4FDD\u8B77':'Dodaj ochrone online',
+  '\u5149\u96FB\u76F8\u95DC':'Czujniki fotoelektryczne (powiazane)',
+  '\u6BDB\u5237\u52D5\u4F5C':'Dzialanie szczotki',
+  '\u7D05\u71C8':'Lampka czerwona (alarm)',
+  '\u9EC3\u71C8':'Lampka zolta (stan gotowosci)',
+  '\u7DA0\u71C8':'Lampka zielona (praca)',
+  '\u96F7\u9054':'Radar (czujnik odleglosci)',
+  '\u624B\u8F2A\u6A21\u64EC':'Symulacja kolka recznego',
+  '\u55AE\u7BC0\u57F7\u884C':'Wykonanie pojedynczego bloku',
+  '\u55AE\u7BC0\u505C\u6B62\u4E2D':'Zatrzymanie pojedynczego bloku',
+  '\u7570\u8B66\u53D6\u6D88':'Anulowanie alarmu',
+  '\u771F\u7A7A\u904E\u8F09':'Przeciazenie prozni',
+  '\u8CFC\u6A19\u9591\u7F6E':'Etykieciarka bezczynna',
+  '\u9032\u7D66\u4FDD\u6301':'Wstrzymanie posuwu (Feed Hold)',
+  '\u901A\u4FE1':'Komunikacja',
+  '\u81EA\u52D5\u904B\u884C\u4E2D\u689D\u4EF6\u5224\u65B7':'Warunki kontrolne w trybie auto',
+  '\u8173\u8E0F\u521D\u59CB\u72C0\u614B':'Stan poczatkowy pedalu',
+  '\u58D3\u8F25\u4E0A':'Walek dociskowy gora',
+  '\u5074\u63A8':'Wypychanie boczne',
+  '\u5074\u63A8\u56DE':'Powrot wypychania bocznego',
+  '\u5438\u76E4\u5438':'Przyssanie przyssawki',
+  '\u5438\u76E4\u653E':'Zwolnienie przyssawki',
+  '\u540E\u63A8':'Tylne podparcie',
+  '\u63A8\u6599\u51FA':'Wysuw podparcia materialu',
+  '\u63A8\u6599\u56DE':'Powrot podparcia materialu',
+  '\u689D\u5438\u958B':'Przyssanie paskowe wlaczone',
+  '\u689D\u5438\u95DC':'Przyssanie paskowe wylaczone',
+  '\u771F\u7A7A\u958B':'Proznia wlaczona',
+  '\u771F\u7A7A\u95DC':'Proznia wylaczona',
+  '\u6CF5\u958B':'Pompa wlaczona',
+  '\u539F\u9EDE':'Punkt bazowy (Home)',
+  '\u8EF8\u5C0B\u904E':'Os zbazowana',
+  '\u81EA\u52D5\u4E0A\u4E0B\u6599\u76F8\u95DC':'Automatyczne ladowanie/rozladowanie (powiazane)',
+  '\u5228\u82B1\u677F\u4E0A\u4E0B\u6599':'Ladowanie/rozladowanie plyty wiorowej',
+  '\u5BC6\u5EA6\u677F\u4E0A\u4E0B\u6599':'Ladowanie/rozladowanie plyty MDF',
+  '\u79FB\u52D5\u5438\u76E4\u6C23\u7F38':'Cylinder przyssawki ruchomej',
 };
 
 // CATEGORY SYSTEM
 const CATEGORIES = [
-  { id:'safety',  name:'Bezpieczenstwo',      color:'var(--cat-safety)',  icon:'\uD83D\uDED1', keywords:['\u7DCA\u6025','\u6025\u505C','\u8D85\u7A0B','\u4FDD\u8B77','\u9632\u649E','\u9650\u5236','\u4E0D\u53EF\u79FB\u52D5','\u975E\u6A19','\u91CB\u653E','\u5239\u8ECA'] },
-  { id:'spindle', name:'Wrzeciono',            color:'var(--cat-spindle)', icon:'\uD83D\uDD04', keywords:['\u4E3B\u8EF8','\u8B8A\u983B','\u6B63\u8F49','\u8F49\u901F'] },
-  { id:'tool',    name:'Narzedzia / Magazyn',  color:'var(--cat-tool)',    icon:'\uD83D\uDD27', keywords:['\u5200\u5EAB','\u5200','\u63DB\u5200','\u5C0D\u5200','\u6709\u5200','\u677E\u5200','\u593E\u5200','\u6392\u9459'] },
-  { id:'axis',    name:'Osie / Ruch',          color:'var(--cat-axis)',    icon:'\u2195\uFE0F', keywords:['\u8EF8','\u624B\u8EF8','\u500D\u7387','\u5BF8\u52D5','\uFF38','\uFF39','\uFF3A','\u9A45\u52D5','\u539F\u9EDE','\u79FB\u52D5'] },
-  { id:'pneum',   name:'Pneumatyka',           color:'var(--cat-pneum)',   icon:'\uD83D\uDCA8', keywords:['\u6C23\u7F38','\u6C23\u58D3','\u63A8\u6599','\u5C0E\u5411','\u5074\u63A8','\u5B9A\u4F4D\u7F38','\u4E0A\u6599','\u5B9A\u4F4D\u6C23'] },
-  { id:'vacuum',  name:'Proznia',              color:'var(--cat-vacuum)',  icon:'\uD83D\uDD2E', keywords:['\u771F\u7A7A','\u5438\u76E4','\u5438\u9644','\u5438','\u6CF5'] },
-  { id:'load',    name:'Ladowanie/Rozladunek', color:'var(--cat-io)',      icon:'\uD83D\uDCE6', keywords:['\u4E0A\u4E0B\u6599','\u4E0B\u6599','\u5228\u82B1\u677F','\u5BC6\u5EA6\u677F'] },
-  { id:'program', name:'Program / Tryb',       color:'var(--cat-motion)',  icon:'\u25B6\uFE0F', keywords:['\u7A0B\u5F0F','\u7A0B\u5E8F','\u6A21\u5F0F','\u904B\u884C','\u9032\u7D66','\u555F\u52D5','\u5FA9\u4F4D','\u66AB\u505C','\u55AE\u7BC0','\u52A0\u5DE5'] },
-  { id:'comm',    name:'Komunikacja',          color:'var(--cat-comm)',    icon:'\uD83D\uDCE1', keywords:['\u901A\u4FE1','\u8CBC\u6A19\u6A5F','\u5171\u4EAB'] },
-  { id:'init',    name:'Inicjalizacja',        color:'var(--cat-init)',    icon:'\u2699\uFE0F', keywords:['\u521D\u59CB','\u8A2D\u5B9A','\u53C3\u6578','\u6E2C\u8A66','\u8173\u8E0F'] },
-  { id:'board',   name:'Karty I/O',            color:'var(--cat-feed)',    icon:'\uD83D\uDCDF', keywords:['\u8F38\u5165\u677F','\u8F38\u51FA\u677F'] },
-  { id:'alarm',   name:'Alarmy',               color:'var(--cat-alarm)',   icon:'\u26A0\uFE0F', keywords:['\u8B66\u5831','\u8B66','\u7570\u5E38','\u5831\u8B66'] },
-  { id:'display', name:'Wyswietlanie',         color:'var(--cat-display)', icon:'\uD83D\uDCFA', keywords:['\u986F\u793A','\u6307\u793A','\u9032\u7A0B','\u71C8','\u96F7\u9054'] },
+  { id:'safety',  name:'Bezpieczenstwo',      color:'var(--cat-safety)',  icon:'\uD83D\uDED1', keywords:['\u7DCA\u6025','\u6025\u505C','\u8D85\u7A0B','\u4FDD\u8B77','\u9632\u649E','\u9650\u5236','\u4E0D\u53EF\u79FB\u52D5','\u975E\u6A19','\u91CB\u653E','\u5239\u8ECA','\u6975\u9650','\u505C\u6B62'] },
+  { id:'spindle', name:'Wrzeciono',            color:'var(--cat-spindle)', icon:'\uD83D\uDD04', keywords:['\u4E3B\u8EF8','\u8B8A\u983B','\u6B63\u8F49','\u8F49\u901F','\u5BCC\u51CC'] },
+  { id:'tool',    name:'Narzedzia / Magazyn',  color:'var(--cat-tool)',    icon:'\uD83D\uDD27', keywords:['\u5200\u5EAB','\u5200','\u63DB\u5200','\u5C0D\u5200','\u6709\u5200','\u677E\u5200','\u593E\u5200','\u6392\u9246','\u6392\u9459'] },
+  { id:'axis',    name:'Osie / Ruch',          color:'var(--cat-axis)',    icon:'\u2195\uFE0F', keywords:['\u8EF8','\u624B\u8EF8','\u500D\u7387','\u5BF8\u52D5','\uFF38','\uFF39','\uFF3A','\u9A45\u52D5','\u539F\u9EDE','\u79FB\u52D5','\u5C0B\u539F','\u5FEB\u901F\u9032\u7D66','\u58D3\u8F25'] },
+  { id:'pneum',   name:'Pneumatyka',           color:'var(--cat-pneum)',   icon:'\uD83D\uDCA8', keywords:['\u6C23\u7F38','\u6C23\u58D3','\u63A8\u6599','\u5C0E\u5411','\u5074\u63A8','\u5B9A\u4F4D\u7F38','\u4E0A\u6599','\u5B9A\u4F4D\u6C23','\u5439\u6C23','\u5C0E\u8ECC'] },
+  { id:'vacuum',  name:'Proznia',              color:'var(--cat-vacuum)',  icon:'\uD83D\uDD2E', keywords:['\u771F\u7A7A','\u5438\u76E4','\u5438\u9644','\u5438','\u6CF5','\u5438\u5875'] },
+  { id:'load',    name:'Ladowanie/Rozladunek', color:'var(--cat-io)',      icon:'\uD83D\uDCE6', keywords:['\u4E0A\u4E0B\u6599','\u4E0B\u6599','\u5228\u82B1\u677F','\u5BC6\u5EA6\u677F','\u4E00\u9375'] },
+  { id:'program', name:'Program / Tryb',       color:'var(--cat-motion)',  icon:'\u25B6\uFE0F', keywords:['\u7A0B\u5F0F','\u7A0B\u5E8F','\u6A21\u5F0F','\u904B\u884C','\u9032\u7D66','\u555F\u52D5','\u5FA9\u4F4D','\u66AB\u505C','\u55AE\u7BC0','\u52A0\u5DE5','\u57F7\u884C'] },
+  { id:'comm',    name:'Komunikacja',          color:'var(--cat-comm)',    icon:'\uD83D\uDCE1', keywords:['\u901A\u4FE1','\u8CBC\u6A19\u6A5F','\u5171\u4EAB','\u8CBC\u6A19'] },
+  { id:'init',    name:'Inicjalizacja',        color:'var(--cat-init)',    icon:'\u2699\uFE0F', keywords:['\u521D\u59CB','\u8A2D\u5B9A','\u53C3\u6578','\u6E2C\u8A66','\u8173\u8E0F','\u8A2D\u7F6E'] },
+  { id:'board',   name:'Karty I/O',            color:'var(--cat-feed)',    icon:'\uD83D\uDCDF', keywords:['\u8F38\u5165\u677F','\u8F38\u51FA\u677F','\u5149\u96FB'] },
+  { id:'alarm',   name:'Alarmy',               color:'var(--cat-alarm)',   icon:'\u26A0\uFE0F', keywords:['\u8B66\u5831','\u8B66','\u7570\u5E38','\u5831\u8B66','\u904E\u8F09','\u4E0D\u8DB3'] },
+  { id:'display', name:'Wyswietlanie',         color:'var(--cat-display)', icon:'\uD83D\uDCFA', keywords:['\u986F\u793A','\u6307\u793A','\u9032\u7A0B','\u71C8','\u96F7\u9054','\u63D0\u793A','\u72C0\u614B'] },
+  { id:'cooling', name:'Chlodn./Smarowanie',   color:'#4ecdc4',           icon:'\u2744\uFE0F', keywords:['\u51B7\u6C34','\u6F64\u6ED1','\u6BDB\u5237','\u5927\u5C0F\u677F'] },
   { id:'misc',    name:'Inne',                 color:'var(--cat-other)',   icon:'\uD83D\uDCCE', keywords:[] },
 ];
 
@@ -817,16 +940,20 @@ function extractRegisters(bytes) {
   return regs;
 }
 function analyzeInstructions(bytes, result) {
+  const NAMES = {0x70:'LD',0x6E:'OUT',0x6C:'SET',0x72:'MOV',0x39:'RST',0x57:'FMOV',0x62:'ADD',0x66:'SUB',0x4B:'MUL',0x45:'DIV',0xE5:'DMOV',0xC9:'FEND',0xCF:'IRET',0x01:'AND',0x03:'ANI',0x0E:'OR',0x07:'ORI',0x05:'SEC',0xE3:'CALL',0xC5:'RET',0xC4:'LBL',0x5E:'CMP',0x27:'TMR',0x6A:'CNT',0x0A:'ANB',0x09:'ORB',0x0B:'MPP',0xC3:'FEND2',0xDE:'BMOV',0x0D:'NOP'};
   const stats = {};
-  for (let i = 2; i < bytes.length - 4; i++) {
-    if (bytes[i-2]===0 && bytes[i-1]===0x0D && bytes[i]===0 && bytes[i+1]===0 && bytes[i+2]!==0 && bytes[i+2]!==0x0D) {
-      const k = '0x'+bytes[i+2].toString(16).toUpperCase().padStart(2,'0'); stats[k] = (stats[k]||0)+1;
-    }
+  let total = 0, nop = 0;
+  for (let i = 0; i + 3 < bytes.length; i += 4) {
+    if (bytes[i] !== 0x00) continue;
+    const op = bytes[i+1];
+    if (op === 0x00) continue; // label data
+    if (op === 0x0D) { nop++; continue; }
+    const name = NAMES[op] || '0x'+op.toString(16).toUpperCase();
+    stats[name] = (stats[name]||0) + 1;
+    total++;
   }
-  let oe=0,ld=0,out=0;
-  for (let i=1;i<bytes.length;i++){if(bytes[i]===0x0E&&bytes[i-1]===0)oe++;}
-  for (let i=0;i<bytes.length;i++){if(bytes[i]===0x70)ld++;if(bytes[i]===0x6E)out++;}
-  stats['0x0E_total']=oe; stats['0x70_total']=ld; stats['0x6E_total']=out;
+  stats._total = total;
+  stats._nop = nop;
   result.instructionStats = stats;
 }
 // TABS
@@ -986,6 +1113,9 @@ function renderOverview() {
         '<div class="legend"><div class="legend-item"><div class="legend-dot" style="background:var(--ac)"></div>Naglowek ('+pcts.hdr+'%)</div><div class="legend-item"><div class="legend-dot" style="background:var(--yl)"></div>Tekst ('+pcts.txt+'%)</div><div class="legend-item"><div class="legend-dot" style="background:var(--gn)"></div>Instrukcje ('+pcts.instr+'%)</div><div class="legend-item"><div class="legend-dot" style="background:var(--td)"></div>NOP ('+pcts.nop+'%)</div></div>'+
         '<h4 style="color:var(--ac);font-size:11px;margin:10px 0 4px">Kategorie sekcji</h4>'+
         '<div style="display:flex;flex-wrap:wrap;gap:4px">'+CATEGORIES.filter(c=>catCounts[c.id]).map(c=>'<div style="display:flex;align-items:center;gap:4px;padding:2px 8px;border-radius:4px;background:'+c.color+'22;border:1px solid '+c.color+'44;font-size:10px"><span>'+c.icon+'</span><span style="color:'+c.color+'">'+c.name+'</span><span style="font-weight:700">'+catCounts[c.id]+'</span></div>').join('')+'</div>'+
+        '<h4 style="color:var(--ac);font-size:11px;margin:10px 0 4px">Instrukcje PLC (4-bajtowe slowa)</h4>'+
+        '<div style="display:flex;flex-wrap:wrap;gap:4px">'+Object.entries(p.instructionStats).filter(function(e){return e[0][0]!=='_'}).sort(function(a,b){return b[1]-a[1]}).map(function(e){return '<div style="padding:2px 8px;border-radius:4px;background:var(--sf2);border:1px solid var(--bd);font-size:10px;font-family:monospace"><span style="color:var(--cy)">'+e[0]+'</span> <span style="font-weight:700;color:var(--gn)">'+e[1]+'</span></div>'}).join('')+'</div>'+
+        (p.instructionStats._total?'<div style="font-size:9px;color:var(--td);margin-top:4px">Razem: '+p.instructionStats._total+' instrukcji, '+p.instructionStats._nop+' NOP</div>':'')+
       '</div></div>';
 }
 
@@ -1089,22 +1219,50 @@ function decodeLadderRung(bytes, section) {
   const rung = { label:section.label, translation:section.translation, category:section.category, instructions:[], rawOpcodes:[] };
   const instrStart = section.labelOffset + (section.label.length * 4 + 4);
   const instrEnd = section.end;
-  for (let i = Math.max(instrStart, section.labelOffset); i < instrEnd && i < bytes.length - 2; i++) {
-    if (bytes[i] === 0x0D || bytes[i] === 0) continue;
-    const b=bytes[i], b1=bytes[i+1]||0, b2=bytes[i+2]||0;
-    if (b===0x70&&b1<0x80){rung.instructions.push({op:'LD',addr:fmtAddr(b1,b2),off:i});i+=2;}
-    else if(b===0x6E&&b1<0x80){rung.instructions.push({op:'OUT',addr:fmtAddr(b1,b2),off:i});i+=2;}
-    else if(b===0x0E){rung.instructions.push({op:'OR',addr:fmtAddr(b1,b2),off:i});i+=2;}
-    else if(b===0xC8){rung.instructions.push({op:'CALL',addr:fmtAddr(b1,b2),off:i});i+=1;}
-    else if(b===0xC6){rung.instructions.push({op:'MOV',addr:fmtAddr(b1,b2),off:i});i+=2;}
-    else if(b===0xC5){rung.instructions.push({op:'END',addr:'',off:i});}
-    else if(b===0x05){rung.instructions.push({op:'SEC',addr:fmtAddr(b1,b2),off:i});i+=2;}
-    else if(b===0x12||b===0x14){rung.instructions.push({op:b===0x12?'SET':'RST',addr:fmtAddr(b1,b2),off:i});i+=2;}
-    else if(b>=0x20&&b<0xA1){rung.rawOpcodes.push(b);}
+  // Align to 4-byte word boundary
+  let start = instrStart;
+  if (start % 4 !== 0) start = start + (4 - start % 4);
+  const REG_TYPES = {0:'R',1:'K',2:'S',3:'D',4:'T',5:'C'};
+  const DOUBLE_OPS = {0x70:'LD',0x6E:'OUT',0x6C:'SET',0x72:'MOV',0x39:'RST',0x57:'FMOV',0x62:'ADD',0x66:'SUB',0x4B:'MUL',0x45:'DIV',0xE5:'DMOV',0xC9:'FEND',0xCF:'IRET'};
+  const SINGLE_OPS = {0x01:'AND',0x03:'ANI',0x0E:'OR',0x07:'ORI',0x05:'SEC',0xE3:'CALL',0xC5:'RET',0xC4:'LBL',0x5E:'CMP',0x27:'TMR',0x6A:'CNT',0x0A:'ANB',0x09:'ORB',0x0B:'MPP',0xC3:'FEND',0xDE:'BMOV'};
+  function decDW(regNum, bitByte) {
+    if (bitByte === 255) return 'R'+regNum+'.*';
+    var type = Math.floor(bitByte/16), bit = bitByte % 16;
+    return (REG_TYPES[type]||'R') + regNum + '.' + bit;
+  }
+  function decSW(b2, b3) {
+    const type = Math.floor(b3/16);
+    const bit = b3 % 16;
+    return (REG_TYPES[type]||'?'+type) + b2 + '.' + bit;
+  }
+  for (let i = start; i + 3 <= instrEnd && i + 3 < bytes.length; i += 4) {
+    if (bytes[i] !== 0x00) continue;
+    const op = bytes[i+1], b2 = bytes[i+2], b3 = bytes[i+3];
+    if (op === 0x0D && b2 === 0 && b3 === 0) continue; // NOP
+    if (op === 0x00) continue; // label data
+    if (DOUBLE_OPS[op] !== undefined) {
+      if (i + 7 < bytes.length && bytes[i+7] === 0x80) {
+        const regL=bytes[i+4], regH=bytes[i+5], regNum=regH*256+regL;
+        const isNC = b2 & 1;
+        const opName = DOUBLE_OPS[op];
+        rung.instructions.push({op:isNC?opName+'I':opName, addr:decDW(regNum,b3), off:i, reg:regNum, bit:b3, flag:b2});
+        i += 4;
+      } else {
+        rung.rawOpcodes.push({opcode:op, b2:b2, b3:b3, off:i});
+      }
+    } else if (SINGLE_OPS[op] !== undefined) {
+      const opName = SINGLE_OPS[op];
+      if (op===0xE3||op===0xC5||op===0xC4) {
+        rung.instructions.push({op:opName, addr:'#'+b2, off:i});
+      } else {
+        rung.instructions.push({op:opName, addr:decSW(b2,b3), off:i, b2:b2, b3:b3});
+      }
+    } else {
+      rung.rawOpcodes.push({opcode:op, b2:b2, b3:b3, off:i});
+    }
   }
   return rung;
 }
-function fmtAddr(b1,b2){return b1===0&&b2===0?'':''+b1.toString(16).toUpperCase().padStart(2,'0')+'.'+b2.toString(16).toUpperCase().padStart(2,'0');}
 function renderLadderRung(rung, index, section) {
   const instrs = rung.instructions;
   const isEmpty = instrs.length === 0;
@@ -1113,18 +1271,58 @@ function renderLadderRung(rung, index, section) {
   if (isEmpty) {
     body = '<div class="ladder-unresolved">Brak rozpoznanych instrukcji w tym bloku</div>';
   } else {
-    const ops = {LD:{cls:'ladder-contact',fmt:function(s){return '\u2014[ '+s+' ]\u2014'}}, OUT:{cls:'ladder-coil',fmt:function(s){return '\u2014( '+s+' )\u2014'}},
-      SET:{cls:'ladder-coil',fmt:function(s){return '\u2014(S '+s+')\u2014'}}, RST:{cls:'ladder-coil',fmt:function(s){return '\u2014(R '+s+')\u2014'}},
-      OR:{cls:'ladder-func',fmt:function(s){return '[OR '+s+']'}}, CALL:{cls:'ladder-func',fmt:function(s){return '[CALL '+s+']'}},
-      MOV:{cls:'ladder-func',fmt:function(s){return '[MOV '+s+']'}}, END:{cls:'ladder-func',fmt:function(s){return '[END]'}},
-      SEC:{cls:'ladder-func',fmt:function(s){return '[SEC '+s+']'}}};
+    const ops = {
+      LD:{cls:'ladder-contact',fmt:function(s){return '\u2014[ '+s+' ]\u2014'}},
+      LDI:{cls:'ladder-contact',fmt:function(s){return '\u2014[/'+s+' ]\u2014'}},
+      AND:{cls:'ladder-contact',fmt:function(s){return '\u2014[ '+s+' ]\u2014'}},
+      ANI:{cls:'ladder-contact',fmt:function(s){return '\u2014[/'+s+' ]\u2014'}},
+      OR:{cls:'ladder-contact',fmt:function(s){return '\u2014[ '+s+' ]\u2014'}},
+      OUT:{cls:'ladder-coil',fmt:function(s){return '\u2014( '+s+' )\u2014'}},
+      OUTI:{cls:'ladder-coil',fmt:function(s){return '\u2014(/'+s+')\u2014'}},
+      SET:{cls:'ladder-coil',fmt:function(s){return '\u2014(S '+s+')\u2014'}},
+      SETI:{cls:'ladder-coil',fmt:function(s){return '\u2014(S/'+s+')\u2014'}},
+      MOV:{cls:'ladder-func',fmt:function(s){return '[MOV '+s+']'}},
+      MOVI:{cls:'ladder-func',fmt:function(s){return '[MOV/ '+s+']'}},
+      SEC:{cls:'ladder-func',fmt:function(s){return '[SEC '+s+']'}},
+      CMP:{cls:'ladder-func',fmt:function(s){return '[CMP '+s+']'}},
+      TMR:{cls:'ladder-func',fmt:function(s){return '[TMR '+s+']'}},
+      CNT:{cls:'ladder-func',fmt:function(s){return '[CNT '+s+']'}},
+      CALL:{cls:'ladder-func',fmt:function(s){return '[CALL '+s+']'}},
+      RET:{cls:'ladder-func',fmt:function(s){return '[RET '+s+']'}},
+      LBL:{cls:'ladder-func',fmt:function(s){return '[LBL '+s+']'}},
+      RST:{cls:'ladder-coil',fmt:function(s){return '\u2014(R '+s+')\u2014'}},
+      RSTI:{cls:'ladder-coil',fmt:function(s){return '\u2014(R/'+s+')\u2014'}},
+      ORI:{cls:'ladder-contact',fmt:function(s){return '\u2014[/'+s+' ]\u2014'}},
+      ANB:{cls:'ladder-func',fmt:function(s){return '[ANB]'}},
+      ORB:{cls:'ladder-func',fmt:function(s){return '[ORB]'}},
+      MPP:{cls:'ladder-func',fmt:function(s){return '[MPP]'}},
+      ADD:{cls:'ladder-func',fmt:function(s){return '[ADD '+s+']'}},
+      ADDI:{cls:'ladder-func',fmt:function(s){return '[ADD/ '+s+']'}},
+      SUB:{cls:'ladder-func',fmt:function(s){return '[SUB '+s+']'}},
+      SUBI:{cls:'ladder-func',fmt:function(s){return '[SUB/ '+s+']'}},
+      MUL:{cls:'ladder-func',fmt:function(s){return '[MUL '+s+']'}},
+      MULI:{cls:'ladder-func',fmt:function(s){return '[MUL/ '+s+']'}},
+      DIV:{cls:'ladder-func',fmt:function(s){return '[DIV '+s+']'}},
+      DIVI:{cls:'ladder-func',fmt:function(s){return '[DIV/ '+s+']'}},
+      FMOV:{cls:'ladder-func',fmt:function(s){return '[FMOV '+s+']'}},
+      FMOVI:{cls:'ladder-func',fmt:function(s){return '[FMOV/ '+s+']'}},
+      DMOV:{cls:'ladder-func',fmt:function(s){return '[DMOV '+s+']'}},
+      DMOVI:{cls:'ladder-func',fmt:function(s){return '[DMOV/ '+s+']'}},
+      FEND:{cls:'ladder-func',fmt:function(s){return '[FEND]'}},
+      IRET:{cls:'ladder-func',fmt:function(s){return '[IRET]'}},
+      BMOV:{cls:'ladder-func',fmt:function(s){return '[BMOV '+s+']'}}
+    };
     body = '<div class="ladder-rail"><span class="lw">|\u2014</span>';
     for (const instr of instrs) {
       const def = ops[instr.op] || {cls:'ladder-func',fmt:function(s){return '['+instr.op+' '+s+']'}};
       body += '<span class="'+def.cls+'" title="'+instr.op+' '+instr.addr+' @ 0x'+instr.off.toString(16)+'">'+def.fmt(instr.addr)+'</span><span class="lw">\u2014</span>';
     }
     body += '<span class="lw">|</span></div>';
-    body += '<div style="font-size:9px;color:var(--td);margin-top:2px">'+instrs.length+' instrukcji rozpoznanych</div>';
+    const rawCount = rung.rawOpcodes.length;
+    body += '<div style="font-size:9px;color:var(--td);margin-top:2px">'+instrs.length+' instrukcji'+(rawCount? ', '+rawCount+' nieznanych':'')+'</div>';
+    if (rawCount) {
+      body += '<div style="font-size:9px;color:var(--rd);margin-top:1px">['+rung.rawOpcodes.map(function(r){return '0x'+r.opcode.toString(16).toUpperCase()}).join(' ')+']</div>';
+    }
   }
   return '<div class="ladder-rung'+(isEmpty?' lad-empty':'')+'" style="border-left:3px solid '+cat.color+'">'+
     '<div class="ladder-rung-hdr">'+
@@ -1527,29 +1725,31 @@ function filterXref() {
 function renderHelpTab() {
   var el = document.getElementById('tab-help');
   var instructions = [
-    {op:'LD',sym:'--[ ]--',desc:'Kontakt normalnie otwarty (NO). Laduje stan bitu do akumulatora.',cat:'Wejscie',color:'var(--gn)'},
-    {op:'LDI',sym:'--[/]--',desc:'Kontakt normalnie zamkniety (NC). Laduje zanegowany stan bitu.',cat:'Wejscie',color:'var(--gn)'},
-    {op:'OUT',sym:'--( )--',desc:'Cewka wyjsciowa (Output Coil). Zapisuje stan akumulatora do bitu.',cat:'Wyjscie',color:'var(--or)'},
-    {op:'SET',sym:'--(S)--',desc:'Ustaw (Set). Ustawia bit na 1 i utrzymuje do RST.',cat:'Wyjscie',color:'var(--or)'},
-    {op:'RST',sym:'--(R)--',desc:'Kasuj (Reset). Kasuje bit na 0.',cat:'Wyjscie',color:'var(--or)'},
-    {op:'OR',sym:'[OR]',desc:'Logiczne LUB. Polaczenie rownolegle kontaktow.',cat:'Logika',color:'var(--cy)'},
-    {op:'AND',sym:'[AND]',desc:'Logiczne I. Polaczenie szeregowe kontaktow.',cat:'Logika',color:'var(--cy)'},
-    {op:'MOV',sym:'[MOV]',desc:'Przesun dane. Kopiuje wartosc z jednego rejestru do drugiego.',cat:'Transfer',color:'var(--yl)'},
-    {op:'CALL',sym:'[CALL]',desc:'Wywolanie podprogramu. Skok do wskazanej sekcji.',cat:'Sterowanie',color:'var(--a2)'},
-    {op:'END',sym:'[END]',desc:'Koniec programu / sekcji.',cat:'Sterowanie',color:'var(--a2)'},
-    {op:'TMR',sym:'[TMR]',desc:'Timer. Odmierza czas (ms/s). Gdy uplynie -> wyjscie ON.',cat:'Czas',color:'#ce93d8'},
-    {op:'CNT',sym:'[CNT]',desc:'Licznik. Zlicza impulsy. Gdy osiagnie wartosc -> wyjscie ON.',cat:'Czas',color:'#ce93d8'},
-    {op:'CMP',sym:'[CMP]',desc:'Porownanie dwoch wartosci. Wynik w bitach statusowych.',cat:'Porownanie',color:'var(--ac)'},
-    {op:'ADD',sym:'[ADD]',desc:'Dodawanie wartosci rejestrowych.',cat:'Arytmetyka',color:'var(--ac)'},
-    {op:'SUB',sym:'[SUB]',desc:'Odejmowanie wartosci rejestrowych.',cat:'Arytmetyka',color:'var(--ac)'},
-    {op:'SEC',sym:'[SEC]',desc:'Selektor sekcji / poczatek bloku warunkowego.',cat:'Sterowanie',color:'var(--a2)'},
+    {op:'LD (0x70)',sym:'--[ ]--',desc:'Kontakt normalnie otwarty (NO). Laduje stan bitu do akumulatora. Podwojne slowo (8B).',cat:'Wejscie',color:'var(--gn)'},
+    {op:'LDI (0x70)',sym:'--[/]--',desc:'Kontakt normalnie zamkniety (NC). Laduje zanegowany stan bitu. Flaga bit0=1.',cat:'Wejscie',color:'var(--gn)'},
+    {op:'AND (0x01)',sym:'--[ ]--',desc:'Logiczne I szeregowe. Pojedyncze slowo (4B). Adres: typ*16+bit.',cat:'Logika',color:'var(--cy)'},
+    {op:'ANI (0x03)',sym:'--[/]--',desc:'Logiczne I zanegowane. Pojedyncze slowo. Kontakt NC w szeregu.',cat:'Logika',color:'var(--cy)'},
+    {op:'OR (0x0E)',sym:'--[ ]--',desc:'Logiczne LUB. Polaczenie rownolegle. Pojedyncze slowo.',cat:'Logika',color:'var(--cy)'},
+    {op:'OUT (0x6E)',sym:'--( )--',desc:'Cewka wyjsciowa. Zapisuje akumulator do bitu. Podwojne slowo (8B).',cat:'Wyjscie',color:'var(--or)'},
+    {op:'OUTI (0x6E)',sym:'--( / )--',desc:'Cewka zanegowana. Flaga bit0=1. Podwojne slowo.',cat:'Wyjscie',color:'var(--or)'},
+    {op:'SET (0x6C)',sym:'--(S)--',desc:'Zatrzask. Ustawia bit na 1, utrzymuje do RST. Podwojne slowo.',cat:'Wyjscie',color:'var(--or)'},
+    {op:'MOV (0x72)',sym:'[MOV]',desc:'Przesun dane miedzy rejestrami. Podwojne slowo. Duze numery rejestrow.',cat:'Transfer',color:'var(--yl)'},
+    {op:'SEC (0x05)',sym:'[SEC]',desc:'Selektor sekcji / poczatek bloku. Adresowanie typ*16+bit.',cat:'Sterowanie',color:'var(--a2)'},
+    {op:'CALL (0xE3)',sym:'[CALL #n]',desc:'Wywolanie podprogramu. Format [00 E3 idx 00].',cat:'Sterowanie',color:'var(--a2)'},
+    {op:'RET (0xC5)',sym:'[RET #n]',desc:'Powrot z podprogramu. Format [00 C5 idx 00].',cat:'Sterowanie',color:'var(--a2)'},
+    {op:'LBL (0xC4)',sym:'[LBL #n]',desc:'Etykieta podprogramu. Format [00 C4 idx 00].',cat:'Sterowanie',color:'var(--a2)'},
+    {op:'CMP (0x5E)',sym:'[CMP]',desc:'Porownanie wartosci. Pojedyncze slowo.',cat:'Porownanie',color:'var(--ac)'},
+    {op:'TMR (0x27)',sym:'[TMR]',desc:'Timer. Odmierza czas. Pojedyncze slowo.',cat:'Czas',color:'#ce93d8'},
+    {op:'CNT (0x6A)',sym:'[CNT]',desc:'Licznik impulsow. Pojedyncze slowo.',cat:'Czas',color:'#ce93d8'},
+    {op:'NOP (0x0D)',sym:'---',desc:'Wypelnienie. Slowo [00 0D 00 00]. Pomijane przy dekodowaniu.',cat:'System',color:'var(--td)'},
   ];
   var regTypes = [
-    {type:'R',name:'Relay (Przekaznik)',color:'#6f6',desc:'Wewnetrzny przekaznik bitowy. Traci stan po wylaczeniu. R0-R9999.',use:'Zmienne tymczasowe, stany maszyny, flagi wewnetrzne'},
-    {type:'K',name:'Keep (Podtrzymanie)',color:'#ff6',desc:'Przekaznik z podtrzymaniem. Zachowuje stan po wylaczeniu. K0-K9999.',use:'Stany trwale: tryby, offsety, konfiguracja'},
-    {type:'D',name:'Data (Dane)',color:'#6cf',desc:'Rejestr danych 16/32-bit. D0-D9999.',use:'Wartosci liczbowe: predkosci, czasy, pozycje'},
-    {type:'T',name:'Timer',color:'#f6f',desc:'Timer odmierzajacy czas. T0-T999. Jednostka zwykle 10ms.',use:'Opoznienia, timeouty, odmierzanie cykli'},
-    {type:'C',name:'Counter (Licznik)',color:'#6ff',desc:'Licznik impulsow. C0-C999.',use:'Zliczanie cykli, narzedzi, detali'},
+    {type:'R',name:'Relay (Przekaznik)',color:'#6f6',desc:'Wewnetrzny przekaznik bitowy. Traci stan po wylaczeniu. R0-R9999. Typ 0 w adresowaniu.',use:'Zmienne tymczasowe, stany maszyny, flagi wewnetrzne'},
+    {type:'K',name:'Keep (Podtrzymanie)',color:'#ff6',desc:'Przekaznik z podtrzymaniem. Zachowuje stan po wylaczeniu. K0-K9999. Typ 1.',use:'Stany trwale: tryby, offsety, konfiguracja'},
+    {type:'S',name:'System',color:'#f96',desc:'Rejestr systemowy. S0-S999. Typ 2 w adresowaniu.',use:'Flagi systemowe CNC, statusy, alarmy'},
+    {type:'D',name:'Data (Dane)',color:'#6cf',desc:'Rejestr danych 16/32-bit. D0-D9999. Typ 3.',use:'Wartosci liczbowe: predkosci, czasy, pozycje'},
+    {type:'T',name:'Timer',color:'#f6f',desc:'Timer odmierzajacy czas. T0-T999. Typ 4. Jednostka zwykle 10ms.',use:'Opoznienia, timeouty, odmierzanie cykli'},
+    {type:'C',name:'Counter (Licznik)',color:'#6ff',desc:'Licznik impulsow. C0-C999. Typ 5.',use:'Zliczanie cykli, narzedzi, detali'},
     {type:'M',name:'Marker',color:'#fc6',desc:'Marker systemowy. M0-M999. Flagi komunikacji z CNC.',use:'M-kody, statusy osi, alarmy systemowe'},
   ];
   el.innerHTML =
@@ -1625,10 +1825,13 @@ function renderHelpTab() {
       '<p style="font-size:10px;color:var(--td);margin-bottom:8px">Pliki .lad to skompilowane programy PLC w formacie binarnym Syntec:</p>'+
       '<div style="font-size:11px;line-height:1.8">'+
         '<div><span style="color:var(--ac);font-weight:700">Naglowek (offset 0x00):</span> Magic bytes + typ maszyny + wersja + zakresy rejestrow</div>'+
-        '<div><span style="color:var(--yl);font-weight:700">Etykiety (Big5):</span> Nazwy sekcji kodowane w chinski tradycyjny Big5. Kazda etykieta to para bajtow (high+low).</div>'+
-        '<div><span style="color:var(--gn);font-weight:700">Instrukcje:</span> Opkody 1-3 bajtowe (np. 0x70=LD, 0x6E=OUT, 0x12=SET, 0x14=RST)</div>'+
-        '<div><span style="color:var(--td);font-weight:700">NOP (0x0D):</span> Bajty wypelnienia miedzy instrukcjami</div>'+
-        '<div><span style="color:var(--a2);font-weight:700">Rejestry:</span> Zakodowane jako ASCII w strumieniu bajtow (np. R, 0x31, 0x30, 0x30 = "R100")</div>'+
+        '<div><span style="color:var(--yl);font-weight:700">Etykiety (Big5):</span> Nazwy sekcji kodowane w chinski tradycyjny Big5 jako pary [00 00 HH LL]</div>'+
+        '<div><span style="color:var(--gn);font-weight:700">Instrukcje (4-bajtowe slowa):</span> Kazda instrukcja to slowo [00 opcode b2 b3] wyrownane do 4 bajtow</div>'+
+        '<div style="margin-left:16px;color:var(--cy)">Podwojne (8B): LD(0x70), OUT(0x6E), SET(0x6C), MOV(0x72) &mdash; [00 op flaga bit][regL regH 00 80]</div>'+
+        '<div style="margin-left:16px;color:var(--cy)">Pojedyncze (4B): AND(0x01), ANI(0x03), OR(0x0E), SEC(0x05), CALL(0xE3), RET(0xC5), LBL(0xC4)</div>'+
+        '<div style="margin-left:16px;color:var(--cy)">Adresowanie: b3 = typ*16+bit &mdash; typ: 0=R, 1=K, 3=D, 4=T, 5=C</div>'+
+        '<div><span style="color:var(--td);font-weight:700">NOP (0x0D):</span> Slowo wypelnienia [00 0D 00 00]</div>'+
+        '<div><span style="color:var(--a2);font-weight:700">Rejestry:</span> W podwojnym slowie: R(regH*256+regL).bit. W pojedynczym: typ(b2).bit</div>'+
       '</div>'+
     '</div>'+
     // ABOUT
