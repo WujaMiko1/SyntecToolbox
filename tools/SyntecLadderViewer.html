@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Syntec Ladder Viewer v5.0</title>
+<title>Syntec Ladder Viewer v5.1</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 :root{
@@ -199,7 +199,7 @@ input[type="file"]{display:none}
 </head>
 <body>
 <div class="top-bar">
-  <h1>&#x26D3; Syntec Ladder Viewer <span>v5.0</span></h1>
+  <h1>&#x26D3; Syntec Ladder Viewer <span>v5.1</span></h1>
   <label for="ladFile" class="top-btn green">&#x1F4C2; Wczytaj .lad</label>
   <input type="file" id="ladFile" accept=".lad" multiple>
   <label for="ladFolder" class="top-btn">&#x1F4C1; Wczytaj folder Ladder</label>
@@ -214,7 +214,7 @@ input[type="file"]{display:none}
 </div>
 <div class="main" id="mainArea">
   <div class="welcome" id="welcomeScreen">
-    <h2>&#x26D3; Syntec PLC Ladder Viewer v3.0</h2>
+    <h2>&#x26D3; Syntec PLC Ladder Viewer v5.1</h2>
     <p>Wizualna przegladarka skompilowanych programow PLC (.lad) dla sterownikow Syntec CNC.<br>
     Pelne tlumaczenie chinskich etykiet na polski, opisy wejsc/wyjsc I/O, mapa zaleznosci systemowych, kategoryzacja sekcji i diagram.</p>
     <div class="drop" id="dropZone">
@@ -250,6 +250,7 @@ input[type="file"]{display:none}
       <div class="tab" data-tab="system" onclick="switchTab('system')">&#x1F3D7; System</div>
       <div class="tab" data-tab="xref" onclick="switchTab('xref')">&#x1F517; Xref</div>
       <div class="tab" data-tab="analysis" onclick="switchTab('analysis')">&#x1F9E0; Analiza</div>
+      <div class="tab" data-tab="ref" onclick="switchTab('ref')">&#x1F4D6; Ref PLC</div>
       <div class="tab" data-tab="help" onclick="switchTab('help')">&#x2753; Pomoc</div>
     </div>
     <div class="tab-content active" id="tab-visual"></div>
@@ -264,6 +265,7 @@ input[type="file"]{display:none}
     <div class="tab-content" id="tab-system"></div>
     <div class="tab-content" id="tab-xref"></div>
     <div class="tab-content" id="tab-analysis"></div>
+    <div class="tab-content" id="tab-ref"></div>
     <div class="tab-content" id="tab-help"></div>
   </div>
 </div>
@@ -276,7 +278,7 @@ input[type="file"]{display:none}
 <div class="statusbar"><span id="status">Gotowy - wczytaj plik .lad</span></div>
 <script>
 // =========================================================
-// SYNTEC LADDER VIEWER v5.0 - Visual PLC Browser
+// SYNTEC LADDER VIEWER v5.1 - Visual PLC Browser + Ref PLC
 // =========================================================
 
 // CHINESE TO POLISH DICTIONARY
@@ -318,7 +320,7 @@ const CN_PL = {
   '\uFF38\uFF0B':'Os X+','\uFF38\uFF0D':'Os X-','\uFF39\uFF0B':'Os Y+','\uFF39\uFF0D':'Os Y-','\uFF3A\uFF0B':'Os Z+','\uFF3A\uFF0D':'Os Z-',
   '\u8EF8\u5411\u672A\u6709\u79FB\u52D5\u771F\u7A7A\u6CF5\u81EA\u52D5\u95DC\u9589\u529F\u80FD':'Auto-wylaczenie pompy prozniowej przy braku ruchu',
   '\u8EF8\u5411\u5E38\u958B\u6642':'Os normalnie otwarta',
-  '\u8EF8\u5239\u8ECA':'Hamulec osi',
+  '\u8EF8\u524E\u8ECA':'Hamulec osi',
   '\u79FB\u52D5\u5438\u76E4\u6C23\u7F38':'Cylinder przyssawki ruchomej',
   '\u4E2D\u4F4D\u7F6E':'Pozycja srodkowa',
   '\u4E0A\u4F4D':'Pozycja gorna',
@@ -634,7 +636,7 @@ const CN_PL = {
   '\u5BC6\u5EA6\u677F\u4E0A\u4E0B\u6599':'Ladowanie/rozladowanie plyty MDF',
   '\u79FB\u52D5\u5438\u76E4\u6C23\u7F38':'Cylinder przyssawki ruchomej',
   // === v5.0 - rozszerzone tlumaczenia faza 1 ===
-  '\u8EF8\u5239\u8ECA':'Hamulec osi',
+  '\u8EF8\u524E\u8ECA':'Hamulec osi',
   '\u4E00\u9375\u56DE\u7A0B\u5F0F\u5750\u6A19':'Powrot jednym przyciskiem do wspolrzednych programu',
   '\u524D\u5B9A\u4F4D':'Pozycjonowanie przednie',
   '\u540C\u6642\u544A\u8A34':'Jednoczesne powiadomienie',
@@ -658,11 +660,18 @@ const CN_PL = {
   '\u5207\u524A\u500D\u52A0':'Zwiekszenie override skrawania',
   '\u5207\u524A\u500D\u6E1B':'Zmniejszenie override skrawania',
   '\u5167\u5BB9\u653E\u5728\u9019\u7406':'Tresc umieszczona tutaj',
+  // === v5.1 - pelne pokrycie tlumaczen z cnc.lad ===
+  '\u7B2C\u4E8C\u7D44\u8EF8\u7FA4\u547D\u4EE4\u66AB\u5B58\u5668\u3002\u7576\u8A72\u8EF8\u7FA4\u5C6C\u65BC':'Rejestr polecen 2. grupy osi. Gdy grupa osi nalezy do',
+  '\u56E0\u6B64\u5BEB':'Dlatego zapisz',
+  '\u7B2C\u4E8C\u8EDF\u9AD4\u884C\u7A0B\u6975\u9650\u958B\u95DC\u3002':'Drugi programowy wylacznik krancowy.',
+  '\u4E0D\u4FDD\u8B77\uFF1B':'Bez ochrony;',
+  '\u8EF8\u6A5F\u81FA\u6B63\u5411\u786C\u9AD4\u6975\u9650\uFF0C\u6B64':'Limit sprzetowy (+) osi maszyny, ten',
+  '\u7576\u8A72\u8EF8\u7FA4\u5C6C\u65BC':'Gdy ta grupa osi nalezy do',
 };
 
 // CATEGORY SYSTEM
 const CATEGORIES = [
-  { id:'safety',  name:'Bezpieczenstwo',      color:'var(--cat-safety)',  icon:'\uD83D\uDED1', keywords:['\u7DCA\u6025','\u6025\u505C','\u8D85\u7A0B','\u4FDD\u8B77','\u9632\u649E','\u9650\u5236','\u4E0D\u53EF\u79FB\u52D5','\u975E\u6A19','\u91CB\u653E','\u5239\u8ECA','\u6975\u9650','\u505C\u6B62'] },
+  { id:'safety',  name:'Bezpieczenstwo',      color:'var(--cat-safety)',  icon:'\uD83D\uDED1', keywords:['\u7DCA\u6025','\u6025\u505C','\u8D85\u7A0B','\u4FDD\u8B77','\u9632\u649E','\u9650\u5236','\u4E0D\u53EF\u79FB\u52D5','\u975E\u6A19','\u91CB\u653E','\u524E\u8ECA','\u6975\u9650','\u505C\u6B62'] },
   { id:'spindle', name:'Wrzeciono',            color:'var(--cat-spindle)', icon:'\uD83D\uDD04', keywords:['\u4E3B\u8EF8','\u8B8A\u983B','\u6B63\u8F49','\u8F49\u901F','\u5BCC\u51CC'] },
   { id:'tool',    name:'Narzedzia / Magazyn',  color:'var(--cat-tool)',    icon:'\uD83D\uDD27', keywords:['\u5200\u5EAB','\u5200','\u63DB\u5200','\u5C0D\u5200','\u6709\u5200','\u677E\u5200','\u593E\u5200','\u6392\u9246','\u6392\u9459'] },
   { id:'axis',    name:'Osie / Ruch',          color:'var(--cat-axis)',    icon:'\u2195\uFE0F', keywords:['\u8EF8','\u624B\u8EF8','\u500D\u7387','\u5BF8\u52D5','\uFF38','\uFF39','\uFF3A','\u9A45\u52D5','\u539F\u9EDE','\u79FB\u52D5','\u5C0B\u539F','\u5FEB\u901F\u9032\u7D66','\u58D3\u8F25','\u4F4D\u7F6E','\u624B\u8F2A','\u5207\u524A','\u65B9\u5411','\u904B\u52D5'] },
@@ -1065,7 +1074,7 @@ function renderAllTabs() {
     ['renderLadder', renderLadder], ['renderRegistersTab', renderRegistersTab],
     ['renderCompare', renderCompare], ['renderIOTab', renderIOTab],
     ['renderSystemTab', renderSystemTab], ['renderXrefTab', renderXrefTab],
-    ['renderAnalysisTab', renderAnalysisTab], ['renderHelpTab', renderHelpTab]
+    ['renderAnalysisTab', renderAnalysisTab], ['renderRefTab', renderRefTab], ['renderHelpTab', renderHelpTab]
   ];
   for (var fn of fns) { try { fn[1](); } catch(e) { console.error(fn[0]+':', e); } }
   try { renderHex(state.files[state.currentFile]?.bytes, 0, 512); } catch(e) { console.error('renderHex:', e); }
@@ -1845,6 +1854,211 @@ function filterXref() {
   });
 }
 
+// PLC REFERENCE TAB - Complete Syntec PLC Instruction Set (from Ladder.xml)
+function renderRefTab() {
+  var el = document.getElementById('tab-ref');
+  var groups = [
+    { id:0, name:'Kontakty (Contacts)', icon:'\u26A1', color:'var(--gn)', items:[
+      {key:'0x01',hint:'-|  |-',name:'NO Contact',fn:'',args:'BitDevice',desc:'Kontakt normalnie otwarty. Zamkniety gdy bit=1.'},
+      {key:'0x03',hint:'-| /|-',name:'NC Contact',fn:'',args:'BitDevice',desc:'Kontakt normalnie zamkniety. Zamkniety gdy bit=0.'},
+      {key:'0x09',hint:'-|T |-',name:'Timer NO',fn:'',args:'Timer',desc:'Kontakt timera NO. Zamkniety gdy timer osiagnal wartosc.'},
+      {key:'0x0A',hint:'-|T/|-',name:'Timer NC',fn:'',args:'Timer',desc:'Kontakt timera NC. Otwarty gdy timer osiagnal wartosc.'},
+      {key:'0x0B',hint:'-|C |-',name:'Counter NO',fn:'',args:'Counter',desc:'Kontakt licznika NO. Zamkniety gdy licznik osiagnal limit.'},
+      {key:'0x0C',hint:'-|C/|-',name:'Counter NC',fn:'',args:'Counter',desc:'Kontakt licznika NC. Otwarty gdy licznik osiagnal limit.'},
+      {key:'0x0D',hint:'----',name:'Horizontal',fn:'',args:'-',desc:'Polaczenie poziome (linia pradu).'},
+      {key:'0xFF',hint:' | ',name:'Vertical',fn:'',args:'-',desc:'Polaczenie pionowe miedzy szczeblami.'},
+    ]},
+    { id:1, name:'Cewki (Coils)', icon:'\uD83D\uDD34', color:'var(--or)', items:[
+      {key:'0x0E',hint:'-(  )-',name:'Coil NO',fn:'',args:'BitDevice',desc:'Cewka normalna. Ustawia bit gdy warunek spelniony.'},
+      {key:'0x10',hint:'-( /)-',name:'Coil NC',fn:'',args:'BitDevice',desc:'Cewka zanegowana. Ustawia bit gdy warunek NIE spelniony.'},
+      {key:'0x05',hint:'-( ^)-',name:'Pos Edge',fn:'',args:'BitDevice',desc:'Zbocze narastajace. Impuls przy przejsciu 0\u21921.'},
+      {key:'0x07',hint:'-( v)-',name:'Neg Edge',fn:'',args:'BitDevice',desc:'Zbocze opadajace. Impuls przy przejsciu 1\u21920.'},
+      {key:'0x12',hint:'-( L)-',name:'Latch',fn:'',args:'BitDevice',desc:'Zatrzask SET. Ustawia bit na stale (do UnLatch).'},
+      {key:'0x14',hint:'-(UL)-',name:'UnLatch',fn:'',args:'BitDevice',desc:'Kasowanie zatrzasku. Zeruje bit ustawiony przez Latch.'},
+    ]},
+    { id:2, name:'Arytmetyka (Arithmetic)', icon:'\uD83D\uDDA9', color:'var(--yl)', items:[
+      {key:'0x21',hint:'add R,R',name:'Add',fn:'Add',args:'R, R',desc:'Dodawanie rejestr + rejestr.'},
+      {key:'0x27',hint:'add #,R',name:'Add',fn:'Add',args:'#, R',desc:'Dodawanie stala + rejestr.'},
+      {key:'0x33',hint:'sub R,R',name:'Sub',fn:'Sub',args:'R, R',desc:'Odejmowanie rejestr - rejestr.'},
+      {key:'0x39',hint:'sub #,R',name:'Sub',fn:'Sub',args:'#, R',desc:'Odejmowanie stala od rejestru.'},
+      {key:'0x45',hint:'mul R,R',name:'Mul',fn:'Mul',args:'R, R',desc:'Mnozenie rejestr * rejestr.'},
+      {key:'0x4B',hint:'mul #,R',name:'Mul',fn:'Mul',args:'#, R',desc:'Mnozenie stala * rejestr.'},
+      {key:'0x57',hint:'div R,R',name:'Div',fn:'Div',args:'R, R',desc:'Dzielenie rejestr / rejestr.'},
+      {key:'0x5D',hint:'div #,R',name:'Div',fn:'Div',args:'#, R',desc:'Dzielenie stala / rejestr.'},
+    ]},
+    { id:3, name:'Porownanie (Compare)', icon:'\u2696', color:'var(--ac)', items:[
+      {key:'0x5E',hint:'cmpg R,R',name:'Cmpg >',fn:'Cmpg',args:'R, R',desc:'Porownanie wiekszy niz (R > R).'},
+      {key:'0x62',hint:'cmpl R,R',name:'Cmpl <',fn:'Cmpl',args:'R, R',desc:'Porownanie mniejszy niz (R < R).'},
+      {key:'0x66',hint:'cmpe R,R',name:'Cmpe =',fn:'Cmpe',args:'R, R',desc:'Porownanie rowny (R == R).'},
+      {key:'0x6A',hint:'cmpg #,R',name:'Cmpg >',fn:'Cmpg',args:'#, R',desc:'Porownanie stala > rejestr.'},
+      {key:'0x6C',hint:'cmpl #,R',name:'Cmpl <',fn:'Cmpl',args:'#, R',desc:'Porownanie stala < rejestr.'},
+      {key:'0x6E',hint:'cmpe #,R',name:'Cmpe =',fn:'Cmpe',args:'#, R',desc:'Porownanie stala == rejestr.'},
+    ]},
+    { id:4, name:'Transfer (Move)', icon:'\u27A1', color:'var(--cy)', items:[
+      {key:'0x70',hint:'mov #,R',name:'Mov',fn:'Mov',args:'#, R',desc:'Przeniesienie stalej do rejestru.'},
+      {key:'0x72',hint:'mov R,R',name:'Mov',fn:'Mov',args:'R, R',desc:'Przeniesienie miedzy rejestrami.'},
+    ]},
+    { id:5, name:'Logika bitowa (Logic)', icon:'\uD83D\uDD00', color:'#ce93d8', items:[
+      {key:'0x81',hint:'and R,R',name:'AND',fn:'And',args:'R, R',desc:'Iloczyn bitowy AND rejestr & rejestr.'},
+      {key:'0x87',hint:'and #,R',name:'AND',fn:'And',args:'#, R',desc:'Iloczyn bitowy AND stala & rejestr.'},
+      {key:'0x93',hint:'or R,R',name:'OR',fn:'Or',args:'R, R',desc:'Suma bitowa OR rejestr | rejestr.'},
+      {key:'0x99',hint:'or #,R',name:'OR',fn:'Or',args:'#, R',desc:'Suma bitowa OR stala | rejestr.'},
+      {key:'0xA5',hint:'xor R,R',name:'XOR',fn:'Xor',args:'R, R',desc:'Roznica symetryczna XOR rejestr ^ rejestr.'},
+      {key:'0xAB',hint:'xor #,R',name:'XOR',fn:'Xor',args:'#, R',desc:'Roznica symetryczna XOR stala ^ rejestr.'},
+    ]},
+    { id:6, name:'Timery (Timers)', icon:'\u23F1', color:'#f6f', items:[
+      {key:'0xC2',hint:'tim1ms T,#',name:'TIM 1ms',fn:'TIM .001s',args:'Timer, #',desc:'Timer 1ms rozdzielczosc. Wartose natychmiastowa.'},
+      {key:'0xC3',hint:'tim10ms T,#',name:'TIM 10ms',fn:'TIM .01s',args:'Timer, #',desc:'Timer 10ms rozdzielczosc. Wartose natychmiastowa.'},
+      {key:'0xC4',hint:'tim100ms T,#',name:'TIM 100ms',fn:'TIM .1s',args:'Timer, #',desc:'Timer 100ms rozdzielczosc. Wartose natychmiastowa.'},
+      {key:'0xC5',hint:'tim1s T,#',name:'TIM 1s',fn:'TIM 1s',args:'Timer, #',desc:'Timer 1s rozdzielczosc. Wartose natychmiastowa.'},
+      {key:'0xE7',hint:'tim1ms T,R',name:'TIM 1ms',fn:'TIM .001s',args:'Timer, R',desc:'Timer 1ms. Wartosc z rejestru.'},
+      {key:'0xE2',hint:'tim10ms T,R',name:'TIM 10ms',fn:'TIM .01s',args:'Timer, R',desc:'Timer 10ms. Wartosc z rejestru.'},
+      {key:'0xE3',hint:'tim100ms T,R',name:'TIM 100ms',fn:'TIM .1s',args:'Timer, R',desc:'Timer 100ms. Wartosc z rejestru.'},
+      {key:'0xE4',hint:'tim1s T,R',name:'TIM 1s',fn:'TIM 1s',args:'Timer, R',desc:'Timer 1s. Wartosc z rejestru.'},
+    ]},
+    { id:7, name:'Liczniki (Counters)', icon:'\uD83D\uDD22', color:'#6ff', items:[
+      {key:'0xC6',hint:'cntUp CT,#',name:'Cnt Up',fn:'Cnt Up',args:'Counter, #',desc:'Licznik w gore. Zlicza impulsy do wartosci.'},
+      {key:'0xC7',hint:'cntDn CT,#',name:'Cnt Dn',fn:'Cnt Dn',args:'Counter, #',desc:'Licznik w dol. Odlicza do zera.'},
+      {key:'0xC8',hint:'cntUpDn CT,#',name:'Cnt UpDn',fn:'Cnt UpDn',args:'Counter, #',desc:'Licznik gora/dol. Dwukierunkowy.'},
+      {key:'0xC9',hint:'cntReset CT',name:'Cnt Reset',fn:'Cnt Rst',args:'Counter',desc:'Reset licznika do zera.'},
+      {key:'0xE0',hint:'cntRingUp CT,#',name:'Ring Up',fn:'Cnt Ring Up',args:'Counter, #',desc:'Licznik kolowy w gore (modulo).'},
+      {key:'0xE1',hint:'cntRingDn CT,#',name:'Ring Dn',fn:'Cnt Ring Dn',args:'Counter, #',desc:'Licznik kolowy w dol (modulo).'},
+      {key:'0xE5',hint:'cntUp CT,R',name:'Cnt Up',fn:'Cnt Up',args:'Counter, R',desc:'Licznik w gore. Limit z rejestru.'},
+      {key:'0xE6',hint:'cntDn CT,R',name:'Cnt Dn',fn:'Cnt Dn',args:'Counter, R',desc:'Licznik w dol. Limit z rejestru.'},
+      {key:'0xE9',hint:'cntRingUp CT,R',name:'Ring Up',fn:'Cnt Ring Up',args:'Counter, R',desc:'Licznik kolowy w gore. Limit z rejestru.'},
+      {key:'0xEA',hint:'cntRingDn CT,R',name:'Ring Dn',fn:'Cnt Ring Dn',args:'Counter, R',desc:'Licznik kolowy w dol. Limit z rejestru.'},
+    ]},
+    { id:8, name:'Sterowanie (Flow)', icon:'\u21A9', color:'var(--a2)', items:[
+      {key:'0xCA',hint:'jmp',name:'JMP',fn:'Jmp',args:'String',desc:'Skok do etykiety. Bezwarunkowy skok w programie.'},
+      {key:'0xCB',hint:'jsr',name:'JSR',fn:'Jsr',args:'String',desc:'Skok do podprogramu. Wywolanie z powrotem.'},
+      {key:'0xCF',hint:'end',name:'END',fn:'End',args:'String',desc:'Koniec programu glownego.'},
+      {key:'0xD0',hint:'rts',name:'RTS',fn:'Rts',args:'String',desc:'Powrot z podprogramu (Return To Subroutine).'},
+      {key:'0xD5',hint:'lab',name:'LAB',fn:'Lab',args:'String',desc:'Etykieta skoku / poczatek podprogramu.'},
+      {key:'0xFD',hint:'fastplcend',name:'Fast PLC End',fn:'Fast PLC End',args:'String',desc:'Koniec sekcji szybkiego PLC (Fast PLC).'},
+    ]},
+    { id:9, name:'Urzadzenia (Device)', icon:'\u2699', color:'#fc6', items:[
+      {key:'0xB0',hint:'rot R,R',name:'Rot Func',fn:'Rot',args:'R, R',desc:'Funkcja obrotowa (rotary table / ATC).'},
+      {key:'0xB8',hint:'run AX,#',name:'AX RUN',fn:'AX RUN',args:'AXID, #',desc:'Uruchomienie osi PLC. Predkosc natychmiastowa.'},
+      {key:'0xB9',hint:'run AX,R',name:'AX RUN',fn:'AX RUN',args:'AXID, R',desc:'Uruchomienie osi PLC. Predkosc z rejestru.'},
+      {key:'0xBB',hint:'stop AX',name:'AX STOP',fn:'AX STOP',args:'AXID',desc:'Zatrzymanie osi PLC.'},
+      {key:'0xBC',hint:'move AX,R',name:'AX MOVE',fn:'AX MOVE',args:'AXID, R',desc:'Ruch osi PLC do pozycji. R+0..R+3 = parametry.'},
+      {key:'0xBD',hint:'matrixscan ID,R',name:'Matrix Scan',fn:'MatrixScan',args:'ID, R',desc:'Skanowanie matrycy I/O. R+0..R+3.'},
+      {key:'0xBE',hint:'filesys ID,R',name:'File Sys',fn:'FileSys',args:'ID, R',desc:'Operacje na systemie plikow. R+0..R+3.'},
+      {key:'0xD7',hint:'extfunc Fn,R',name:'Ext Func',fn:'ExtFunc',args:'ExtFunc, R',desc:'Wywolanie zewnetrznej funkcji z DLL (PLC_EXT.DLL).'},
+    ]},
+    { id:10, name:'Komunikacja (Comm)', icon:'\uD83D\uDCE1', color:'#4ecdc4', items:[
+      {key:'0xD8',hint:'rs232 RS,R',name:'RS232',fn:'RS232',args:'RS232, R',desc:'Komunikacja RS232. R+0..R+7 = dane.'},
+      {key:'0xD9',hint:'asc2bin ID,R',name:'ASC2BIN',fn:'ASC2BIN',args:'RS232ID, R',desc:'Konwersja ASCII na binarny. R+0..R+3.'},
+      {key:'0xDA',hint:'bin2asc ID,R',name:'BIN2ASC',fn:'BIN2ASC',args:'RS232ID, R',desc:'Konwersja binarny na ASCII. R+0..R+3.'},
+      {key:'0xDB',hint:'putchar #,R',name:'PutChar',fn:'PutChar',args:'#, R',desc:'Wyslanie znaku przez port seryjny.'},
+      {key:'0xDC',hint:'getchar R,R',name:'GetChar',fn:'GetChar',args:'R, R',desc:'Odczyt znaku z portu seryjnego.'},
+      {key:'0xDE',hint:'modbusRD R,R,S,N',name:'ModBus RD',fn:'MOD R',args:'R, R, S=, N=',desc:'ModBus odczyt. Stacja S=, dlugosc N=.'},
+      {key:'0xDF',hint:'modbusWR R,R,S',name:'ModBus WR',fn:'MOD W',args:'R, R, S=',desc:'ModBus zapis. Stacja S=.'},
+      {key:'0xEB',hint:'modbusRS R,R,SL',name:'ModBus RS',fn:'MOD RS',args:'R, R, SL=',desc:'ModBus z dlugoscia zrodla SL=.'},
+      {key:'0xEC',hint:'sri R,R,SL,C',name:'SRI',fn:'SRI',args:'R, R, SL=, C=',desc:'Komunikacja SRI. Port C=, dlugosc SL=.'},
+    ]},
+    { id:14, name:'Zadania tla (Background)', icon:'\u23F3', color:'#90a4ae', items:[
+      {key:'0xF0',hint:'bgnd start',name:'BGnd Run',fn:'BGnd Run',args:'#, R, BG',desc:'Uruchomienie zadania w tle. Nr pliku, rejestr, nr BG.'},
+      {key:'0xF1',hint:'bgnd stop',name:'BGnd Stop',fn:'BGnd Stop',args:'BG',desc:'Zatrzymanie zadania w tle.'},
+    ]},
+  ];
+  var argTypes = [
+    {type:'BitDevice',fmt:'3d',desc:'Adres bitowy (X, Y, R, K, S + numer.bit)',color:'var(--gn)'},
+    {type:'Timer',fmt:'3d',title:'TM',desc:'Numer timera (T0-T999)',color:'#f6f'},
+    {type:'Counter',fmt:'3d',title:'CT',desc:'Numer licznika (C0-C999)',color:'#6ff'},
+    {type:'Register',fmt:'4d',title:'R',desc:'Numer rejestru (R0-R9999, D0-D9999)',color:'var(--cy)'},
+    {type:'ImmediateData',fmt:'5d',title:'#',desc:'Wartosc natychmiastowa (stala liczbowa)',color:'var(--yl)'},
+    {type:'String',fmt:'s',desc:'Lancuch tekstowy (etykieta)',color:'var(--td)'},
+    {type:'RS232',fmt:'2d',title:'RS',desc:'Numer portu RS232',color:'#4ecdc4'},
+    {type:'ExtFunc',fmt:'2d',title:'Fn',desc:'Numer funkcji zewnetrznej DLL',color:'#fc6'},
+    {type:'RS485',fmt:'3d',title:'S=',desc:'Adres stacji ModBus (slave)',color:'#4ecdc4'},
+    {type:'AXID',fmt:'2d',title:'AX',desc:'Numer osi PLC',color:'var(--or)'},
+    {type:'BGnd',fmt:'2d',title:'BG',desc:'Numer zadania w tle',color:'#90a4ae'},
+  ];
+  // Count existing opcodes in loaded file
+  var fileOpcodes = {};
+  var file = state.files[state.currentFile];
+  if (file) {
+    var bytes = file.bytes;
+    for (var i = 0; i+3 < bytes.length; i+=4) {
+      if (bytes[i]===0 && bytes[i+1]!==0 && bytes[i+1]!==0x0D) {
+        var op = bytes[i+1];
+        fileOpcodes[op] = (fileOpcodes[op]||0)+1;
+      }
+    }
+  }
+  var totalInstrs = groups.reduce(function(s,g){return s+g.items.length;},0);
+  el.innerHTML =
+    '<h3 style="color:var(--ac);margin-bottom:12px">\uD83D\uDCD6 Referencja PLC Syntec - Kompletny zestaw instrukcji</h3>'+
+    '<p style="font-size:10px;color:var(--td);margin-bottom:12px">Pelna lista '+totalInstrs+' instrukcji PLC sterownika Syntec CNC (zrodlo: Ladder.xml - schemat edytora PLC). '+
+    'Kolumna <b>Hex</b> = klucz komponentu edytora. <b>Hint</b> = symbol wizualny. <b>Fn</b> = nazwa funkcji. <b>Argumenty</b> = typy parametrow.</p>'+
+    (file ? '<p style="font-size:10px;color:var(--gn);margin-bottom:12px">\u2705 Zaladowany plik: <b>'+esc(file.parsed.filename)+'</b> - opcody uzyte w pliku oznaczone kolorem</p>' : '')+
+    // Instruction groups
+    groups.map(function(g) {
+      return '<div class="help-card" style="border-left:3px solid '+g.color+'">'+
+        '<h4 style="color:'+g.color+'">'+g.icon+' Grupa '+g.id+': '+g.name+' <span style="font-size:10px;color:var(--td);font-weight:400">('+g.items.length+' instrukcji)</span></h4>'+
+        '<table style="width:100%"><thead><tr>'+
+          '<th style="width:55px">Hex</th>'+
+          '<th style="width:100px">Hint</th>'+
+          '<th style="width:90px">Nazwa</th>'+
+          '<th style="width:90px">Fn</th>'+
+          '<th style="width:90px">Argumenty</th>'+
+          '<th>Opis</th>'+
+          (file?'<th style="width:45px">Ile</th>':'')+
+        '</tr></thead><tbody>'+
+        g.items.map(function(it) {
+          var opNum = parseInt(it.key,16);
+          var cnt = fileOpcodes[opNum]||0;
+          var rowStyle = cnt>0 ? 'background:'+g.color+'11' : '';
+          return '<tr style="'+rowStyle+'">'+
+            '<td style="font-family:monospace;font-weight:700;color:'+g.color+'">'+it.key+'</td>'+
+            '<td style="font-family:monospace;font-size:10px;color:var(--td)">'+esc(it.hint)+'</td>'+
+            '<td style="font-weight:600;color:'+g.color+'">'+it.name+'</td>'+
+            '<td style="font-size:10px;color:var(--cy)">'+esc(it.fn||'-')+'</td>'+
+            '<td style="font-size:10px">'+esc(it.args)+'</td>'+
+            '<td style="font-size:10px">'+it.desc+'</td>'+
+            (file?'<td style="text-align:center;font-weight:700;color:'+(cnt>0?'var(--gn)':'var(--td)')+'">'+cnt+'</td>':'')+
+          '</tr>';
+        }).join('')+
+        '</tbody></table>'+
+      '</div>';
+    }).join('')+
+    // Argument types
+    '<div class="help-card">'+
+      '<h4>\uD83D\uDCCB Typy argumentow (ArgumentFormat z Ladder.xml)</h4>'+
+      '<table style="width:100%"><thead><tr>'+
+        '<th style="width:100px">Typ</th><th style="width:60px">Format</th><th style="width:60px">Prefiks</th><th>Opis</th>'+
+      '</tr></thead><tbody>'+
+      argTypes.map(function(at) {
+        return '<tr><td style="font-weight:600;color:'+at.color+'">'+at.type+'</td>'+
+          '<td style="font-family:monospace;font-size:10px">'+at.fmt+'</td>'+
+          '<td style="font-family:monospace;color:var(--yl)">'+(at.title||'-')+'</td>'+
+          '<td style="font-size:10px">'+at.desc+'</td></tr>';
+      }).join('')+
+      '</tbody></table>'+
+    '</div>'+
+    // Binary vs Editor note
+    '<div class="help-card" style="border-left:3px solid var(--or)">'+
+      '<h4 style="color:var(--or)">\u26A0 Uwaga: Kody edytora vs format binarny .lad</h4>'+
+      '<p style="font-size:10px;color:var(--td);line-height:1.6">'+
+        'Powyzsze kody hex (Key) to <b>identyfikatory komponentow edytora</b> PLC (Ladder Editor), NIE zakompilowane opcody binarnego pliku .lad.<br>'+
+        'W skompilowanym pliku .lad format instrukcji jest inny &mdash; np.:<br>'+
+        '<span style="color:var(--cy);font-family:monospace">0x70</span> w edytorze = <b>Mov #,R</b>, ale w .lad binarnym = <b>LD</b> (kontakt NO).<br>'+
+        '<span style="color:var(--cy);font-family:monospace">0x6E</span> w edytorze = <b>Cmpe #,R</b>, ale w .lad binarnym = <b>OUT</b> (cewka wyjsciowa).<br>'+
+        '<span style="color:var(--cy);font-family:monospace">0x0E</span> w edytorze = <b>NO Coil</b>, ale w .lad binarnym = <b>OR</b> (polaczenie rownolegle).<br>'+
+        'Zakladka <b>Pomoc</b> zawiera referencje opcodes dla formatu binarnego .lad.</p>'+
+    '</div>'+
+    // External DLLs
+    '<div class="help-card">'+
+      '<h4>\uD83D\uDD0C Zewnetrzne biblioteki DLL</h4>'+
+      '<p style="font-size:10px;color:var(--td)">Sterownik Syntec PLC wykorzystuje zewnetrzne DLL do rozszerzen:</p>'+
+      '<div style="font-family:monospace;font-size:11px;margin-top:6px">'+
+        '<div style="color:var(--gn)">\u2022 PLC_COMM.DLL <span style="color:var(--td)">- Funkcje komunikacyjne (RS232, ModBus, SRI)</span></div>'+
+        '<div style="color:var(--gn)">\u2022 PLC_EXT.DLL <span style="color:var(--td)">- Funkcje zewnetrzne (ExtFunc Fn##)</span></div>'+
+      '</div>'+
+    '</div>';
+}
+
 // HELP / POMOC TAB
 function renderHelpTab() {
   var el = document.getElementById('tab-help');
@@ -1962,16 +2176,18 @@ function renderHelpTab() {
     '<div class="help-card">'+
       '<h4>&#x2139; O programie</h4>'+
       '<div style="font-size:11px;line-height:1.6">'+
-        '<div><b style="color:var(--ac)">Syntec Ladder Viewer v5.0</b> - Wizualna przegladarka programow PLC</div>'+
+        '<div><b style="color:var(--ac)">Syntec Ladder Viewer v5.1</b> - Wizualna przegladarka programow PLC</div>'+
         '<div style="color:var(--td)">Narzedie do analizy skompilowanych programow drabinkowych (.lad) dla sterownikow Syntec CNC.</div>'+
         '<div style="margin-top:6px"><b>Funkcje:</b></div>'+
         '<ul style="margin:4px 0 0 16px;color:var(--td);font-size:10px">'+
           '<li>Mapa wizualna sekcji PLC z kategoryzacja i treemap</li>'+
-          '<li>Pelne tlumaczenie chinskich etykiet (Big5) na polski (258+ hasel)</li>'+
+          '<li>Pelne tlumaczenie chinskich etykiet (Big5) na polski (264+ hasel)</li>'+
           '<li><b style="color:var(--gn)">[v5.0]</b> Wizualny diagram drabinkowy z drzewem logicznym (serie / rownoleglosci)</li>'+
           '<li><b style="color:var(--gn)">[v5.0]</b> Analiza programu: graf CALL, zmienne stanu, interlocki, statystyki</li>'+
           '<li><b style="color:var(--gn)">[v5.0]</b> Eksport pelnej dokumentacji PLC (HTML do wydruku)</li>'+
           '<li><b style="color:var(--gn)">[v5.0]</b> Porownanie instrukcji miedzy plikami (instruction-level diff)</li>'+
+          '<li><b style="color:var(--ac)">[v5.1]</b> Referencja PLC Syntec - 74+ instrukcji z Ladder.xml w 12 grupach</li>'+
+          '<li><b style="color:var(--ac)">[v5.1]</b> Pelne pokrycie tlumaczen (264 hasel, wlaczajac dlugie etykiety)</li>'+
           '<li>Cross-reference rejestrow (Xref) - gdzie kazdy rejestr jest uzywany</li>'+
           '<li>Mapa I/O z mozliwoscia importu IoMap XML + Cabinet Tracer</li>'+
           '<li>System zaleznosci i przeplyw sygnalow CNC</li>'+
