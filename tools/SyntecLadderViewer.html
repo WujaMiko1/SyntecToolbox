@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Syntec Ladder Viewer v5.1</title>
+<title>Syntec Ladder Viewer v6.0</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 :root{
@@ -171,6 +171,21 @@ input[type="file"]{display:none}
 .cab-bit-table td{padding:3px 6px;border-bottom:1px solid rgba(45,45,80,.15);font-family:'Cascadia Code',monospace;font-size:10px}
 .cab-bit-table tr:hover{background:var(--sel)}
 .cab-bit-table tr.cab-in td:first-child{color:var(--gn);font-weight:700}.cab-bit-table tr.cab-out td:first-child{color:var(--or);font-weight:700}
+/* Light theme */
+.light-theme{--bg:#f5f5f8;--sf:#fff;--sf2:#f0f0f5;--bd:#d0d0e0;--bdl:#b0b0c8;--tx:#2a2a40;--td:#6060a0;--ac:#4060d0;--ah:#5070e0;--a2:#d04060;--gn:#388e3c;--or:#e68a00;--rd:#d32f2f;--cy:#0097a7;--yl:#f9a825;--pb:#eaeaf0;--sel:rgba(64,96,208,0.12)}
+.light-theme .hex-view{background:#fff}.light-theme .cat-badge{color:#fff}
+/* Noise/Artifact section dimming */
+.sec-item.noise-sec{opacity:.4;font-style:italic}.sec-item.noise-sec:hover{opacity:.7}
+.noise-badge{font-size:8px;padding:0 4px;border-radius:3px;background:#f4433622;color:var(--rd);border:1px solid #f4433633;margin-left:4px}
+/* SIM tab styles */
+.sim-reg-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(90px,1fr));gap:3px;margin:6px 0}
+.sim-reg{display:flex;flex-direction:column;align-items:center;padding:4px;border:1px solid var(--bd);border-radius:4px;font-size:10px;cursor:pointer;transition:all .12s}
+.sim-reg:hover{border-color:var(--ac)}.sim-reg.on{background:var(--gn)22;border-color:var(--gn)}.sim-reg.off{background:var(--sf)}
+.sim-reg-name{font-family:monospace;font-weight:700;font-size:10px;color:var(--cy)}
+.sim-reg-val{font-weight:800;font-size:14px}.sim-reg.on .sim-reg-val{color:var(--gn)}.sim-reg.off .sim-reg-val{color:var(--rd)}
+/* Timing diagram */
+.timing-bar{height:24px;display:flex;align-items:center;gap:2px;margin:2px 0}
+.timing-block{height:100%;border-radius:3px;display:flex;align-items:center;justify-content:center;font-size:9px;color:#fff;font-family:monospace;min-width:20px}
 /* Phase 3: Visual Ladder */
 .lv-rung{display:flex;align-items:stretch;margin:2px 0;min-height:26px}
 .lv-rail{width:3px;background:var(--ac);flex-shrink:0;border-radius:1px}
@@ -199,22 +214,28 @@ input[type="file"]{display:none}
 </head>
 <body>
 <div class="top-bar">
-  <h1>&#x26D3; Syntec Ladder Viewer <span>v5.1</span></h1>
+  <h1>&#x26D3; Syntec Ladder Viewer <span>v6.0</span></h1>
   <label for="ladFile" class="top-btn green">&#x1F4C2; Wczytaj .lad</label>
   <input type="file" id="ladFile" accept=".lad" multiple>
   <label for="ladFolder" class="top-btn">&#x1F4C1; Wczytaj folder Ladder</label>
   <input type="file" id="ladFolder" webkitdirectory directory multiple>
   <button class="top-btn" onclick="exportJSON()" id="btnExport" style="display:none">&#x1F4BE; JSON</button>
   <button class="top-btn warn" onclick="exportLabels()" id="btnLabels" style="display:none">&#x1F4CB; Etykiety</button>
+  <button class="top-btn" onclick="exportIL()" id="btnIL" style="display:none">&#x1F4DD; IEC IL</button>
   <button class="top-btn" onclick="generateDocumentation()" id="btnDoc" style="display:none">&#x1F4C4; Dok.</button>
   <label for="ioMapFile" class="top-btn" id="btnIoMap" style="display:none">&#x1F50C; IoMap XML</label>
   <input type="file" id="ioMapFile" accept=".xml" onchange="loadIoMapXML(this)">
+  <label for="sriModFile" class="top-btn" id="btnSriMod" style="display:none">&#x1F4E6; SRI XML</label>
+  <input type="file" id="sriModFile" accept=".xml" onchange="loadSriModuleXML(this)">
+  <label for="cncBaseFile" class="top-btn" id="btnCncBase" style="display:none">&#x2699; CncBase</label>
+  <input type="file" id="cncBaseFile" accept=".ini" onchange="loadCncBaseINI(this)">
   <button class="top-btn" onclick="openGlobalSearch()" title="Ctrl+K">&#x1F50E; Szukaj</button>
+  <button class="top-btn" onclick="toggleTheme()" title="Przelacz motyw" id="themeBtn">&#x1F319; Motyw</button>
   <span style="margin-left:auto;font-size:10px;color:var(--td)" id="fileInfo">Brak pliku</span>
 </div>
 <div class="main" id="mainArea">
   <div class="welcome" id="welcomeScreen">
-    <h2>&#x26D3; Syntec PLC Ladder Viewer v5.1</h2>
+    <h2>&#x26D3; Syntec PLC Ladder Viewer v6.0</h2>
     <p>Wizualna przegladarka skompilowanych programow PLC (.lad) dla sterownikow Syntec CNC.<br>
     Pelne tlumaczenie chinskich etykiet na polski, opisy wejsc/wyjsc I/O, mapa zaleznosci systemowych, kategoryzacja sekcji i diagram.</p>
     <div class="drop" id="dropZone">
@@ -250,6 +271,9 @@ input[type="file"]{display:none}
       <div class="tab" data-tab="system" onclick="switchTab('system')">&#x1F3D7; System</div>
       <div class="tab" data-tab="xref" onclick="switchTab('xref')">&#x1F517; Xref</div>
       <div class="tab" data-tab="analysis" onclick="switchTab('analysis')">&#x1F9E0; Analiza</div>
+      <div class="tab" data-tab="tracer" onclick="switchTab('tracer')">&#x1F50E; Tracer</div>
+      <div class="tab" data-tab="timing" onclick="switchTab('timing')">&#x23F1; Timing</div>
+      <div class="tab" data-tab="sim" onclick="switchTab('sim')">&#x25B6; Symulacja</div>
       <div class="tab" data-tab="ref" onclick="switchTab('ref')">&#x1F4D6; Ref PLC</div>
       <div class="tab" data-tab="help" onclick="switchTab('help')">&#x2753; Pomoc</div>
     </div>
@@ -265,6 +289,9 @@ input[type="file"]{display:none}
     <div class="tab-content" id="tab-system"></div>
     <div class="tab-content" id="tab-xref"></div>
     <div class="tab-content" id="tab-analysis"></div>
+    <div class="tab-content" id="tab-tracer"></div>
+    <div class="tab-content" id="tab-timing"></div>
+    <div class="tab-content" id="tab-sim"></div>
     <div class="tab-content" id="tab-ref"></div>
     <div class="tab-content" id="tab-help"></div>
   </div>
@@ -674,29 +701,76 @@ const CATEGORIES = [
   { id:'safety',  name:'Bezpieczenstwo',      color:'var(--cat-safety)',  icon:'\uD83D\uDED1', keywords:['\u7DCA\u6025','\u6025\u505C','\u8D85\u7A0B','\u4FDD\u8B77','\u9632\u649E','\u9650\u5236','\u4E0D\u53EF\u79FB\u52D5','\u975E\u6A19','\u91CB\u653E','\u524E\u8ECA','\u6975\u9650','\u505C\u6B62'] },
   { id:'spindle', name:'Wrzeciono',            color:'var(--cat-spindle)', icon:'\uD83D\uDD04', keywords:['\u4E3B\u8EF8','\u8B8A\u983B','\u6B63\u8F49','\u8F49\u901F','\u5BCC\u51CC'] },
   { id:'tool',    name:'Narzedzia / Magazyn',  color:'var(--cat-tool)',    icon:'\uD83D\uDD27', keywords:['\u5200\u5EAB','\u5200','\u63DB\u5200','\u5C0D\u5200','\u6709\u5200','\u677E\u5200','\u593E\u5200','\u6392\u9246','\u6392\u9459'] },
-  { id:'axis',    name:'Osie / Ruch',          color:'var(--cat-axis)',    icon:'\u2195\uFE0F', keywords:['\u8EF8','\u624B\u8EF8','\u500D\u7387','\u5BF8\u52D5','\uFF38','\uFF39','\uFF3A','\u9A45\u52D5','\u539F\u9EDE','\u79FB\u52D5','\u5C0B\u539F','\u5FEB\u901F\u9032\u7D66','\u58D3\u8F25','\u4F4D\u7F6E','\u624B\u8F2A','\u5207\u524A','\u65B9\u5411','\u904B\u52D5'] },
+  { id:'axis',    name:'Osie / Ruch',          color:'var(--cat-axis)',    icon:'\u2195\uFE0F', keywords:['\u8EF8','\u624B\u8EF8','\u500D\u7387','\u5BF8\u52D5','\uFF38','\uFF39','\uFF3A','\u9A45\u52D5','\u539F\u9EDE','\u79FB\u52D5','\u5C0B\u539F','\u5FEB\u901F\u9032\u7D66','\u58D3\u8F25','\u4F4D\u7F6E','\u624B\u8F2A','\u5207\u524A','\u65B9\u5411','\u904B\u52D5','\u4E0A\u4F4D'] },
   { id:'pneum',   name:'Pneumatyka',           color:'var(--cat-pneum)',   icon:'\uD83D\uDCA8', keywords:['\u6C23\u7F38','\u6C23\u58D3','\u63A8\u6599','\u5C0E\u5411','\u5074\u63A8','\u5B9A\u4F4D\u7F38','\u4E0A\u6599','\u5B9A\u4F4D\u6C23','\u5439\u6C23','\u5C0E\u8ECC','\u5B9A\u4F4D','\u540E\u63A8','\u6253\u5370'] },
   { id:'vacuum',  name:'Proznia',              color:'var(--cat-vacuum)',  icon:'\uD83D\uDD2E', keywords:['\u771F\u7A7A','\u5438\u76E4','\u5438\u9644','\u5438','\u6CF5','\u5438\u5875'] },
   { id:'load',    name:'Ladowanie/Rozladunek', color:'var(--cat-io)',      icon:'\uD83D\uDCE6', keywords:['\u4E0A\u4E0B\u6599','\u4E0B\u6599','\u5228\u82B1\u677F','\u5BC6\u5EA6\u677F','\u4E00\u9375'] },
-  { id:'program', name:'Program / Tryb',       color:'var(--cat-motion)',  icon:'\u25B6\uFE0F', keywords:['\u7A0B\u5F0F','\u7A0B\u5E8F','\u6A21\u5F0F','\u904B\u884C','\u9032\u7D66','\u555F\u52D5','\u5FA9\u4F4D','\u66AB\u505C','\u55AE\u7BC0','\u52A0\u5DE5','\u57F7\u884C','\u8D77\u52D5','\u6307\u4EE4','\u63A7\u5236\u5668'] },
+  { id:'program', name:'Program / Tryb',       color:'var(--cat-motion)',  icon:'\u25B6\uFE0F', keywords:['\u7A0B\u5F0F','\u7A0B\u5E8F','\u6A21\u5F0F','\u904B\u884C','\u9032\u7D66','\u555F\u52D5','\u5FA9\u4F4D','\u66AB\u505C','\u55AE\u7BC0','\u52A0\u5DE5','\u57F7\u884C','\u8D77\u52D5','\u6307\u4EE4','\u63A7\u5236\u5668','\u865F\u5230'] },
   { id:'comm',    name:'Komunikacja',          color:'var(--cat-comm)',    icon:'\uD83D\uDCE1', keywords:['\u901A\u4FE1','\u8CBC\u6A19\u6A5F','\u5171\u4EAB','\u8CBC\u6A19','\u544A\u8A34','\u767C\u51FA'] },
-  { id:'init',    name:'Inicjalizacja',        color:'var(--cat-init)',    icon:'\u2699\uFE0F', keywords:['\u521D\u59CB','\u8A2D\u5B9A','\u53C3\u6578','\u6E2C\u8A66','\u8173\u8E0F','\u8A2D\u7F6E','\u5C0D\u61C9','\u4F7F\u7528\u8005','\u5B9A\u7FA9','\u5167\u5BB9','\u8B80\u53D6','\u8B8A\u6578'] },
+  { id:'init',    name:'Inicjalizacja',        color:'var(--cat-init)',    icon:'\u2699\uFE0F', keywords:['\u521D\u59CB','\u8A2D\u5B9A','\u53C3\u6578','\u6E2C\u8A66','\u8173\u8E0F','\u8A2D\u7F6E','\u5C0D\u61C9','\u4F7F\u7528\u8005','\u5B9A\u7FA9','\u5167\u5BB9','\u8B80\u53D6','\u8B8A\u6578','\u56E0\u6B64\u5BEB'] },
   { id:'board',   name:'Karty I/O',            color:'var(--cat-feed)',    icon:'\uD83D\uDCDF', keywords:['\u8F38\u5165\u677F','\u8F38\u51FA\u677F','\u5149\u96FB'] },
   { id:'alarm',   name:'Alarmy',               color:'var(--cat-alarm)',   icon:'\u26A0\uFE0F', keywords:['\u8B66\u5831','\u8B66','\u7570\u5E38','\u5831\u8B66','\u904E\u8F09','\u4E0D\u8DB3','\u672A\u5C0B'] },
-  { id:'display', name:'Wyswietlanie',         color:'var(--cat-display)', icon:'\uD83D\uDCFA', keywords:['\u986F\u793A','\u6307\u793A','\u9032\u7A0B','\u71C8','\u96F7\u9054','\u63D0\u793A','\u72C0\u614B','\u958B\u555F'] },
+  { id:'display', name:'Wyswietlanie',         color:'var(--cat-display)', icon:'\uD83D\uDCFA', keywords:['\u986F\u793A','\u6307\u793A','\u9032\u7A0B','\u71C8','\u96F7\u9054','\u63D0\u793A','\u72C0\u614B','\u958B\u555F','\u9375'] },
   { id:'cooling', name:'Chlodn./Smarowanie',   color:'#4ecdc4',           icon:'\u2744\uFE0F', keywords:['\u51B7\u6C34','\u6F64\u6ED1','\u6BDB\u5237','\u5927\u5C0F\u677F'] },
+  { id:'noise',   name:'Szum binarny',         color:'#616161',           icon:'\u26AB', keywords:[] },
   { id:'misc',    name:'Inne',                 color:'var(--cat-other)',   icon:'\uD83D\uDCCE', keywords:[] },
 ];
 
+// Polish translation keywords for auto-categorization
+const PL_CAT_KEYWORDS = {
+  safety: ['bezpiecz','e-stop','zatrzym','limit','ograni','koliz','hamul'],
+  spindle: ['wrzeci','obrot','falown'],
+  tool: ['narze','magaz','wymian','zacisl','zwolni'],
+  axis: ['os ','ruch','pozycj','bazow','kolko','enkod','predkosc ruch'],
+  pneum: ['pneum','cylind','powiet','cisnien','sprez','nadmuch'],
+  vacuum: ['prozn','ssanie','przyssaw','pomp'],
+  load: ['ladow','rozlad','podaj','material'],
+  program: ['program','tryb','start ','pauza','stop ','cykl','g-code','numer','osiag'],
+  comm: ['komun','serial','modbus','rs232','sygnal wysl'],
+  init: ['inicj','ustaw','param','konfi','kalib','zapis'],
+  board: ['karta','plytk','modul i/o'],
+  alarm: ['alarm','ostrze','blad','awari','przeci'],
+  display: ['wyswiet','lampk','sygnal','indyk','klawis','przycis','panel'],
+  cooling: ['chlodz','smarow','olej'],
+};
+
+function isNoiseLabel(label) {
+  return /\uFFFD/.test(label);
+}
+
+function isGarbageLabel(label) {
+  // Labels with Bopomofo chars mixed with CJK are garbage
+  if (/[\u3105-\u3129]/.test(label)) return true;
+  // Very short labels (1 char) that aren't in dictionary are garbage
+  if (label.length <= 1) return true;
+  return false;
+}
+
 function categorize(label) {
+  // First: noise labels (FFFD replacement chars) → noise category
+  if (isNoiseLabel(label)) return CATEGORIES.find(c => c.id === 'noise');
+  // Second: try CN keywords on original label
   for (const cat of CATEGORIES) {
-    if (cat.id === 'misc') continue;
+    if (cat.id === 'misc' || cat.id === 'noise') continue;
     for (const kw of cat.keywords) { if (label.includes(kw)) return cat; }
   }
-  return CATEGORIES[CATEGORIES.length - 1];
+  // Third: try PL keywords on translated text
+  const pl = CN_PL[label];
+  if (pl) {
+    const plLower = pl.toLowerCase();
+    for (const [catId, keywords] of Object.entries(PL_CAT_KEYWORDS)) {
+      for (const kw of keywords) {
+        if (plLower.includes(kw)) return CATEGORIES.find(c => c.id === catId);
+      }
+    }
+  }
+  // Fourth: garbage labels → noise category
+  if (isGarbageLabel(label)) return CATEGORIES.find(c => c.id === 'noise');
+  return CATEGORIES.find(c => c.id === 'misc');
 }
 
 function translate(cn) {
+  if (isNoiseLabel(cn)) return '[Szum binarny]';
   if (CN_PL[cn]) return CN_PL[cn];
   for (const [k, v] of Object.entries(CN_PL)) {
     if (cn.includes(k) && k.length >= 2) return v + ' (~)';
@@ -706,7 +780,11 @@ function translate(cn) {
   for (const [k, v] of frags) {
     if (k.length >= 2 && result.includes(k)) { result = result.replace(k, '['+v+']'); translated = true; }
   }
-  return translated ? result : '';
+  if (translated) return result;
+  if (isGarbageLabel(cn)) return '[Artefakt Big5]';
+  // Check if mostly CJK with no translation
+  if (/^[\u4E00-\u9FFF\u3400-\u4DBF]+$/.test(cn) && cn.length >= 2) return '[Artefakt Big5]';
+  return '';
 }
 
 // I/O DATABASE - typowe przypisania Syntec CNC (frezarka/router drewna)
@@ -890,8 +968,11 @@ async function loadFiles(fileList) {
   document.getElementById('contentPanel').style.display = '';
   document.getElementById('btnExport').style.display = '';
   document.getElementById('btnLabels').style.display = '';
+  document.getElementById('btnIL').style.display = '';
   document.getElementById('btnIoMap').style.display = '';
   document.getElementById('btnDoc').style.display = '';
+  document.getElementById('btnSriMod').style.display = '';
+  document.getElementById('btnCncBase').style.display = '';
   const sel = document.getElementById('fileSelect');
   sel.innerHTML = names.map(n => '<option value="'+esc(n)+'">'+esc(n)+'</option>').join('');
   const largest = names.reduce((a, b) => (state.files[a].bytes.length > state.files[b].bytes.length ? a : b));
@@ -1035,7 +1116,8 @@ function renderSections() {
     const pl = s.translation;
     const note = getNote(p.filename, i);
     const regs = p.sectionRegisters[i] ? [...p.sectionRegisters[i]].slice(0, 6) : [];
-    return '<div class="sec-item'+(state.selectedSection===i?' active':'')+'" style="border-left-color:'+cat.color+'" onclick="selectSection('+i+')" data-cat="'+cat.id+'">'+
+    const noiseClass = (cat.id==='noise') ? ' noise-sec' : '';
+    return '<div class="sec-item'+(state.selectedSection===i?' active':'')+noiseClass+'" style="border-left-color:'+cat.color+'" onclick="selectSection('+i+')" data-cat="'+cat.id+'">'+
       '<div class="sec-idx">'+(i+1)+'</div>'+
       '<div class="sec-body">'+
         '<div class="sec-name-cn">'+esc(s.label)+'</div>'+
@@ -1074,7 +1156,9 @@ function renderAllTabs() {
     ['renderLadder', renderLadder], ['renderRegistersTab', renderRegistersTab],
     ['renderCompare', renderCompare], ['renderIOTab', renderIOTab],
     ['renderSystemTab', renderSystemTab], ['renderXrefTab', renderXrefTab],
-    ['renderAnalysisTab', renderAnalysisTab], ['renderRefTab', renderRefTab], ['renderHelpTab', renderHelpTab]
+    ['renderAnalysisTab', renderAnalysisTab], ['renderTracerTab', renderTracerTab],
+    ['renderTimingTab', renderTimingTab], ['renderSimTab', renderSimTab],
+    ['renderRefTab', renderRefTab], ['renderHelpTab', renderHelpTab]
   ];
   for (var fn of fns) { try { fn[1](); } catch(e) { console.error(fn[0]+':', e); } }
   try { renderHex(state.files[state.currentFile]?.bytes, 0, 512); } catch(e) { console.error('renderHex:', e); }
@@ -1779,9 +1863,14 @@ function buildSectionRegisters(bytes, sections) {
 document.addEventListener('keydown', function(e) {
   if (e.ctrlKey && e.key === 'k') { e.preventDefault(); openGlobalSearch(); }
   if (e.ctrlKey && e.key === 'e') { e.preventDefault(); exportJSON(); }
+  if (e.ctrlKey && e.key === 'i') { e.preventDefault(); exportIL(); }
   if (e.key === 'Escape' && document.getElementById('gsOverlay').classList.contains('open')) { closeGlobalSearch(); }
   var tabKeys = {'1':'visual','2':'overview','3':'sections','4':'flow','5':'ladder','6':'registers','7':'hex','8':'compare','9':'io','0':'system'};
   if (e.ctrlKey && tabKeys[e.key]) { e.preventDefault(); switchTab(tabKeys[e.key]); }
+  if (e.altKey && e.key === '1') { e.preventDefault(); switchTab('tracer'); }
+  if (e.altKey && e.key === '2') { e.preventDefault(); switchTab('timing'); }
+  if (e.altKey && e.key === '3') { e.preventDefault(); switchTab('sim'); }
+  if (e.altKey && e.key === 't') { e.preventDefault(); toggleTheme(); }
 });
 // Init global search state
 state.gsResults = [];
@@ -2098,6 +2187,11 @@ function renderHelpTab() {
       '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:8px;font-size:11px">'+
         '<div><span class="kbd">Ctrl+K</span> Globalne wyszukiwanie</div>'+
         '<div><span class="kbd">Ctrl+E</span> Eksport JSON</div>'+
+        '<div><span class="kbd">Ctrl+I</span> Eksport IEC IL</div>'+
+        '<div><span class="kbd">Alt+1</span> Tracer sygnalow</div>'+
+        '<div><span class="kbd">Alt+2</span> Timery/Liczniki</div>'+
+        '<div><span class="kbd">Alt+3</span> Symulator PLC</div>'+
+        '<div><span class="kbd">Alt+T</span> Przelacz motyw</div>'+
         '<div><span class="kbd">Esc</span> Zamknij wyszukiwanie</div>'+
         '<div><span class="kbd">&#x2191;&#x2193;</span> Nawigacja wynikow</div>'+
         '<div><span class="kbd">Enter</span> Wybierz wynik</div>'+
@@ -2176,25 +2270,29 @@ function renderHelpTab() {
     '<div class="help-card">'+
       '<h4>&#x2139; O programie</h4>'+
       '<div style="font-size:11px;line-height:1.6">'+
-        '<div><b style="color:var(--ac)">Syntec Ladder Viewer v5.1</b> - Wizualna przegladarka programow PLC</div>'+
+        '<div><b style="color:var(--ac)">Syntec Ladder Viewer v6.0</b> - Wizualna przegladarka programow PLC</div>'+
         '<div style="color:var(--td)">Narzedie do analizy skompilowanych programow drabinkowych (.lad) dla sterownikow Syntec CNC.</div>'+
         '<div style="margin-top:6px"><b>Funkcje:</b></div>'+
         '<ul style="margin:4px 0 0 16px;color:var(--td);font-size:10px">'+
           '<li>Mapa wizualna sekcji PLC z kategoryzacja i treemap</li>'+
           '<li>Pelne tlumaczenie chinskich etykiet (Big5) na polski (264+ hasel)</li>'+
-          '<li><b style="color:var(--gn)">[v5.0]</b> Wizualny diagram drabinkowy z drzewem logicznym (serie / rownoleglosci)</li>'+
-          '<li><b style="color:var(--gn)">[v5.0]</b> Analiza programu: graf CALL, zmienne stanu, interlocki, statystyki</li>'+
-          '<li><b style="color:var(--gn)">[v5.0]</b> Eksport pelnej dokumentacji PLC (HTML do wydruku)</li>'+
-          '<li><b style="color:var(--gn)">[v5.0]</b> Porownanie instrukcji miedzy plikami (instruction-level diff)</li>'+
-          '<li><b style="color:var(--ac)">[v5.1]</b> Referencja PLC Syntec - 74+ instrukcji z Ladder.xml w 12 grupach</li>'+
-          '<li><b style="color:var(--ac)">[v5.1]</b> Pelne pokrycie tlumaczen (264 hasel, wlaczajac dlugie etykiety)</li>'+
-          '<li>Cross-reference rejestrow (Xref) - gdzie kazdy rejestr jest uzywany</li>'+
-          '<li>Mapa I/O z mozliwoscia importu IoMap XML + Cabinet Tracer</li>'+
-          '<li>System zaleznosci i przeplyw sygnalow CNC</li>'+
-          '<li>Widok hex z kolorowaniem sekcji</li>'+
-          '<li>Notatki/adnotacje do sekcji (localStorage)</li>'+
+          '<li><b style="color:var(--gn)">[v5.0]</b> Wizualny diagram drabinkowy z drzewem logicznym</li>'+
+          '<li><b style="color:var(--gn)">[v5.0]</b> Analiza programu: graf CALL, zmienne stanu, interlocki</li>'+
+          '<li><b style="color:var(--gn)">[v5.0]</b> Eksport dokumentacji PLC + porownanie instrukcji</li>'+
+          '<li><b style="color:var(--ac)">[v5.1]</b> Referencja PLC Syntec - 74+ instrukcji z Ladder.xml</li>'+
+          '<li><b style="color:var(--yl)">[v6.0]</b> Filtr szumu binarnego - 129 artefaktow FFFD wyciszonych</li>'+
+          '<li><b style="color:var(--yl)">[v6.0]</b> Tracer sygnalow - sledzenie rejestrow miedzy sekcjami</li>'+
+          '<li><b style="color:var(--yl)">[v6.0]</b> Timery i liczniki - wizualizacja TMR/CNT z paskami</li>'+
+          '<li><b style="color:var(--yl)">[v6.0]</b> Symulator PLC - krok po kroku, toggle wejsc, log</li>'+
+          '<li><b style="color:var(--yl)">[v6.0]</b> Import SriModule.xml - 14 typow modulow I/O</li>'+
+          '<li><b style="color:var(--yl)">[v6.0]</b> Import CncBase.ini - architektura systemu CNC</li>'+
+          '<li><b style="color:var(--yl)">[v6.0]</b> Eksport IEC 61131-3 IL (Instruction List)</li>'+
+          '<li><b style="color:var(--yl)">[v6.0]</b> Motyw jasny/ciemny z zapamietywaniem</li>'+
+          '<li><b style="color:var(--yl)">[v6.0]</b> Ulepszona kategoryzacja: polskie slowa kluczowe</li>'+
+          '<li>Cross-reference rejestrow (Xref)</li>'+
+          '<li>Mapa I/O + IoMap XML + Cabinet Tracer</li>'+
           '<li>Globalne wyszukiwanie (Ctrl+K)</li>'+
-          '<li>Eksport do JSON i etykiet tekstowych</li>'+
+          '<li>Notatki/adnotacje do sekcji (localStorage)</li>'+
         '</ul>'+
       '</div>'+
     '</div>';
@@ -2841,6 +2939,325 @@ function renderAnalysisTab() {
   el.innerHTML = html;
 }
 
+// SIGNAL TRACER TAB
+function renderTracerTab() {
+  var el = document.getElementById('tab-tracer'); if (!el) return;
+  var file = state.files[state.currentFile];
+  if (!file) { el.innerHTML = '<p style="color:var(--td)">Wczytaj plik .lad aby uzyc Tracera sygnalow.</p>'; return; }
+  var p = file.parsed;
+  // Build register → section map
+  var regMap = {};
+  p.sections.forEach(function(sec, si) {
+    var regs = p.sectionRegisters[si];
+    if (regs) regs.forEach(function(r) {
+      if (!regMap[r]) regMap[r] = [];
+      regMap[r].push(si);
+    });
+  });
+  var regList = Object.keys(regMap).sort();
+  var html = '<div style="padding:10px">';
+  html += '<h3 style="color:var(--gn);margin:0 0 8px">\uD83D\uDD0E Tracer sygnalow</h3>';
+  html += '<p style="font-size:11px;color:var(--td);margin:0 0 8px">Wpisz rejestr (np. X0.0, Y1.3, R100, D200) aby znalezc wszystkie sekcje ktore go uzywaja.</p>';
+  html += '<div style="display:flex;gap:8px;margin-bottom:10px;align-items:center">';
+  html += '<input id="tracerInput" placeholder="Wpisz rejestr..." style="flex:1;padding:6px 10px;background:var(--si);border:1px solid var(--bd);border-radius:4px;color:var(--tx);font-family:monospace" onkeydown="if(event.key===\'Enter\')traceRegister()">';
+  html += '<button onclick="traceRegister()" style="padding:6px 14px;background:var(--gn);color:#000;border:none;border-radius:4px;cursor:pointer;font-weight:bold">Szukaj</button>';
+  html += '<select id="tracerQuick" onchange="if(this.value){document.getElementById(\'tracerInput\').value=this.value;traceRegister()}" style="padding:6px;background:var(--si);border:1px solid var(--bd);border-radius:4px;color:var(--tx)">';
+  html += '<option value="">-- Popularne --</option>';
+  var popular = regList.filter(function(r) { return regMap[r].length >= 3; }).slice(0, 30);
+  popular.forEach(function(r) { html += '<option value="'+r+'">'+r+' ('+regMap[r].length+' sek.)</option>'; });
+  html += '</select></div>';
+  html += '<div id="tracerResult"></div>';
+  html += '<div style="margin-top:16px"><h4 style="color:var(--yl);margin:0 0 6px">Statystyki rejestrow</h4>';
+  html += '<div style="font-size:10px;color:var(--td);margin-bottom:6px">Laczna liczba unikalnych rejestrow: <b style="color:var(--cy)">'+regList.length+'</b></div>';
+  // Top 20 most referenced
+  var topRegs = regList.sort(function(a,b) { return regMap[b].length - regMap[a].length; }).slice(0, 20);
+  html += '<table style="width:100%;font-size:10px;border-collapse:collapse"><thead><tr style="color:var(--gn);border-bottom:1px solid var(--bd)"><th style="text-align:left;padding:3px">Rejestr</th><th>Ilosc sekcji</th><th style="text-align:left">Sekcje</th></tr></thead><tbody>';
+  topRegs.forEach(function(r) {
+    var secs = regMap[r];
+    html += '<tr style="border-bottom:1px solid var(--bd)22"><td style="font-family:monospace;color:var(--cy);padding:3px">'+r+'</td>';
+    html += '<td style="text-align:center;color:var(--or)">'+secs.length+'</td>';
+    html += '<td>'+secs.slice(0,8).map(function(si) {
+      var s = p.sections[si];
+      return '<span style="cursor:pointer;color:'+s.category.color+';font-size:9px" onclick="selectSection('+si+')">#'+(si+1)+'</span>';
+    }).join(' ')+(secs.length>8?' ...':'')+'</td></tr>';
+  });
+  html += '</tbody></table></div></div>';
+  el.innerHTML = html;
+}
+function traceRegister() {
+  var reg = (document.getElementById('tracerInput')?.value || '').trim().toUpperCase();
+  var resultEl = document.getElementById('tracerResult');
+  if (!reg || !resultEl) return;
+  var file = state.files[state.currentFile]; if (!file) return;
+  var p = file.parsed;
+  var matches = [];
+  p.sections.forEach(function(sec, si) {
+    var regs = p.sectionRegisters[si];
+    if (regs) {
+      var found = false;
+      regs.forEach(function(r) { if (r.toUpperCase().includes(reg)) found = true; });
+      if (found) matches.push(si);
+    }
+  });
+  if (matches.length === 0) {
+    resultEl.innerHTML = '<p style="color:var(--or);font-size:11px">Nie znaleziono rejestru "'+esc(reg)+'" w zadnej sekcji.</p>';
+    return;
+  }
+  var html = '<div style="background:var(--si);border:1px solid var(--bd);border-radius:6px;padding:8px;margin-top:4px">';
+  html += '<div style="color:var(--gn);font-size:12px;margin-bottom:6px"><b>'+esc(reg)+'</b> znaleziony w <b>'+matches.length+'</b> sekcjach:</div>';
+  matches.forEach(function(si) {
+    var s = p.sections[si];
+    html += '<div style="display:flex;gap:8px;align-items:center;padding:4px 6px;border-radius:4px;cursor:pointer;transition:background .15s" onmouseover="this.style.background=\'var(--bd)\'" onmouseout="this.style.background=\'transparent\'" onclick="selectSection('+si+');switchTab(\'hex\')">';
+    html += '<span style="color:var(--cy);font-family:monospace;font-size:10px;min-width:30px">#'+(si+1)+'</span>';
+    html += '<span class="cat-badge" style="background:'+s.category.color+';font-size:8px;padding:1px 4px">'+s.category.icon+'</span>';
+    html += '<span style="color:var(--tx);font-size:11px">'+esc(s.label)+'</span>';
+    if (s.translation) html += '<span style="color:var(--yl);font-size:10px;opacity:.7">'+esc(s.translation)+'</span>';
+    html += '</div>';
+  });
+  // Dependency chain: find registers shared with these sections
+  var sharedRegs = {};
+  matches.forEach(function(si) {
+    var regs = p.sectionRegisters[si];
+    if (regs) regs.forEach(function(r) {
+      if (r.toUpperCase() !== reg) {
+        if (!sharedRegs[r]) sharedRegs[r] = 0;
+        sharedRegs[r]++;
+      }
+    });
+  });
+  var related = Object.entries(sharedRegs).sort(function(a,b) { return b[1]-a[1]; }).slice(0, 10);
+  if (related.length) {
+    html += '<div style="margin-top:8px;padding-top:8px;border-top:1px solid var(--bd)">';
+    html += '<div style="color:var(--td);font-size:10px;margin-bottom:4px">Powiazane rejestry (wspoldzielone sekcje):</div>';
+    related.forEach(function(entry) {
+      html += '<span style="display:inline-block;margin:2px;padding:1px 6px;background:var(--bd);border-radius:3px;font-family:monospace;font-size:9px;color:var(--cy);cursor:pointer" onclick="document.getElementById(\'tracerInput\').value=\''+entry[0]+'\';traceRegister()">'+entry[0]+' ('+entry[1]+')</span>';
+    });
+    html += '</div>';
+  }
+  html += '</div>';
+  resultEl.innerHTML = html;
+}
+
+// TIMING VISUALIZATION TAB
+function renderTimingTab() {
+  var el = document.getElementById('tab-timing'); if (!el) return;
+  var file = state.files[state.currentFile];
+  if (!file) { el.innerHTML = '<p style="color:var(--td)">Wczytaj plik .lad aby zobaczyc timery i liczniki.</p>'; return; }
+  var p = file.parsed, bytes = file.bytes;
+  // Scan for TMR (0x27) and CNT (0x6A) instructions in all sections
+  var timers = [], counters = [];
+  p.sections.forEach(function(sec, si) {
+    for (var i = sec.start; i + 3 < sec.end && i + 3 < bytes.length; i += 4) {
+      if (bytes[i] !== 0x00) continue;
+      var op = bytes[i+1];
+      if (op === 0x27 || op === 0x6A) {
+        var b2 = bytes[i+2], b3 = bytes[i+3];
+        var regType = (b3 >> 4) & 0xF;
+        var regNum = ((b3 & 0xF) << 8) | b2;
+        var entry = { section: si, sectionLabel: sec.label, offset: i, regType: regType, regNum: regNum, preset: 0 };
+        // Next word might be preset value
+        if (i + 7 < bytes.length) {
+          entry.preset = (bytes[i+6] << 8) | bytes[i+5];
+        }
+        if (op === 0x27) { entry.type = 'TMR'; timers.push(entry); }
+        else { entry.type = 'CNT'; counters.push(entry); }
+      }
+    }
+  });
+  var html = '<div style="padding:10px">';
+  html += '<h3 style="color:var(--yl);margin:0 0 8px">\u23F1 Timery i liczniki</h3>';
+  html += '<div style="display:flex;gap:20px;margin-bottom:12px">';
+  html += '<div style="background:var(--si);padding:8px 14px;border-radius:6px;border:1px solid var(--bd)"><span style="color:var(--gn);font-size:20px;font-weight:bold">'+timers.length+'</span><div style="color:var(--td);font-size:10px">Timerow (TMR)</div></div>';
+  html += '<div style="background:var(--si);padding:8px 14px;border-radius:6px;border:1px solid var(--bd)"><span style="color:var(--or);font-size:20px;font-weight:bold">'+counters.length+'</span><div style="color:var(--td);font-size:10px">Licznikow (CNT)</div></div>';
+  html += '</div>';
+  // Timers table
+  if (timers.length) {
+    html += '<h4 style="color:var(--gn);margin:12px 0 6px">\u23F2 Timery</h4>';
+    html += '<table style="width:100%;font-size:10px;border-collapse:collapse"><thead><tr style="color:var(--gn);border-bottom:1px solid var(--bd)"><th style="text-align:left;padding:4px">#</th><th style="text-align:left">Rejestr</th><th>Preset</th><th>Czas ~</th><th style="text-align:left">Sekcja</th><th>Offset</th></tr></thead><tbody>';
+    timers.forEach(function(t, idx) {
+      var regName = 'T' + t.regNum;
+      var timeMs = t.preset * 10; // Typically 10ms base
+      var timeStr = timeMs >= 1000 ? (timeMs/1000).toFixed(1)+'s' : timeMs+'ms';
+      var sec = p.sections[t.section];
+      var pl = sec.translation || '';
+      html += '<tr style="border-bottom:1px solid var(--bd)22;cursor:pointer" onclick="selectSection('+t.section+')">';
+      html += '<td style="padding:4px;color:var(--td)">'+(idx+1)+'</td>';
+      html += '<td style="font-family:monospace;color:var(--cy)">'+regName+'</td>';
+      html += '<td style="text-align:center;color:var(--or)">'+t.preset+'</td>';
+      html += '<td style="text-align:center;color:var(--yl)">'+timeStr+'</td>';
+      html += '<td><span style="color:'+sec.category.color+'">'+esc(sec.label.substring(0,15))+'</span>'+(pl?' <span style="color:var(--td);font-size:9px">'+esc(pl.substring(0,20))+'</span>':'')+'</td>';
+      html += '<td style="text-align:center;font-family:monospace;color:var(--td);font-size:9px">0x'+t.offset.toString(16).toUpperCase()+'</td>';
+      html += '</tr>';
+    });
+    html += '</tbody></table>';
+    // Timing bars visualization
+    if (timers.length > 0) {
+      var maxPreset = Math.max.apply(null, timers.map(function(t) { return t.preset || 1; }));
+      html += '<div style="margin-top:12px"><h4 style="color:var(--gn);margin:0 0 6px">Wizualizacja czasow</h4>';
+      timers.slice(0, 30).forEach(function(t) {
+        var pct = Math.max(2, (t.preset / maxPreset) * 100);
+        var timeMs = t.preset * 10;
+        var timeStr = timeMs >= 1000 ? (timeMs/1000).toFixed(1)+'s' : timeMs+'ms';
+        html += '<div class="timing-bar"><span style="min-width:50px;font-family:monospace;color:var(--cy);font-size:9px">T'+t.regNum+'</span>';
+        html += '<div class="timing-block" style="width:'+pct+'%;background:var(--gn)">';
+        html += '<span style="padding:0 4px;font-size:8px;color:#000">'+timeStr+'</span></div></div>';
+      });
+      html += '</div>';
+    }
+  }
+  // Counters table
+  if (counters.length) {
+    html += '<h4 style="color:var(--or);margin:16px 0 6px">\uD83D\uDD22 Liczniki</h4>';
+    html += '<table style="width:100%;font-size:10px;border-collapse:collapse"><thead><tr style="color:var(--or);border-bottom:1px solid var(--bd)"><th style="text-align:left;padding:4px">#</th><th style="text-align:left">Rejestr</th><th>Limit</th><th style="text-align:left">Sekcja</th><th>Offset</th></tr></thead><tbody>';
+    counters.forEach(function(c, idx) {
+      var regName = 'C' + c.regNum;
+      var sec = p.sections[c.section];
+      html += '<tr style="border-bottom:1px solid var(--bd)22;cursor:pointer" onclick="selectSection('+c.section+')">';
+      html += '<td style="padding:4px;color:var(--td)">'+(idx+1)+'</td>';
+      html += '<td style="font-family:monospace;color:var(--cy)">'+regName+'</td>';
+      html += '<td style="text-align:center;color:var(--or)">'+c.preset+'</td>';
+      html += '<td><span style="color:'+sec.category.color+'">'+esc(sec.label.substring(0,15))+'</span></td>';
+      html += '<td style="text-align:center;font-family:monospace;color:var(--td);font-size:9px">0x'+c.offset.toString(16).toUpperCase()+'</td>';
+      html += '</tr>';
+    });
+    html += '</tbody></table>';
+  }
+  if (!timers.length && !counters.length) {
+    html += '<p style="color:var(--td);font-style:italic">Nie znaleziono instrukcji TMR ani CNT w pliku.</p>';
+  }
+  html += '</div>';
+  el.innerHTML = html;
+}
+
+// PLC SIMULATION TAB
+function renderSimTab() {
+  var el = document.getElementById('tab-sim'); if (!el) return;
+  var file = state.files[state.currentFile];
+  if (!file) { el.innerHTML = '<p style="color:var(--td)">Wczytaj plik .lad aby uzyc symulatora PLC.</p>'; return; }
+  var p = file.parsed;
+  if (!state.simRegs) {
+    state.simRegs = {};
+    state.simOutputs = {};
+    state.simStep = 0;
+    state.simLog = [];
+  }
+  var html = '<div style="padding:10px">';
+  html += '<h3 style="color:var(--cy);margin:0 0 8px">\u25B6 Symulator PLC</h3>';
+  html += '<p style="font-size:11px;color:var(--td);margin:0 0 10px">Ustaw wartosci rejestrow wejsciowych i wykonaj krok symulacji logiki ladder.</p>';
+  // Input registers
+  html += '<div style="display:flex;gap:16px;flex-wrap:wrap;margin-bottom:12px">';
+  html += '<div style="flex:1;min-width:280px"><h4 style="color:var(--gn);margin:0 0 6px">Wejscia (X)</h4>';
+  html += '<div class="sim-reg-grid">';
+  for (var xi = 0; xi < 4; xi++) {
+    for (var bi = 0; bi < 8; bi++) {
+      var addr = 'X'+xi+'.'+bi;
+      var val = state.simRegs[addr] || 0;
+      html += '<div class="sim-reg'+(val?' on':'')+'" onclick="simToggle(\''+addr+'\')" title="'+addr+'">'+addr+'<br><b>'+(val?'1':'0')+'</b></div>';
+    }
+  }
+  html += '</div></div>';
+  html += '<div style="flex:1;min-width:280px"><h4 style="color:var(--or);margin:0 0 6px">Wyjscia (Y) <span style="font-size:9px;font-weight:normal;color:var(--td)">(obliczone)</span></h4>';
+  html += '<div class="sim-reg-grid">';
+  for (var yi = 0; yi < 4; yi++) {
+    for (var bj = 0; bj < 8; bj++) {
+      var yaddr = 'Y'+yi+'.'+bj;
+      var yval = state.simOutputs[yaddr] || 0;
+      html += '<div class="sim-reg out'+(yval?' on':'')+'" title="'+yaddr+'">'+yaddr+'<br><b>'+(yval?'1':'0')+'</b></div>';
+    }
+  }
+  html += '</div></div></div>';
+  // Controls
+  html += '<div style="display:flex;gap:8px;margin-bottom:12px;align-items:center">';
+  html += '<button onclick="simStep()" style="padding:6px 16px;background:var(--gn);color:#000;border:none;border-radius:4px;cursor:pointer;font-weight:bold">\u25B6 Krok</button>';
+  html += '<button onclick="simReset()" style="padding:6px 16px;background:var(--or);color:#000;border:none;border-radius:4px;cursor:pointer">Reset</button>';
+  html += '<span style="color:var(--td);font-size:10px">Krok: <b style="color:var(--cy)">'+state.simStep+'</b></span>';
+  html += '</div>';
+  // Internal registers
+  html += '<div style="margin-bottom:12px"><h4 style="color:var(--yl);margin:0 0 6px">Rejestry wewnetrzne (R, D, M)</h4>';
+  html += '<div style="display:flex;gap:4px;flex-wrap:wrap">';
+  var intRegs = Object.keys(state.simRegs).filter(function(r) { return /^[RDM]/.test(r); }).sort();
+  if (intRegs.length) {
+    intRegs.slice(0, 40).forEach(function(r) {
+      html += '<div style="background:var(--si);border:1px solid var(--bd);border-radius:3px;padding:2px 6px;font-family:monospace;font-size:9px"><span style="color:var(--cy)">'+r+'</span>=<span style="color:var(--yl)">'+state.simRegs[r]+'</span></div>';
+    });
+  } else {
+    html += '<span style="color:var(--td);font-size:10px;font-style:italic">Brak rejestrow wewnetrznych (wykonaj krok symulacji)</span>';
+  }
+  html += '</div></div>';
+  // Simulation log
+  html += '<div><h4 style="color:var(--td);margin:0 0 6px">Log symulacji</h4>';
+  html += '<div style="background:var(--si);border:1px solid var(--bd);border-radius:6px;padding:8px;max-height:200px;overflow-y:auto;font-family:monospace;font-size:9px">';
+  if (state.simLog.length) {
+    state.simLog.slice(-50).forEach(function(entry) {
+      html += '<div style="color:'+entry.color+';padding:1px 0">'+esc(entry.text)+'</div>';
+    });
+  } else {
+    html += '<span style="color:var(--td)">Kliknij "Krok" aby rozpoczac symulacje...</span>';
+  }
+  html += '</div></div></div>';
+  el.innerHTML = html;
+}
+function simToggle(addr) {
+  if (!state.simRegs) state.simRegs = {};
+  state.simRegs[addr] = state.simRegs[addr] ? 0 : 1;
+  renderSimTab();
+}
+function simReset() {
+  state.simRegs = {};
+  state.simOutputs = {};
+  state.simStep = 0;
+  state.simLog = [];
+  renderSimTab();
+}
+function simStep() {
+  if (!state.simRegs) state.simRegs = {};
+  if (!state.simOutputs) state.simOutputs = {};
+  if (!state.simLog) state.simLog = [];
+  state.simStep++;
+  var file = state.files[state.currentFile]; if (!file) return;
+  var p = file.parsed, bytes = file.bytes;
+  var stack = [0]; // Accumulator stack, start with 0
+  var log = state.simLog;
+  log.push({ text: '--- Krok '+state.simStep+' ---', color: 'var(--cy)' });
+  // Simple simulation: execute instructions sequentially
+  var executed = 0;
+  for (var si = 0; si < Math.min(p.sections.length, 20); si++) {
+    var sec = p.sections[si];
+    if (sec.category.id === 'noise') continue;
+    for (var i = sec.start; i + 3 < sec.end && i + 3 < bytes.length; i += 4) {
+      if (bytes[i] !== 0x00) continue;
+      var op = bytes[i+1], b2 = bytes[i+2], b3 = bytes[i+3];
+      var regType = (b3 >> 4) & 0xF;
+      var regBit = b3 & 0xF;
+      var regNum = b2;
+      var types = {0:'X',1:'Y',2:'R',3:'M',4:'D',5:'T',6:'C',7:'S'};
+      var tname = types[regType] || '?';
+      var addr = tname + regNum + '.' + regBit;
+      var wordAddr = tname + regNum;
+      var getB = function(a) { return state.simRegs[a] || 0; };
+      var setB = function(a, v) { state.simRegs[a] = v; if (a.startsWith('Y')) state.simOutputs[a] = v; };
+      var acc = stack[stack.length-1] || 0;
+      switch(op) {
+        case 0x70: stack = [getB(addr)]; log.push({text:'LD '+addr+' = '+getB(addr), color:'var(--tx)'}); break;
+        case 0x01: stack[stack.length-1] = acc & getB(addr); log.push({text:'AND '+addr, color:'var(--tx)'}); break;
+        case 0x03: stack[stack.length-1] = acc & (getB(addr)?0:1); log.push({text:'ANI '+addr, color:'var(--tx)'}); break;
+        case 0x0E: stack[stack.length-1] = acc | getB(addr); log.push({text:'OR '+addr, color:'var(--tx)'}); break;
+        case 0x07: stack[stack.length-1] = acc | (getB(addr)?0:1); log.push({text:'ORI '+addr, color:'var(--tx)'}); break;
+        case 0x6E: setB(addr, acc); log.push({text:'OUT '+addr+' = '+acc, color: acc?'var(--gn)':'var(--or)'}); break;
+        case 0x6C: if (acc) setB(addr, 1); log.push({text:'SET '+addr+(acc?' -> ON':' (skipped)'), color:'var(--gn)'}); break;
+        case 0x39: if (acc) setB(addr, 0); log.push({text:'RST '+addr+(acc?' -> OFF':' (skipped)'), color:'var(--or)'}); break;
+        case 0x0A: { var top = stack.pop()||0; stack[stack.length-1] = (stack[stack.length-1]||0) & top; } break; // ANB
+        case 0x09: { var top2 = stack.pop()||0; stack[stack.length-1] = (stack[stack.length-1]||0) | top2; } break; // ORB
+      }
+      executed++;
+      if (executed > 500) break;
+    }
+    if (executed > 500) break;
+  }
+  log.push({ text: 'Wykonano '+executed+' instrukcji', color: 'var(--yl)' });
+  renderSimTab();
+}
+
 // DOCUMENTATION EXPORT - Phase 7
 function generateDocumentation() {
   var file = state.files[state.currentFile]; if (!file) { alert('Wczytaj plik .lad'); return; }
@@ -2911,7 +3328,7 @@ function generateDocumentation() {
     doc += '<tr><td><b>'+e[0]+'</b></td><td>'+e[1]+'</td><td>'+(e[1]/totalInstr*100).toFixed(1)+'%</td></tr>';
   });
   doc += '</tbody></table>';
-  doc += '<hr><p style="color:#999;font-size:10px">Wygenerowano przez Syntec Ladder Viewer v5.0</p></body></html>';
+  doc += '<hr><p style="color:#999;font-size:10px">Wygenerowano przez Syntec Ladder Viewer v6.0</p></body></html>';
   // Open in new window
   var w = window.open('','_blank');
   if (w) { w.document.write(doc); w.document.close(); }
@@ -2949,6 +3366,169 @@ function exportLabels() {
   downloadFile(lines.join('\n'), file.parsed.filename.replace('.lad','_labels.txt'), 'text/plain');
 }
 function downloadFile(c,n,t){var b=new Blob([c],{type:t}),u=URL.createObjectURL(b),a=document.createElement('a');a.href=u;a.download=n;a.click();URL.revokeObjectURL(u);}
+
+// THEME TOGGLE
+function toggleTheme() {
+  document.body.classList.toggle('light-theme');
+  var isLight = document.body.classList.contains('light-theme');
+  try { localStorage.setItem('ladder_theme', isLight ? 'light' : 'dark'); } catch(e) {}
+  setStatus('Motyw: ' + (isLight ? 'jasny' : 'ciemny'));
+}
+(function() {
+  try { if (localStorage.getItem('ladder_theme') === 'light') document.body.classList.add('light-theme'); } catch(e) {}
+})();
+
+// SRI MODULE XML IMPORT
+function loadSriModuleXML() {
+  var input = document.getElementById('sriModFile');
+  if (!input || !input.files || !input.files[0]) return;
+  var reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      var parser = new DOMParser();
+      var doc = parser.parseFromString(e.target.result, 'text/xml');
+      var devices = doc.querySelectorAll('Device');
+      if (!devices.length) { setStatus('Brak urzadzen w SriModule.xml'); return; }
+      state.sriModules = [];
+      devices.forEach(function(dev) {
+        var mod = { name: '', ports: [] };
+        var nameEl = dev.querySelector('Name');
+        if (nameEl) mod.name = nameEl.textContent.trim();
+        // Parse all port types
+        ['Digital_In','Digital_Out','Analog_In','Analog_Out','LaserSource_In','LaserSource_Out'].forEach(function(portType) {
+          var portEl = dev.querySelector(portType);
+          if (portEl) {
+            var startAddr = portEl.querySelector('StartAddress');
+            var length = portEl.querySelector('Length');
+            mod.ports.push({
+              type: portType,
+              start: startAddr ? parseInt(startAddr.textContent) : 0,
+              length: length ? parseInt(length.textContent) : 0
+            });
+          }
+        });
+        state.sriModules.push(mod);
+      });
+      setStatus('SriModule.xml: ' + state.sriModules.length + ' urzadzen zaladowano');
+      renderSriModules();
+    } catch(ex) { setStatus('Blad parsowania SriModule.xml: ' + ex.message); }
+  };
+  reader.readAsText(input.files[0]);
+}
+function renderSriModules() {
+  if (!state.sriModules || !state.sriModules.length) return;
+  // Append to I/O tab
+  var ioEl = document.getElementById('tab-io');
+  if (!ioEl) return;
+  var html = '<div style="margin-top:16px;padding:10px;background:var(--si);border:1px solid var(--bd);border-radius:6px">';
+  html += '<h4 style="color:var(--gn);margin:0 0 8px">\uD83D\uDCDF SRI Modules ('+state.sriModules.length+' urzadzen)</h4>';
+  html += '<table style="width:100%;font-size:10px;border-collapse:collapse"><thead><tr style="color:var(--gn);border-bottom:1px solid var(--bd)"><th style="text-align:left;padding:4px">Nazwa</th><th style="text-align:left">Porty</th><th>Typ</th><th>Adres start</th><th>Dlugosc</th></tr></thead><tbody>';
+  state.sriModules.forEach(function(mod) {
+    if (mod.ports.length === 0) {
+      html += '<tr style="border-bottom:1px solid var(--bd)22"><td style="padding:4px;color:var(--cy);font-weight:bold">'+esc(mod.name)+'</td><td colspan="4" style="color:var(--td);font-style:italic">Brak portow</td></tr>';
+    } else {
+      mod.ports.forEach(function(port, pi) {
+        html += '<tr style="border-bottom:1px solid var(--bd)22">';
+        if (pi === 0) html += '<td style="padding:4px;color:var(--cy);font-weight:bold" rowspan="'+mod.ports.length+'">'+esc(mod.name)+'</td>';
+        var portColor = port.type.includes('In') ? 'var(--gn)' : 'var(--or)';
+        html += '<td style="color:'+portColor+'">'+port.type.replace('_',' ')+'</td>';
+        var typeLabel = port.type.includes('Digital') ? 'DIO' : port.type.includes('Analog') ? 'AIO' : 'Laser';
+        html += '<td style="text-align:center"><span style="background:var(--bd);padding:1px 4px;border-radius:3px;font-size:8px">'+typeLabel+'</span></td>';
+        html += '<td style="text-align:center;font-family:monospace;color:var(--yl)">'+port.start+'</td>';
+        html += '<td style="text-align:center;font-family:monospace;color:var(--tx)">'+port.length+'</td></tr>';
+      });
+    }
+  });
+  html += '</tbody></table></div>';
+  ioEl.insertAdjacentHTML('beforeend', html);
+}
+
+// CNCBASE.INI IMPORT
+function loadCncBaseINI() {
+  var input = document.getElementById('cncBaseFile');
+  if (!input || !input.files || !input.files[0]) return;
+  var reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      var lines = e.target.result.split(/\r?\n/);
+      var sections = {};
+      var currentSec = '';
+      lines.forEach(function(line) {
+        line = line.trim();
+        if (!line || line.startsWith(';')) return;
+        var secMatch = line.match(/^\[(.+)\]$/);
+        if (secMatch) { currentSec = secMatch[1]; sections[currentSec] = {}; return; }
+        var kvMatch = line.match(/^([^=]+)=(.*)$/);
+        if (kvMatch && currentSec) {
+          sections[currentSec][kvMatch[1].trim()] = kvMatch[2].trim();
+        }
+      });
+      state.cncBase = sections;
+      setStatus('CncBase.ini: ' + Object.keys(sections).length + ' sekcji zaladowano');
+      renderCncBase();
+    } catch(ex) { setStatus('Blad parsowania CncBase.ini: ' + ex.message); }
+  };
+  reader.readAsText(input.files[0]);
+}
+function renderCncBase() {
+  if (!state.cncBase) return;
+  var sysEl = document.getElementById('tab-system');
+  if (!sysEl) return;
+  var sections = state.cncBase;
+  var html = '<div style="margin-top:16px;padding:10px;background:var(--si);border:1px solid var(--bd);border-radius:6px">';
+  html += '<h4 style="color:var(--yl);margin:0 0 8px">\u2699 CncBase.ini ('+Object.keys(sections).length+' sekcji)</h4>';
+  Object.keys(sections).forEach(function(sec) {
+    var entries = sections[sec];
+    var keys = Object.keys(entries);
+    if (!keys.length) return;
+    html += '<div style="margin-bottom:8px">';
+    html += '<div style="color:var(--cy);font-family:monospace;font-size:11px;cursor:pointer" onclick="this.nextElementSibling.style.display=this.nextElementSibling.style.display===\'none\'?\'block\':\'none\'">['+esc(sec)+'] <span style="color:var(--td);font-size:9px">('+keys.length+' kluczy)</span></div>';
+    html += '<div style="display:'+(keys.length<=10?'block':'none')+';margin-left:12px;margin-top:2px">';
+    keys.forEach(function(k) {
+      html += '<div style="font-size:9px;font-family:monospace;padding:1px 0"><span style="color:var(--or)">'+esc(k)+'</span> = <span style="color:var(--gn)">'+esc(entries[k])+'</span></div>';
+    });
+    html += '</div></div>';
+  });
+  html += '</div>';
+  sysEl.insertAdjacentHTML('beforeend', html);
+}
+
+// IEC 61131-3 IL EXPORT
+function exportIL() {
+  var file = state.files[state.currentFile];
+  if (!file) { alert('Wczytaj plik .lad'); return; }
+  var p = file.parsed, bytes = file.bytes;
+  var NAMES = {0x70:'LD',0x6E:'ST',0x6C:'S',0x72:'MOV',0x39:'R',0x57:'FMOV',0x62:'ADD',0x66:'SUB',0x4B:'MUL',0x45:'DIV',0xE5:'DMOV',0xC9:'FEND',0xCF:'IRET',0x01:'AND',0x03:'ANDN',0x0E:'OR',0x07:'ORN',0x05:'SEC',0xE3:'CAL',0xC5:'RET',0xC4:'LBL',0x5E:'CMP',0x27:'TMR',0x6A:'CNT',0x0A:'ANDB',0x09:'ORB',0x0B:'MPP',0xC3:'FEND2',0xDE:'BMOV',0x0D:'NOP'};
+  var TYPES = {0:'%IX',1:'%QX',2:'%MW',3:'%MX',4:'%MD',5:'%TW',6:'%CW',7:'%SW'};
+  var il = '(* IEC 61131-3 IL - Wygenerowano z ' + p.filename + ' *)\n';
+  il += '(* Syntec Ladder Viewer v6.0 *)\n';
+  il += '(* Sekcji: ' + p.sections.length + ', Rozmiar: ' + fmtSize(p.size) + ' *)\n\n';
+  p.sections.forEach(function(sec, si) {
+    if (sec.category.id === 'noise') return;
+    il += '(* === Sekcja #' + (si+1) + ': ' + sec.label;
+    if (sec.translation) il += ' / ' + sec.translation;
+    il += ' === *)\n';
+    for (var i = sec.start; i + 3 < sec.end && i + 3 < bytes.length; i += 4) {
+      if (bytes[i] !== 0x00) continue;
+      var op = bytes[i+1];
+      if (op === 0x00 || op === 0x0D) continue;
+      var b2 = bytes[i+2], b3 = bytes[i+3];
+      var regType = (b3 >> 4) & 0xF;
+      var regBit = b3 & 0xF;
+      var regNum = b2;
+      var opName = NAMES[op] || '(* OP:0x'+op.toString(16).toUpperCase()+' *)';
+      var iecAddr = (TYPES[regType] || '%?') + regNum + '.' + regBit;
+      // Special cases
+      if (op === 0xC9 || op === 0xC3) il += '  ' + opName + '\n';
+      else if (op === 0xCF || op === 0xC5) il += '  ' + opName + '\n';
+      else if (op === 0x0A || op === 0x09 || op === 0x0B) il += '  ' + opName + '\n';
+      else il += '  ' + opName + ' ' + iecAddr + '\n';
+    }
+    il += '\n';
+  });
+  downloadFile(il, p.filename.replace('.lad', '.il'), 'text/plain');
+  setStatus('Wyeksportowano ' + p.filename.replace('.lad', '.il'));
+}
 
 // UTILS
 function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
