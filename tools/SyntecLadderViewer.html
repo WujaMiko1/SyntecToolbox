@@ -210,6 +210,24 @@ input[type="file"]{display:none}
 .rw-r{color:var(--gn);font-weight:700;font-size:10px}.rw-w{color:var(--or);font-weight:700;font-size:10px}
 .an-state{display:inline-flex;align-items:center;gap:4px;padding:4px 10px;border:2px solid var(--ac);border-radius:20px;font-size:11px;font-weight:600;background:rgba(108,140,255,.08)}
 .an-trans{color:var(--td);font-size:16px;padding:0 4px}
+/* Activity Map */
+.chain-card{background:var(--sf);border:1px solid var(--bd);border-radius:8px;padding:10px;margin-bottom:8px;transition:border-color .2s}
+.chain-card:hover{border-color:var(--ac)}
+.chain-flow{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin:6px 0}
+.chain-node{padding:3px 8px;border-radius:4px;font-family:monospace;font-size:10px;white-space:nowrap}
+.chain-node.input{background:#1a3a1a;color:#6f6;border:1px solid #2a5a2a}
+.chain-node.output{background:#3a2a1a;color:#fc6;border:1px solid #5a4a2a}
+.chain-node.internal{background:#1a2a3a;color:#6cf;border:1px solid #2a4a6a}
+.chain-node.section{background:var(--sf2);color:var(--tx);border:1px solid var(--bd);cursor:pointer}
+.chain-node.section:hover{border-color:var(--ac);background:var(--bd)}
+.chain-arrow{color:var(--td);font-size:14px}
+.scenario-btn{padding:8px 14px;border:1px solid var(--bd);border-radius:6px;background:var(--sf);color:var(--tx);cursor:pointer;transition:all .15s;font-size:11px;text-align:left}
+.scenario-btn:hover{border-color:var(--ac);background:var(--bd)}
+.scenario-btn.active{border-color:var(--gn);background:rgba(100,255,100,.08)}
+.snap-reg{display:inline-flex;align-items:center;padding:2px 6px;border-radius:3px;font-family:monospace;font-size:9px;margin:1px;cursor:pointer;transition:all .15s;border:1px solid transparent}
+.snap-reg.on{background:#1a3a1a;color:#6f6;border-color:#2a5a2a}
+.snap-reg.off{background:var(--sf2);color:var(--td)}
+.snap-reg:hover{border-color:var(--ac)}
 </style>
 </head>
 <body>
@@ -274,6 +292,7 @@ input[type="file"]{display:none}
       <div class="tab" data-tab="tracer" onclick="switchTab('tracer')">&#x1F50E; Tracer</div>
       <div class="tab" data-tab="timing" onclick="switchTab('timing')">&#x23F1; Timing</div>
       <div class="tab" data-tab="sim" onclick="switchTab('sim')">&#x25B6; Symulacja</div>
+      <div class="tab" data-tab="activity" onclick="switchTab('activity')">&#x26A1; Aktywnosc</div>
       <div class="tab" data-tab="ref" onclick="switchTab('ref')">&#x1F4D6; Ref PLC</div>
       <div class="tab" data-tab="help" onclick="switchTab('help')">&#x2753; Pomoc</div>
     </div>
@@ -292,6 +311,7 @@ input[type="file"]{display:none}
     <div class="tab-content" id="tab-tracer"></div>
     <div class="tab-content" id="tab-timing"></div>
     <div class="tab-content" id="tab-sim"></div>
+    <div class="tab-content" id="tab-activity"></div>
     <div class="tab-content" id="tab-ref"></div>
     <div class="tab-content" id="tab-help"></div>
   </div>
@@ -1158,6 +1178,7 @@ function renderAllTabs() {
     ['renderSystemTab', renderSystemTab], ['renderXrefTab', renderXrefTab],
     ['renderAnalysisTab', renderAnalysisTab], ['renderTracerTab', renderTracerTab],
     ['renderTimingTab', renderTimingTab], ['renderSimTab', renderSimTab],
+    ['renderActivityTab', renderActivityTab],
     ['renderRefTab', renderRefTab], ['renderHelpTab', renderHelpTab]
   ];
   for (var fn of fns) { try { fn[1](); } catch(e) { console.error(fn[0]+':', e); } }
@@ -1870,6 +1891,7 @@ document.addEventListener('keydown', function(e) {
   if (e.altKey && e.key === '1') { e.preventDefault(); switchTab('tracer'); }
   if (e.altKey && e.key === '2') { e.preventDefault(); switchTab('timing'); }
   if (e.altKey && e.key === '3') { e.preventDefault(); switchTab('sim'); }
+  if (e.altKey && e.key === '4') { e.preventDefault(); switchTab('activity'); }
   if (e.altKey && e.key === 't') { e.preventDefault(); toggleTheme(); }
 });
 // Init global search state
@@ -2191,6 +2213,7 @@ function renderHelpTab() {
         '<div><span class="kbd">Alt+1</span> Tracer sygnalow</div>'+
         '<div><span class="kbd">Alt+2</span> Timery/Liczniki</div>'+
         '<div><span class="kbd">Alt+3</span> Symulator PLC</div>'+
+        '<div><span class="kbd">Alt+4</span> Mapa aktywnosci</div>'+
         '<div><span class="kbd">Alt+T</span> Przelacz motyw</div>'+
         '<div><span class="kbd">Esc</span> Zamknij wyszukiwanie</div>'+
         '<div><span class="kbd">&#x2191;&#x2193;</span> Nawigacja wynikow</div>'+
@@ -2289,6 +2312,7 @@ function renderHelpTab() {
           '<li><b style="color:var(--yl)">[v6.0]</b> Eksport IEC 61131-3 IL (Instruction List)</li>'+
           '<li><b style="color:var(--yl)">[v6.0]</b> Motyw jasny/ciemny z zapamietywaniem</li>'+
           '<li><b style="color:var(--yl)">[v6.0]</b> Ulepszona kategoryzacja: polskie slowa kluczowe</li>'+
+          '<li><b style="color:var(--ac)">[v6.1]</b> Mapa aktywnosci: lancuchy X→Y, scenariusze CNC, snapshot rejestrow</li>'+
           '<li>Cross-reference rejestrow (Xref)</li>'+
           '<li>Mapa I/O + IoMap XML + Cabinet Tracer</li>'+
           '<li>Globalne wyszukiwanie (Ctrl+K)</li>'+
@@ -3256,6 +3280,602 @@ function simStep() {
   }
   log.push({ text: 'Wykonano '+executed+' instrukcji', color: 'var(--yl)' });
   renderSimTab();
+}
+
+// ACTIVITY MAP - "Co załącza co"
+function buildSignalChains(p, bytes) {
+  // Decode all sections to get instruction-level data
+  var sectionData = p.sections.map(function(sec, si) {
+    var rung = decodeLadderRung(bytes, sec);
+    var reads = [], writes = [];
+    rung.instructions.forEach(function(instr) {
+      if (!instr.addr || instr.addr.startsWith('#')) return;
+      var op = instr.op;
+      if (op === 'LD' || op === 'LDI' || op === 'AND' || op === 'ANI' || op === 'OR' || op === 'ORI' || op === 'CMP') {
+        reads.push(instr.addr);
+      } else if (op === 'OUT' || op === 'OUTI' || op === 'SET' || op === 'RST' || op === 'MOV' || op === 'FMOV' || op === 'DMOV' || op === 'BMOV') {
+        writes.push(instr.addr);
+      } else if (op === 'TMR' || op === 'CNT') {
+        writes.push(instr.addr);
+      } else if (op === 'SEC') {
+        reads.push(instr.addr);
+      }
+    });
+    return { si: si, label: sec.label, translation: sec.translation, cat: sec.category, reads: reads, writes: writes, instrCount: rung.instructions.length };
+  });
+  // Build register graph: who reads, who writes each register
+  var regGraph = {};
+  var allReads = {}, allWrites = {};
+  sectionData.forEach(function(sd) {
+    sd.reads.forEach(function(r) {
+      if (!regGraph[r]) regGraph[r] = { readers: [], writers: [] };
+      regGraph[r].readers.push(sd.si);
+      allReads[r] = true;
+    });
+    sd.writes.forEach(function(r) {
+      if (!regGraph[r]) regGraph[r] = { readers: [], writers: [] };
+      regGraph[r].writers.push(sd.si);
+      allWrites[r] = true;
+    });
+  });
+  // Classify registers: SOURCE (read-only), SINK (write-only), INTERNAL (both)
+  var sources = [], sinks = [], internals = [];
+  Object.keys(regGraph).forEach(function(r) {
+    var isRead = !!allReads[r], isWritten = !!allWrites[r];
+    if (isRead && !isWritten) sources.push(r);
+    else if (!isRead && isWritten) sinks.push(r);
+    else internals.push(r);
+  });
+  // Build chains: for each SINK, trace backward through sections to find SOURCE dependencies
+  var sinkChains = {};
+  sinks.forEach(function(sinkReg) {
+    var sInfo = regGraph[sinkReg];
+    if (!sInfo || !sInfo.writers.length) return;
+    var sourceDeps = new Set();
+    var involvedSections = new Set(sInfo.writers);
+    var intermediates = new Set();
+    // Level 1: sections that write this sink → what do they read?
+    sInfo.writers.forEach(function(si) {
+      sectionData[si].reads.forEach(function(r) {
+        if (allReads[r] && !allWrites[r]) sourceDeps.add(r); // pure source
+        else if (allReads[r] && allWrites[r]) intermediates.add(r); // internal
+      });
+    });
+    // Level 2: follow internal registers one more hop backward
+    intermediates.forEach(function(intReg) {
+      var intInfo = regGraph[intReg];
+      if (!intInfo) return;
+      intInfo.writers.forEach(function(si) {
+        involvedSections.add(si);
+        sectionData[si].reads.forEach(function(r) {
+          if (allReads[r] && !allWrites[r]) sourceDeps.add(r);
+        });
+      });
+    });
+    if (sourceDeps.size > 0 || involvedSections.size > 0) {
+      sinkChains[sinkReg] = {
+        sink: sinkReg,
+        sources: [...sourceDeps].sort(),
+        intermediates: [...intermediates].sort().slice(0, 8),
+        sections: [...involvedSections].sort(function(a,b) { return a-b; })
+      };
+    }
+  });
+  // Build forward chains: for each SOURCE → which SINKs does it affect?
+  var sourceChains = [];
+  sources.forEach(function(srcReg) {
+    var srcInfo = regGraph[srcReg];
+    if (!srcInfo || !srcInfo.readers.length) return;
+    var reachedSinks = new Set();
+    var involvedSections = new Set(srcInfo.readers);
+    var intermediates = new Set();
+    // Level 1: sections that read this source → what do they write?
+    srcInfo.readers.forEach(function(si) {
+      sectionData[si].writes.forEach(function(w) {
+        if (!allReads[w] && allWrites[w]) reachedSinks.add(w); // pure sink
+        else intermediates.add(w);
+      });
+    });
+    // Level 2: follow intermediates forward one more hop
+    intermediates.forEach(function(intReg) {
+      var intInfo = regGraph[intReg];
+      if (!intInfo) return;
+      intInfo.readers.forEach(function(si) {
+        involvedSections.add(si);
+        sectionData[si].writes.forEach(function(w) {
+          if (!allReads[w] && allWrites[w]) reachedSinks.add(w);
+        });
+      });
+    });
+    if (reachedSinks.size > 0) {
+      sourceChains.push({
+        input: srcReg,
+        outputs: [...reachedSinks].sort(),
+        intermediates: [...intermediates].sort().slice(0, 5),
+        sections: [...involvedSections].sort(function(a,b) { return a-b; })
+      });
+    }
+  });
+  // Sort chains by number of outputs (most impactful first)
+  sourceChains.sort(function(a,b) { return b.outputs.length - a.outputs.length; });
+  return { chains: sourceChains, sinkChains: sinkChains, sectionData: sectionData, regGraph: regGraph, sources: sources, sinks: sinks, internals: internals };
+}
+
+function getIOName(addr) {
+  // Lookup from IO_DB if available
+  if (typeof IO_DB !== 'undefined') {
+    for (var i = 0; i < IO_DB.inputs.length; i++) {
+      if (IO_DB.inputs[i].addr === addr) return IO_DB.inputs[i].name;
+    }
+    for (var j = 0; j < IO_DB.outputs.length; j++) {
+      if (IO_DB.outputs[j].addr === addr) return IO_DB.outputs[j].name;
+    }
+  }
+  return '';
+}
+
+function regClass(addr) {
+  // Classify register by type for display
+  if (addr.startsWith('R')) {
+    var n = parseInt(addr.substring(1));
+    if (n <= 7) return 'io-in'; // likely physical input area
+    if (n >= 100 && n <= 107) return 'io-out'; // likely physical output area
+    if (n >= 800) return 'sys'; // system registers
+    return 'relay'; // internal relay
+  }
+  if (addr.startsWith('D')) return 'data';
+  if (addr.startsWith('T')) return 'timer';
+  if (addr.startsWith('C')) return 'counter';
+  if (addr.startsWith('K')) return 'const';
+  if (addr.startsWith('S')) return 'sys';
+  return 'other';
+}
+
+function regClassColor(cls) {
+  var colors = { 'io-in':'var(--gn)', 'io-out':'var(--or)', 'sys':'var(--mg)', 'relay':'var(--cy)', 'data':'var(--yl)', 'timer':'#f9a', 'counter':'#af9', 'const':'var(--td)', 'other':'var(--td)' };
+  return colors[cls] || 'var(--td)';
+}
+
+// CNC Scenario definitions - typical CNC operations and their expected I/O
+var CNC_SCENARIOS = [
+  { id: 'estop', name: 'E-STOP (Zatrzymanie awaryjne)', icon: '\uD83D\uDED1', color: '#f44',
+    desc: 'Nacisniety przycisk E-STOP. Wszystkie osie sie zatrzymuja, wrzeciono OFF, alarmy aktywne.',
+    keywords: ['e-stop','zatrzym','awaryjn','emergency','bezpiecz','緊急','停止'] },
+  { id: 'spindle_cw', name: 'Wrzeciono CW (M03)', icon: '\uD83D\uDD04', color: '#4f4',
+    desc: 'Start wrzeciona w kierunku zgodnym z ruchem wskazowek zegara. Falownik zal., chlodzenie moze sie wl.',
+    keywords: ['wrzeci','spindle','m03','obrot','falown','主軸','正轉'] },
+  { id: 'spindle_ccw', name: 'Wrzeciono CCW (M04)', icon: '\uD83D\uDD04', color: '#4f4',
+    desc: 'Start wrzeciona w kierunku przeciwnym.',
+    keywords: ['wrzeci','spindle','m04','obrot','反轉'] },
+  { id: 'spindle_stop', name: 'Wrzeciono STOP (M05)', icon: '\u23F9', color: '#fa4',
+    desc: 'Zatrzymanie wrzeciona. Hamowanie.',
+    keywords: ['wrzeci','spindle','m05','stop','hamul','停'] },
+  { id: 'tool_change', name: 'Wymiana narzedzia (M06/T)', icon: '\uD83D\uDD27', color: '#6cf',
+    desc: 'Pelny cykl wymiany narzedzia: magazyn obraca, ramie wymienia, wrzeciono zaciska.',
+    keywords: ['narze','wymian','magaz','tool','zmiana','换刀','刀庫','刀','ATC','對刀'] },
+  { id: 'tool_clamp', name: 'Zacisnij narzedzie', icon: '\uD83D\uDD27', color: '#6cf',
+    desc: 'Zacisk uchwytu narzedzia we wrzecionie.',
+    keywords: ['zacisl','clamp','夾刀','松刀','uchwyt'] },
+  { id: 'coolant_on', name: 'Chlodzenie ON (M08)', icon: '\u2744\uFE0F', color: '#4dd',
+    desc: 'Wlaczenie pompy chlodziwa.',
+    keywords: ['chlodz','coolant','m08','pompa','冷水'] },
+  { id: 'air_blow', name: 'Nadmuch powietrza (M07)', icon: '\uD83D\uDCA8', color: '#aaf',
+    desc: 'Nadmuch powietrza na narzedzie/obszar roboczy.',
+    keywords: ['nadmuch','air','blow','吹氣','dmuch','powietrz'] },
+  { id: 'home', name: 'Bazowanie osi (Home)', icon: '\uD83C\uDFE0', color: '#ff6',
+    desc: 'Procedura bazowania - osie jedza do punktow referencyjnych.',
+    keywords: ['bazow','home','origin','寻原','尋原','punkt ref','zero maszynowe'] },
+  { id: 'jog', name: 'Jog reczny (JOG)', icon: '\u2195\uFE0F', color: '#af6',
+    desc: 'Reczne przesuwanie osi za pomoca przyciskow lub kolka recznego.',
+    keywords: ['jog','reczn','kolko','手輪','手動','寸動','mpg','handwheel'] },
+  { id: 'auto_start', name: 'Auto Start (Cycle Start)', icon: '\u25B6\uFE0F', color: '#4f4',
+    desc: 'Start automatycznego cyklu obrobki. Wykonywanie programu NC.',
+    keywords: ['auto','start','cycle','cykl','加工','運行','program','rozpocz'] },
+  { id: 'feed_hold', name: 'Pauza posuwu (Feed Hold)', icon: '\u23F8', color: '#fa4',
+    desc: 'Zatrzymanie posuwu z mozliwoscia kontynuacji. Wrzeciono dalej pracuje.',
+    keywords: ['pauza','hold','feed','暫停','zatrzym posuw','wstrzym'] },
+  { id: 'door', name: 'Drzwi / oslona', icon: '\uD83D\uDEAA', color: '#f96',
+    desc: 'Otwarcie/zamkniecie drzwi obudowy maszyny. Interlock bezpieczenstwa.',
+    keywords: ['drzwi','door','oslona','guard','安全門','interlock'] },
+  { id: 'lubrication', name: 'Smarowanie centralne', icon: '\uD83D\uDEE2\uFE0F', color: '#fc6',
+    desc: 'Automatyczne smarowanie prowadnic i sruby kulowej.',
+    keywords: ['smarow','lubric','olej','潤滑','prowadnic'] },
+  { id: 'pneum_clamp', name: 'Zaciski pneumatyczne', icon: '\uD83D\uDCA8', color: '#aaf',
+    desc: 'Zaciski stolu, uchwyty przedmiotu obrabianego.',
+    keywords: ['pneum','zacisk','气缸','氣缸','cylinder','clamp','fixture'] },
+  { id: 'vacuum', name: 'Proznia / ssanie', icon: '\uD83D\uDD2E', color: '#c6f',
+    desc: 'System prozniowy - przyssawki na stole.',
+    keywords: ['prozn','vacuum','ssanie','przyssawk','真空','吸'] },
+  { id: 'board', name: 'Plyty I/O (wejscia/wyjscia)', icon: '\uD83D\uDCDF', color: '#9cf',
+    desc: 'Konfiguracja plyt wejsc/wyjsc i mapowanie sygnalow.',
+    keywords: ['plyt','board','板','輸入','輸出','mapping','wejsc','wyjsc'] },
+  { id: 'comm', name: 'Komunikacja / etykiety', icon: '\uD83D\uDCE1', color: '#fc9',
+    desc: 'Komunikacja z etykieciarka, podajnikiem, urzadzeniami zewnetrznymi.',
+    keywords: ['komun','etykiet','贴标','貼標','共享','通訊','label'] },
+];
+
+function renderActivityTab() {
+  var el = document.getElementById('tab-activity'); if (!el) return;
+  var file = state.files[state.currentFile];
+  if (!file) { el.innerHTML = '<p style="color:var(--td);padding:12px">Wczytaj plik .lad aby zobaczyc mape aktywnosci.</p>'; return; }
+  var p = file.parsed, bytes = file.bytes;
+  // Build full signal analysis
+  var analysis = buildSignalChains(p, bytes);
+  state.activityAnalysis = analysis;
+
+  var html = '<div style="padding:10px">';
+  html += '<h3 style="color:var(--yl);margin:0 0 4px">\u26A1 Mapa aktywnosci - Co zalacza co?</h3>';
+  html += '<p style="font-size:11px;color:var(--td);margin:0 0 4px">Analiza przeplywu sygnalow: ktore rejestry zrodlowe (czytane z zewn\u0105trz) steruja ktorymi wyjsciami, przez jakie sekcje PLC.</p>';
+  html += '<p style="font-size:10px;color:var(--td);margin:0 0 12px"><span style="color:var(--gn)">\u25CF Zrodla: '+analysis.sources.length+'</span> | <span style="color:var(--or)">\u25CF Wyjscia: '+analysis.sinks.length+'</span> | <span style="color:var(--cy)">\u25CF Wewnetrzne: '+analysis.internals.length+'</span> | <span style="color:var(--yl)">\u25CF Lancuchy: '+analysis.chains.length+'</span></p>';
+
+  // TAB SELECTOR within activity tab
+  html += '<div style="display:flex;gap:4px;margin-bottom:12px;border-bottom:1px solid var(--bd);padding-bottom:8px">';
+  html += '<button class="scenario-btn" onclick="activityView(\'chains\')" id="actViewChains" style="border-color:var(--gn)">\uD83D\uDD17 Lancuchy sygnalow</button>';
+  html += '<button class="scenario-btn" onclick="activityView(\'scenarios\')" id="actViewScen">\uD83C\uDFAC Scenariusze CNC</button>';
+  html += '<button class="scenario-btn" onclick="activityView(\'outputs\')" id="actViewOut">\uD83D\uDCA1 Mapa wyjsc</button>';
+  html += '<button class="scenario-btn" onclick="activityView(\'snapshot\')" id="actViewSnap">\uD83D\uDCCB Snapshot rejestrow</button>';
+  html += '</div>';
+
+  html += '<div id="activityContent"></div>';
+  html += '</div>';
+  el.innerHTML = html;
+  activityView('chains');
+}
+
+function activityView(view) {
+  // Toggle button highlight
+  document.querySelectorAll('#tab-activity .scenario-btn').forEach(function(b) { b.style.borderColor = 'var(--bd)'; });
+  var btnId = { chains:'actViewChains', scenarios:'actViewScen', outputs:'actViewOut', snapshot:'actViewSnap' }[view];
+  if (btnId) { var b = document.getElementById(btnId); if (b) b.style.borderColor = 'var(--gn)'; }
+
+  var contentEl = document.getElementById('activityContent');
+  if (!contentEl) return;
+  var file = state.files[state.currentFile]; if (!file) return;
+  var p = file.parsed, bytes = file.bytes;
+  var analysis = state.activityAnalysis || buildSignalChains(p, bytes);
+
+  switch(view) {
+    case 'chains': renderChainView(contentEl, analysis, p); break;
+    case 'scenarios': renderScenarioView(contentEl, analysis, p); break;
+    case 'outputs': renderOutputView(contentEl, analysis, p); break;
+    case 'snapshot': renderSnapshotView(contentEl, analysis, p); break;
+  }
+}
+
+function renderChainView(el, analysis, p) {
+  var chains = analysis.chains;
+  var html = '<div style="margin-bottom:8px"><span style="color:var(--gn);font-size:12px;font-weight:bold">'+chains.length+'</span> <span style="color:var(--td);font-size:11px">lancuchow sygnalowych (Zrodlo \u2192 Wyjscie)</span></div>';
+  html += '<input id="chainSearch" placeholder="Szukaj rejestru..." oninput="filterChains()" style="width:100%;padding:6px 10px;background:var(--si);border:1px solid var(--bd);border-radius:4px;color:var(--tx);font-family:monospace;margin-bottom:8px">';
+  if (!chains.length) {
+    html += '<p style="color:var(--td);font-style:italic">Nie znaleziono lancuchow. Sekcje moga nie miec dekodowalnych instrukcji w biezacym formacie.</p>';
+  }
+  chains.slice(0, 200).forEach(function(chain, idx) {
+    var srcColor = regClassColor(regClass(chain.input));
+    html += '<div class="chain-card" data-chain="'+idx+'">';
+    // Header
+    html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">';
+    html += '<span style="color:'+srcColor+';font-family:monospace;font-weight:bold">'+chain.input+'</span>';
+    html += '<span style="font-size:9px;color:var(--td)">'+chain.sections.length+' sekcji, '+chain.outputs.length+' wyjsc</span>';
+    html += '</div>';
+    // Flow visualization
+    html += '<div class="chain-flow">';
+    html += '<span class="chain-node input" style="border-color:'+srcColor+'">'+chain.input+'</span>';
+    html += '<span class="chain-arrow">\u2192</span>';
+    // Show sections involved
+    chain.sections.slice(0, 3).forEach(function(si) {
+      var s = p.sections[si];
+      var lbl = s.translation || s.label.substring(0, 12);
+      html += '<span class="chain-node section" onclick="selectSection('+si+');switchTab(\'hex\')" title="'+esc(s.label)+(s.translation?' - '+esc(s.translation):'')+'">#'+(si+1)+' '+esc(lbl.substring(0,15))+'</span>';
+      html += '<span class="chain-arrow">\u2192</span>';
+    });
+    if (chain.sections.length > 3) html += '<span style="color:var(--td);font-size:9px">+' + (chain.sections.length - 3) + '</span><span class="chain-arrow">\u2192</span>';
+    // Show intermediates
+    if (chain.intermediates.length) {
+      html += '<span style="font-size:9px;color:var(--td)">[';
+      html += chain.intermediates.slice(0, 3).map(function(i) { return '<span style="color:var(--cy);font-family:monospace">'+i+'</span>'; }).join(', ');
+      if (chain.intermediates.length > 3) html += ', ...';
+      html += ']</span>';
+      html += '<span class="chain-arrow">\u2192</span>';
+    }
+    // Show outputs (sinks)
+    chain.outputs.slice(0, 6).forEach(function(out) {
+      var outColor = regClassColor(regClass(out));
+      html += '<span class="chain-node output" style="border-color:'+outColor+'">'+out+'</span> ';
+    });
+    if (chain.outputs.length > 6) html += '<span style="color:var(--td);font-size:9px">+' + (chain.outputs.length - 6) + '</span>';
+    html += '</div></div>';
+  });
+  if (chains.length > 200) html += '<p style="color:var(--td);font-size:10px">Pokazano 200 z '+chains.length+'. Uzyj wyszukiwarki.</p>';
+  el.innerHTML = html;
+}
+
+function filterChains() {
+  var q = (document.getElementById('chainSearch')?.value || '').toLowerCase();
+  document.querySelectorAll('.chain-card').forEach(function(card) {
+    card.style.display = (!q || card.textContent.toLowerCase().includes(q)) ? '' : 'none';
+  });
+}
+
+function renderScenarioView(el, analysis, p) {
+  var sectionData = analysis.sectionData;
+  var html = '<div style="margin-bottom:8px;color:var(--td);font-size:11px">Wybierz operacje CNC aby zobaczyc ktore sekcje PLC sa zaangazowane:</div>';
+  html += '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:8px;margin-bottom:12px">';
+  CNC_SCENARIOS.forEach(function(scen) {
+    html += '<button class="scenario-btn" onclick="showScenario(\''+scen.id+'\')" id="scen_'+scen.id+'">';
+    html += '<div style="font-size:14px;margin-bottom:2px">'+scen.icon+' <span style="color:'+scen.color+';font-weight:bold">'+scen.name+'</span></div>';
+    html += '<div style="font-size:9px;color:var(--td)">'+scen.desc.substring(0, 60)+'...</div>';
+    html += '</button>';
+  });
+  html += '</div>';
+  html += '<div id="scenarioResult"></div>';
+  el.innerHTML = html;
+}
+
+function showScenario(scenId) {
+  var scen = CNC_SCENARIOS.find(function(s) { return s.id === scenId; });
+  if (!scen) return;
+  // Highlight active scenario button
+  document.querySelectorAll('[id^="scen_"]').forEach(function(b) { b.classList.remove('active'); });
+  var btn = document.getElementById('scen_' + scenId);
+  if (btn) btn.classList.add('active');
+
+  var file = state.files[state.currentFile]; if (!file) return;
+  var p = file.parsed;
+  var analysis = state.activityAnalysis;
+  if (!analysis) return;
+  var sectionData = analysis.sectionData;
+
+  // Find sections matching this scenario by keywords (search in label, translation, category)
+  var matchingSections = [];
+  sectionData.forEach(function(sd) {
+    if (sd.cat.id === 'noise') return;
+    var searchText = (sd.label + ' ' + (sd.translation || '') + ' ' + sd.cat.name).toLowerCase();
+    var matched = scen.keywords.some(function(kw) { return searchText.includes(kw.toLowerCase()); });
+    if (matched) matchingSections.push(sd);
+  });
+
+  var resultEl = document.getElementById('scenarioResult');
+  if (!resultEl) return;
+  var html = '<div style="background:var(--sf);border:1px solid '+scen.color+'44;border-radius:8px;padding:12px">';
+  html += '<h4 style="color:'+scen.color+';margin:0 0 6px">'+scen.icon+' '+scen.name+'</h4>';
+  html += '<p style="color:var(--td);font-size:11px;margin:0 0 10px">'+scen.desc+'</p>';
+
+  if (matchingSections.length) {
+    html += '<div style="margin-bottom:10px"><span style="color:var(--gn);font-weight:bold;font-size:11px">'+matchingSections.length+' sekcji PLC powiazanych:</span></div>';
+    matchingSections.forEach(function(sd) {
+      html += '<div style="display:flex;gap:8px;align-items:center;padding:4px 6px;border-radius:4px;cursor:pointer;border-bottom:1px solid var(--bd)22" onclick="selectSection('+sd.si+');switchTab(\'hex\')" onmouseover="this.style.background=\'var(--bd)\'" onmouseout="this.style.background=\'transparent\'">';
+      html += '<span style="color:var(--cy);font-family:monospace;font-size:10px;min-width:30px">#'+(sd.si+1)+'</span>';
+      html += '<span class="cat-badge" style="background:'+sd.cat.color+';font-size:8px;padding:1px 4px">'+sd.cat.icon+'</span>';
+      html += '<span style="color:var(--tx);font-size:11px">'+esc(sd.label)+'</span>';
+      if (sd.translation) html += '<span style="color:var(--yl);font-size:10px;opacity:.7"> \u2192 '+esc(sd.translation)+'</span>';
+      // Show read/write summary with actual register types
+      var rdCount = sd.reads.length, wrCount = sd.writes.length;
+      html += '<span style="margin-left:auto;font-size:9px;color:var(--td)">';
+      if (rdCount) html += '<span style="color:var(--gn)">R:'+rdCount+' </span>';
+      if (wrCount) html += '<span style="color:var(--or)">W:'+wrCount+'</span>';
+      html += '</span></div>';
+      // Show actual registers involved
+      if (sd.reads.length || sd.writes.length) {
+        html += '<div style="padding:2px 6px 4px 38px;font-size:9px">';
+        if (sd.reads.length) {
+          html += '<span style="color:var(--gn)">Czyta: </span>';
+          html += sd.reads.slice(0, 10).map(function(r) { return '<span style="font-family:monospace;color:'+regClassColor(regClass(r))+'">'+r+'</span>'; }).join(', ');
+          if (sd.reads.length > 10) html += ' +' + (sd.reads.length - 10);
+          html += ' ';
+        }
+        if (sd.writes.length) {
+          html += '<span style="color:var(--or)">Pisze: </span>';
+          html += sd.writes.slice(0, 6).map(function(r) { return '<span style="font-family:monospace;color:'+regClassColor(regClass(r))+'">'+r+'</span>'; }).join(', ');
+          if (sd.writes.length > 6) html += ' +' + (sd.writes.length - 6);
+        }
+        html += '</div>';
+      }
+    });
+  } else {
+    html += '<p style="color:var(--or);font-size:11px;font-style:italic">Nie znaleziono bezposrednio powiazanych sekcji dla tego scenariusza.</p>';
+  }
+
+  html += '</div>';
+  resultEl.innerHTML = html;
+}
+
+function renderOutputView(el, analysis, p) {
+  var sinkChains = analysis.sinkChains;
+  var sinkRegs = Object.keys(sinkChains).sort(function(a,b) {
+    // Sort by register type then number
+    if (a[0] !== b[0]) return a[0].localeCompare(b[0]);
+    var na = parseFloat(a.substring(1)), nb = parseFloat(b.substring(1));
+    return na - nb;
+  });
+  var html = '<div style="margin-bottom:8px;color:var(--td);font-size:11px">';
+  html += 'Mapa wyjsc: dla kazdego rejestru-wyjscia (tylko zapisywany, nigdy czytany w PLC) pokazuje skad pochodzi sygnal sterujacy. ';
+  html += '<b style="color:var(--or)">'+sinkRegs.length+'</b> rejestrow wyjsciowych z rozpoznanymi zrodlami.</div>';
+  html += '<input id="outputSearch" placeholder="Szukaj rejestru wyjsciowego..." oninput="filterOutputs()" style="width:100%;padding:6px 10px;background:var(--si);border:1px solid var(--bd);border-radius:4px;color:var(--tx);font-family:monospace;margin-bottom:8px">';
+  html += '<table style="width:100%;font-size:10px;border-collapse:collapse" id="outputTable"><thead><tr style="color:var(--or);border-bottom:1px solid var(--bd)">';
+  html += '<th style="text-align:left;padding:4px">Wyjscie</th><th style="text-align:left">Typ</th><th style="text-align:left">Sterowane przez (zrodla)</th><th style="text-align:left">Sekcje zapisujace</th></tr></thead><tbody>';
+  sinkRegs.forEach(function(sinkReg) {
+    var data = sinkChains[sinkReg];
+    var cls = regClass(sinkReg);
+    var clr = regClassColor(cls);
+    html += '<tr class="output-row" style="border-bottom:1px solid var(--bd)22">';
+    html += '<td style="padding:4px;font-family:monospace;color:'+clr+';font-weight:bold">'+sinkReg+'</td>';
+    html += '<td style="color:var(--td);font-size:9px">'+cls+'</td>';
+    html += '<td>';
+    data.sources.slice(0, 8).forEach(function(src) {
+      var srcClr = regClassColor(regClass(src));
+      html += '<span style="font-family:monospace;color:'+srcClr+';margin-right:4px">'+src+'</span>';
+    });
+    if (data.sources.length > 8) html += '<span style="color:var(--td)">+' + (data.sources.length - 8) + '</span>';
+    if (!data.sources.length) html += '<span style="color:var(--td);font-style:italic">brak zrodel</span>';
+    html += '</td><td>';
+    data.sections.slice(0, 5).forEach(function(si) {
+      var s = p.sections[si];
+      html += '<span style="cursor:pointer;color:'+s.category.color+';font-size:9px;margin-right:3px" onclick="selectSection('+si+');switchTab(\'hex\')" title="'+esc(s.label)+(s.translation?' - '+esc(s.translation):'')+'">#'+(si+1)+'</span>';
+    });
+    if (data.sections.length > 5) html += '<span style="color:var(--td)">+' + (data.sections.length - 5) + '</span>';
+    html += '</td></tr>';
+  });
+  html += '</tbody></table>';
+  el.innerHTML = html;
+}
+
+function filterOutputs() {
+  var q = (document.getElementById('outputSearch')?.value || '').toLowerCase();
+  document.querySelectorAll('.output-row').forEach(function(row) {
+    row.style.display = (!q || row.textContent.toLowerCase().includes(q)) ? '' : 'none';
+  });
+}
+
+function renderSnapshotView(el, analysis, p) {
+  if (!state.snapshot) state.snapshot = {};
+  // Group sources by register word (R0, R1, D175, etc.)
+  var srcWords = {};
+  analysis.sources.forEach(function(addr) {
+    var word = addr.split('.')[0];
+    if (!srcWords[word]) srcWords[word] = [];
+    srcWords[word].push(addr);
+  });
+  var sinkWords = {};
+  analysis.sinks.forEach(function(addr) {
+    var word = addr.split('.')[0];
+    if (!sinkWords[word]) sinkWords[word] = [];
+    sinkWords[word].push(addr);
+  });
+  // Sort word keys by type then number
+  var sortRegs = function(a,b) {
+    if(a[0]!==b[0])return a[0].localeCompare(b[0]);
+    return parseFloat(a.substring(1))-parseFloat(b.substring(1));
+  };
+  var srcKeys = Object.keys(srcWords).sort(sortRegs);
+  var sinkKeys = Object.keys(sinkWords).sort(sortRegs);
+
+  var html = '<div>';
+  html += '<p style="color:var(--td);font-size:11px;margin:0 0 8px">Wklej wartosci rejestrow z monitora SyntecIDE lub kliknij aby przelaczac stany. Aktywne zrodla podswietla aktywne lancuchy.</p>';
+  html += '<div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:12px">';
+
+  // Source registers panel
+  html += '<div style="flex:1;min-width:300px"><h4 style="color:var(--gn);margin:0 0 6px">\u25B6 Zrodla (czytane, nie zapisywane w PLC) - '+analysis.sources.length+' rejestrow</h4>';
+  html += '<div style="max-height:260px;overflow-y:auto;border:1px solid var(--bd);border-radius:4px;padding:4px">';
+  // Show only R-type sources (most relevant), grouped by word
+  var rSrcKeys = srcKeys.filter(function(k) { return k.startsWith('R'); }).slice(0, 40);
+  if (!rSrcKeys.length) rSrcKeys = srcKeys.slice(0, 40);
+  rSrcKeys.forEach(function(word) {
+    var addrs = srcWords[word].sort();
+    html += '<div style="margin-bottom:2px"><span style="color:var(--td);font-size:9px;font-family:monospace">'+word+':</span> ';
+    addrs.forEach(function(addr) {
+      var val = state.snapshot[addr] || 0;
+      html += '<span class="snap-reg '+(val?'on':'off')+'" onclick="snapToggle(\''+addr+'\')" title="'+addr+'">'+addr.split('.')[1]+(val?'\u2713':'')+'</span>';
+    });
+    html += '</div>';
+  });
+  if (srcKeys.length > 40) html += '<div style="color:var(--td);font-size:9px;padding:4px">+' + (srcKeys.length - 40) + ' wiecej grup rejestrow...</div>';
+  html += '</div></div>';
+
+  // Sink registers panel (calculated)
+  html += '<div style="flex:1;min-width:300px"><h4 style="color:var(--or);margin:0 0 6px">\u25C0 Wyjscia (tylko zapisywane) - '+analysis.sinks.length+' rejestrow - obliczone</h4>';
+  html += '<div style="max-height:260px;overflow-y:auto;border:1px solid var(--bd);border-radius:4px;padding:4px">';
+  var activeOutputs = calcActiveOutputs(analysis, state.snapshot);
+  sinkKeys.forEach(function(word) {
+    var addrs = sinkWords[word].sort();
+    html += '<div style="margin-bottom:2px"><span style="color:var(--td);font-size:9px;font-family:monospace">'+word+':</span> ';
+    addrs.forEach(function(addr) {
+      var yval = activeOutputs[addr] || 0;
+      html += '<span class="snap-reg '+(yval?'on':'off')+'" title="'+addr+'">'+addr.split('.')[1]+(yval?'\u2713':'')+'</span>';
+    });
+    html += '</div>';
+  });
+  html += '</div></div></div>';
+
+  // Show active chains for current snapshot
+  var activeChains = [];
+  analysis.chains.forEach(function(chain) {
+    if (state.snapshot[chain.input]) activeChains.push(chain);
+  });
+  if (activeChains.length) {
+    html += '<div style="margin-top:12px;padding-top:8px;border-top:1px solid var(--bd)">';
+    html += '<h4 style="color:var(--gn);margin:0 0 6px">\u26A1 Aktywne lancuchy ('+activeChains.length+')</h4>';
+    activeChains.slice(0, 30).forEach(function(chain) {
+      var srcClr = regClassColor(regClass(chain.input));
+      html += '<div class="chain-card" style="border-color:var(--gn)44;background:rgba(100,255,100,.03)">';
+      html += '<div class="chain-flow">';
+      html += '<span class="chain-node input" style="background:#2a5a2a;border-color:#4f4">\u2713 '+chain.input+'</span>';
+      html += '<span class="chain-arrow">\u2192</span>';
+      chain.sections.slice(0,3).forEach(function(si) {
+        var s = p.sections[si];
+        html += '<span class="chain-node section" onclick="selectSection('+si+');switchTab(\'hex\')" style="border-color:var(--gn)">#'+(si+1)+' '+(s.translation||s.label).substring(0,12)+'</span>';
+        html += '<span class="chain-arrow">\u2192</span>';
+      });
+      chain.outputs.slice(0, 4).forEach(function(out) {
+        var isActive = activeOutputs[out];
+        html += '<span class="chain-node output" style="'+(isActive?'background:#5a4a1a;border-color:#fc6':'')+'">'+out+(isActive?' \u2713':'')+'</span> ';
+      });
+      html += '</div></div>';
+    });
+    if (activeChains.length > 30) html += '<p style="color:var(--td);font-size:10px">+' + (activeChains.length - 30) + ' wiecej lancuchow...</p>';
+    html += '</div>';
+  }
+
+  // Active sections
+  var activeSections = new Set();
+  activeChains.forEach(function(chain) { chain.sections.forEach(function(si) { activeSections.add(si); }); });
+  if (activeSections.size) {
+    html += '<div style="margin-top:12px"><h4 style="color:var(--cy);margin:0 0 6px">Aktywne sekcje PLC ('+activeSections.size+')</h4>';
+    [...activeSections].sort(function(a,b){return a-b;}).forEach(function(si) {
+      var s = p.sections[si];
+      html += '<span class="chain-node section" style="margin:2px;border-color:var(--gn)" onclick="selectSection('+si+');switchTab(\'hex\')">#'+(si+1)+' '+esc((s.translation||s.label).substring(0,20))+'</span>';
+    });
+    html += '</div>';
+  }
+
+  // Paste area
+  html += '<div style="margin-top:12px;padding-top:8px;border-top:1px solid var(--bd)">';
+  html += '<h4 style="color:var(--td);margin:0 0 6px">Import z monitora SyntecIDE</h4>';
+  html += '<textarea id="snapPaste" placeholder="Wklej rejestr=wartosc (np. R0.4=1&#10;R36.4=1&#10;R101.2=1)&#10;Lub format hex: R0=FF (caly bajt = 8 bitow)" style="width:100%;height:60px;background:var(--si);border:1px solid var(--bd);border-radius:4px;color:var(--tx);font-family:monospace;font-size:10px;padding:6px;resize:vertical"></textarea>';
+  html += '<button onclick="importSnapshot()" style="margin-top:4px;padding:4px 12px;background:var(--gn);color:#000;border:none;border-radius:4px;cursor:pointer;font-size:10px">\u2B07 Importuj</button>';
+  html += '<button onclick="state.snapshot={};activityView(\'snapshot\')" style="margin-top:4px;margin-left:4px;padding:4px 12px;background:var(--or);color:#000;border:none;border-radius:4px;cursor:pointer;font-size:10px">Reset</button>';
+  html += '</div></div>';
+  el.innerHTML = html;
+}
+
+function snapToggle(addr) {
+  if (!state.snapshot) state.snapshot = {};
+  state.snapshot[addr] = state.snapshot[addr] ? 0 : 1;
+  activityView('snapshot');
+}
+
+function importSnapshot() {
+  var text = (document.getElementById('snapPaste')?.value || '').trim();
+  if (!text) return;
+  if (!state.snapshot) state.snapshot = {};
+  text.split(/[\n;,]+/).forEach(function(line) {
+    line = line.trim();
+    if (!line) return;
+    // Format: R0.4=1 or D175.0=1 or T64.3=1
+    var m = line.match(/^([A-Z]\d+\.\d+)\s*=\s*(\d+)/i);
+    if (m) { state.snapshot[m[1].toUpperCase()] = parseInt(m[2]) ? 1 : 0; return; }
+    // Byte format: R0=FF → set R0.0-R0.15 (16-bit word)
+    var mb = line.match(/^([A-Z])(\d+)\s*=\s*([0-9A-Fa-f]{1,4})$/i);
+    if (mb) {
+      var prefix = mb[1].toUpperCase(), num = mb[2], val = parseInt(mb[3], 16);
+      for (var bit = 0; bit < 16; bit++) {
+        state.snapshot[prefix + num + '.' + bit] = (val >> bit) & 1;
+      }
+    }
+  });
+  activityView('snapshot');
+}
+
+function calcActiveOutputs(analysis, snapshot) {
+  var outputs = {};
+  // Chain tracing: if a source register in a chain is ON, mark its sink outputs as potentially ON
+  analysis.chains.forEach(function(chain) {
+    if (snapshot[chain.input]) {
+      chain.outputs.forEach(function(out) {
+        outputs[out] = 1;
+      });
+    }
+  });
+  return outputs;
 }
 
 // DOCUMENTATION EXPORT - Phase 7
